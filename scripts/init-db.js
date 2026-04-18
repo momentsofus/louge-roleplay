@@ -30,6 +30,19 @@ async function main() {
     }
   }
 
+  async function ensureIndex(tableName, indexName, indexSql) {
+    const [rows] = await connection.query(
+      `SELECT COUNT(*) AS count
+       FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?`,
+      [tableName, indexName],
+    );
+
+    if (Number(rows[0].count || 0) === 0) {
+      await connection.query(`ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexSql}`);
+    }
+  }
+
   async function ensureUniqueIndex(tableName, indexName, columnName) {
     const [rows] = await connection.query(
       `SELECT COUNT(*) AS count
@@ -88,6 +101,9 @@ async function main() {
       id BIGINT PRIMARY KEY AUTO_INCREMENT,
       user_id BIGINT NOT NULL,
       character_id BIGINT NOT NULL,
+      parent_conversation_id BIGINT NULL,
+      branched_from_message_id BIGINT NULL,
+      current_message_id BIGINT NULL,
       title VARCHAR(200) NULL,
       status ENUM('active','archived','deleted') DEFAULT 'active',
       last_message_at DATETIME NULL,
@@ -98,6 +114,13 @@ async function main() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  await ensureColumn('conversations', 'parent_conversation_id', 'parent_conversation_id BIGINT NULL');
+  await ensureColumn('conversations', 'branched_from_message_id', 'branched_from_message_id BIGINT NULL');
+  await ensureColumn('conversations', 'current_message_id', 'current_message_id BIGINT NULL');
+  await ensureIndex('conversations', 'idx_conversations_parent', '(parent_conversation_id)');
+  await ensureIndex('conversations', 'idx_conversations_branch_message', '(branched_from_message_id)');
+  await ensureIndex('conversations', 'idx_conversations_current_message', '(current_message_id)');
+
   await connection.query(`
     CREATE TABLE IF NOT EXISTS messages (
       id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -105,12 +128,26 @@ async function main() {
       sender_type ENUM('user','character','system') NOT NULL,
       content LONGTEXT NOT NULL,
       sequence_no INT NOT NULL,
+      parent_message_id BIGINT NULL,
+      branch_from_message_id BIGINT NULL,
+      edited_from_message_id BIGINT NULL,
+      prompt_kind ENUM('normal','regenerate','branch','edit','optimized') NOT NULL DEFAULT 'normal',
+      metadata_json JSON NULL,
       status ENUM('success','failed','streaming') DEFAULT 'success',
       created_at DATETIME NOT NULL,
       CONSTRAINT fk_messages_conversation FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
       INDEX idx_messages_conversation_sequence (conversation_id, sequence_no)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  await ensureColumn('messages', 'parent_message_id', 'parent_message_id BIGINT NULL');
+  await ensureColumn('messages', 'branch_from_message_id', 'branch_from_message_id BIGINT NULL');
+  await ensureColumn('messages', 'edited_from_message_id', 'edited_from_message_id BIGINT NULL');
+  await ensureColumn('messages', 'prompt_kind', "prompt_kind ENUM('normal','regenerate','branch','edit','optimized') NOT NULL DEFAULT 'normal'");
+  await ensureColumn('messages', 'metadata_json', 'metadata_json JSON NULL');
+  await ensureIndex('messages', 'idx_messages_parent', '(parent_message_id)');
+  await ensureIndex('messages', 'idx_messages_branch_from', '(branch_from_message_id)');
+  await ensureIndex('messages', 'idx_messages_edited_from', '(edited_from_message_id)');
 
   await connection.end();
   console.log('Database initialization completed successfully.');

@@ -6,26 +6,29 @@
 const config = require('../config');
 const logger = require('../lib/logger');
 
-async function generateReply({ character, messages, userMessage }) {
-  if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
-    return `${character.name} 看着你，轻声说：我听见你说“${userMessage.slice(0, 120)}”。现在还没接上正式 AI 接口，所以我先陪你把网站流程跑通。`;
-  }
-
-  const promptMessages = [
+function buildPromptMessages({ character, messages, userMessage, systemHint = '' }) {
+  return [
     {
       role: 'system',
-      content: `你现在正在进行角色扮演。角色名：${character.name}\n角色简介：${character.summary || ''}\n角色性格：${character.personality || ''}\n请始终以该角色身份自然回复，避免脱离角色。`,
+      content: [
+        `你现在正在进行角色扮演。角色名：${character.name}`,
+        `角色简介：${character.summary || ''}`,
+        `角色性格：${character.personality || ''}`,
+        '请始终以该角色身份自然回复，避免脱离角色。',
+        systemHint || '',
+      ].filter(Boolean).join('\n'),
     },
-    ...messages.slice(-12).map((message) => ({
+    ...messages.slice(-24).map((message) => ({
       role: message.sender_type === 'user' ? 'user' : 'assistant',
       content: message.content,
     })),
-    {
-      role: 'user',
-      content: userMessage,
-    },
+    ...(userMessage
+      ? [{ role: 'user', content: userMessage }]
+      : []),
   ];
+}
 
+async function callProvider(promptMessages) {
   const response = await fetch(`${config.openaiBaseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -49,6 +52,30 @@ async function generateReply({ character, messages, userMessage }) {
   return data.choices?.[0]?.message?.content?.trim() || '……';
 }
 
+async function generateReply({ character, messages, userMessage, systemHint = '' }) {
+  if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
+    return `${character.name} 看着你，轻声说：我听见你说“${String(userMessage || '').slice(0, 120)}”。现在还没接上正式 AI 接口，所以我先陪你把网站流程跑通。`;
+  }
+
+  const promptMessages = buildPromptMessages({ character, messages, userMessage, systemHint });
+  return callProvider(promptMessages);
+}
+
+async function optimizeUserInput({ character, messages, userInput }) {
+  if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
+    return `请帮我把下面这段输入润色得更清楚、更自然，同时保留原意和情绪：\n\n${String(userInput || '').trim()}`;
+  }
+
+  const promptMessages = buildPromptMessages({
+    character,
+    messages,
+    systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
+    userMessage: `原始输入：\n${String(userInput || '').trim()}`,
+  });
+  return callProvider(promptMessages);
+}
+
 module.exports = {
   generateReply,
+  optimizeUserInput,
 };

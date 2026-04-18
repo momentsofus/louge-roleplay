@@ -20,8 +20,18 @@ const { requireAuth } = require('./middleware/auth');
 const { hashPassword, verifyPassword } = require('./services/password-service');
 const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById } = require('./services/user-service');
 const { createCharacter, listPublicCharacters, listUserCharacters, getCharacterById } = require('./services/character-service');
-const { createConversation, getConversationById, listUserConversations, listMessages, addMessage } = require('./services/conversation-service');
-const { generateReply } = require('./services/ai-service');
+const {
+  createConversation,
+  getConversationById,
+  listUserConversations,
+  listMessages,
+  getMessageById,
+  addMessage,
+  updateMessageContent,
+  buildPathMessages,
+  decorateMessages,
+} = require('./services/conversation-service');
+const { generateReply, optimizeUserInput } = require('./services/ai-service');
 const { createCaptcha, getCaptchaImage, verifyCaptcha } = require('./services/captcha-service');
 const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = require('./services/verification-service');
 const { verifyDomesticPhoneIdentity } = require('./services/phone-auth-service');
@@ -77,6 +87,30 @@ function isAllowedInternationalEmail(value) {
 
 function isDomesticPhone(value) {
   return /^1\d{10}$/.test(String(value || '').trim());
+}
+
+function buildConversationTitle(characterName, content = '') {
+  const tail = String(content || '').trim().replace(/\s+/g, ' ').slice(0, 24);
+  return tail ? `${characterName} · ${tail}` : `${characterName} · 新分支`;
+}
+
+async function renderChatPage(req, res, conversation, options = {}) {
+  const allMessages = await listMessages(conversation.id);
+  const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
+  const requestedLeafId = Number(options.leafId || req.query.leaf || fallbackLeafId || 0) || null;
+  const activeLeafId = requestedLeafId || fallbackLeafId || null;
+  const pathMessages = buildPathMessages(allMessages, activeLeafId);
+  const decoratedMessages = decorateMessages(allMessages, activeLeafId);
+
+  renderPage(res, 'chat', {
+    title: '聊天',
+    conversation,
+    messages: pathMessages,
+    decoratedMessages,
+    activeLeafId,
+    draftContent: options.draftContent || String(req.query.draft || ''),
+    optimizedContent: options.optimizedContent || '',
+  });
 }
 
 async function bootstrap() {
@@ -202,7 +236,7 @@ async function bootstrap() {
       }
 
       await verifyDomesticPhoneIdentity({ phone, captchaPassed });
-      const code = await issuePhoneCode(phone, ip);
+      await issuePhoneCode(phone, ip);
       logger.debug('Phone verification code issued', { phoneMasked: `${phone.slice(0, 3)}****${phone.slice(-4)}`, provider: 'aliyun-sms' });
       return res.json({ message: '短信验证码已发送' });
     } catch (error) {
@@ -369,12 +403,21 @@ async function bootstrap() {
         return renderPage(res, 'message', { title: '提示', message: '角色不存在。' });
       }
 
-      const conversationId = await createConversation(req.session.user.id, characterId);
+      const conversationId = await createConversation(req.session.user.id, characterId, {
+        title: `${character.name} · 新对话`,
+      });
+
+      let currentParentId = null;
       if (character.first_message) {
-        await addMessage(conversationId, 'character', character.first_message);
+        currentParentId = await addMessage({
+          conversationId,
+          senderType: 'character',
+          content: character.first_message,
+          promptKind: 'normal',
+        });
       }
 
-      return res.redirect(`/chat/${conversationId}`);
+      return res.redirect(`/chat/${conversationId}${currentParentId ? `?leaf=${currentParentId}` : ''}`);
     } catch (error) {
       next(error);
     }
@@ -389,8 +432,7 @@ async function bootstrap() {
         return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
       }
 
-      const messages = await listMessages(conversationId);
-      renderPage(res, 'chat', { title: '聊天', conversation, messages });
+      await renderChatPage(req, res, conversation);
     } catch (error) {
       next(error);
     }
@@ -400,6 +442,7 @@ async function bootstrap() {
     try {
       const conversationId = Number(req.params.conversationId);
       const content = String(req.body.content || '').trim();
+      const parentMessageId = Number(req.body.parentMessageId || 0) || null;
 
       if (!content) {
         return renderPage(res, 'message', { title: '提示', message: '消息不能为空。' });
@@ -410,15 +453,172 @@ async function bootstrap() {
         return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
       }
 
-      await addMessage(conversationId, 'user', content);
-      const history = await listMessages(conversationId);
+      const allMessages = await listMessages(conversationId);
+      const history = buildPathMessages(allMessages, parentMessageId || conversation.current_message_id || null);
+      const userMessageId = await addMessage({
+        conversationId,
+        senderType: 'user',
+        content,
+        parentMessageId,
+        branchFromMessageId: parentMessageId,
+        promptKind: parentMessageId && parentMessageId !== conversation.current_message_id ? 'branch' : 'normal',
+      });
+
       const reply = await generateReply({
-        character: conversation,
-        messages: history,
+        character: { name: conversation.character_name, summary: conversation.character_summary, personality: conversation.personality },
+        messages: [...history, { sender_type: 'user', content }],
         userMessage: content,
       });
-      await addMessage(conversationId, 'character', reply);
-      return res.redirect(`/chat/${conversationId}`);
+
+      const replyMessageId = await addMessage({
+        conversationId,
+        senderType: 'character',
+        content: reply,
+        parentMessageId: userMessageId,
+        branchFromMessageId: userMessageId,
+        promptKind: parentMessageId && parentMessageId !== conversation.current_message_id ? 'branch' : 'normal',
+      });
+
+      return res.redirect(`/chat/${conversationId}?leaf=${replyMessageId}`);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/chat/:conversationId/regenerate/:messageId', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = Number(req.params.conversationId);
+      const messageId = Number(req.params.messageId);
+      const conversation = await getConversationById(conversationId, req.session.user.id);
+
+      if (!conversation) {
+        return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
+      }
+
+      const targetMessage = await getMessageById(conversationId, messageId);
+      if (!targetMessage || targetMessage.sender_type !== 'character') {
+        return renderPage(res, 'message', { title: '提示', message: '只能重新生成 AI 回复。' });
+      }
+
+      const allMessages = await listMessages(conversationId);
+      const parentUserMessage = targetMessage.parent_message_id ? await getMessageById(conversationId, targetMessage.parent_message_id) : null;
+      if (!parentUserMessage || parentUserMessage.sender_type !== 'user') {
+        return renderPage(res, 'message', { title: '提示', message: '找不到对应的用户输入。' });
+      }
+
+      const history = buildPathMessages(allMessages, parentUserMessage.id).slice(0, -1);
+      const reply = await generateReply({
+        character: { name: conversation.character_name, summary: conversation.character_summary, personality: conversation.personality },
+        messages: [...history, parentUserMessage],
+        userMessage: parentUserMessage.content,
+        systemHint: '这是一次重新生成。请在保持角色一致的前提下，给出与先前不同但同样合理的新回复。',
+      });
+
+      const newReplyId = await addMessage({
+        conversationId,
+        senderType: 'character',
+        content: reply,
+        parentMessageId: parentUserMessage.id,
+        branchFromMessageId: messageId,
+        editedFromMessageId: messageId,
+        promptKind: 'regenerate',
+      });
+
+      return res.redirect(`/chat/${conversationId}?leaf=${newReplyId}`);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/chat/:conversationId/messages/:messageId/edit', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = Number(req.params.conversationId);
+      const messageId = Number(req.params.messageId);
+      const content = String(req.body.content || '').trim();
+      const conversation = await getConversationById(conversationId, req.session.user.id);
+
+      if (!conversation) {
+        return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
+      }
+      if (!content) {
+        return renderPage(res, 'message', { title: '提示', message: '内容不能为空。' });
+      }
+
+      const targetMessage = await getMessageById(conversationId, messageId);
+      if (!targetMessage || targetMessage.sender_type !== 'character') {
+        return renderPage(res, 'message', { title: '提示', message: '这里只支持修改 AI 生成内容。' });
+      }
+
+      await updateMessageContent(conversationId, messageId, content);
+      return res.redirect(`/chat/${conversationId}?leaf=${messageId}`);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/chat/:conversationId/optimize-input', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = Number(req.params.conversationId);
+      const content = String(req.body.content || '').trim();
+      const parentMessageId = Number(req.body.parentMessageId || 0) || null;
+      const conversation = await getConversationById(conversationId, req.session.user.id);
+
+      if (!conversation) {
+        return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
+      }
+      if (!content) {
+        return renderPage(res, 'message', { title: '提示', message: '内容不能为空。' });
+      }
+
+      const allMessages = await listMessages(conversationId);
+      const history = buildPathMessages(allMessages, parentMessageId || conversation.current_message_id || null);
+      const optimizedContent = await optimizeUserInput({
+        character: { name: conversation.character_name, summary: conversation.character_summary, personality: conversation.personality },
+        messages: history,
+        userInput: content,
+      });
+
+      await renderChatPage(req, res, conversation, {
+        leafId: parentMessageId || conversation.current_message_id || null,
+        draftContent: content,
+        optimizedContent,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/chat/:conversationId/branch/:messageId', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = Number(req.params.conversationId);
+      const messageId = Number(req.params.messageId);
+      const conversation = await getConversationById(conversationId, req.session.user.id);
+
+      if (!conversation) {
+        return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
+      }
+
+      const targetMessage = await getMessageById(conversationId, messageId);
+      if (!targetMessage) {
+        return renderPage(res, 'message', { title: '提示', message: '分支起点不存在。' });
+      }
+
+      const branchConversationId = await createConversation(req.session.user.id, conversation.character_id, {
+        parentConversationId: conversation.id,
+        branchedFromMessageId: messageId,
+        title: buildConversationTitle(conversation.character_name, targetMessage.content),
+      });
+
+      const branchRootMessageId = await addMessage({
+        conversationId: branchConversationId,
+        senderType: 'system',
+        content: `此分支从原对话 #${conversation.id} 的消息 #${messageId} 开始。`,
+        branchFromMessageId: messageId,
+        promptKind: 'branch',
+        metadataJson: JSON.stringify({ sourceConversationId: conversation.id, sourceMessageId: messageId }),
+      });
+
+      return res.redirect(`/chat/${branchConversationId}?leaf=${branchRootMessageId}`);
     } catch (error) {
       next(error);
     }

@@ -105,7 +105,13 @@
       <% conversations.forEach(conversation => { %>
         <div class="list-item">
           <a href="/chat/<%= conversation.id %>"><strong><%= conversation.character_name %></strong></a>
-          <p class="muted-line">最近更新：<%= conversation.updated_at %></p>
+          <p class="muted-line">
+            标题：<%= conversation.title || '未命名对话' %>
+            · 最近更新：<%= conversation.updated_at %>
+            <% if (conversation.current_message_id) { %>
+              · 当前叶子：#<%= conversation.current_message_id %>
+            <% } %>
+          </p>
         </div>
       <% }) %>
     </div>

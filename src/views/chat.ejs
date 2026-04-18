@@ -25,6 +25,12 @@
     line-height: 1.75;
   }
 
+  .chat-meta {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #d8d4ca;
+  }
+
   .chat-log,
   .chat-compose {
     background: #faf9f5;
@@ -40,6 +46,7 @@
     margin-bottom: 14px;
     white-space: pre-wrap;
     line-height: 1.75;
+    position: relative;
   }
 
   .bubble-user {
@@ -54,14 +61,61 @@
     border: 1px solid #e8e6dc;
   }
 
+  .bubble-inactive {
+    opacity: 0.48;
+  }
+
   .bubble strong {
     display: block;
     margin-bottom: 6px;
   }
 
-  .chat-compose textarea {
-    min-height: 140px;
+  .bubble small {
+    display: inline-block;
+    margin-top: 10px;
+    color: #7b766f;
+  }
+
+  .bubble-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .inline-form {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .inline-form input,
+  .inline-form textarea,
+  .inline-form button {
+    width: auto;
+  }
+
+  .inline-form textarea {
+    width: min(100%, 540px);
+    min-height: 96px;
     resize: vertical;
+  }
+
+  .inline-btn {
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #f3ede4;
+    color: #403d39;
+    border: 1px solid #e5ddd2;
+    box-shadow: none;
+  }
+
+  .inline-btn.primary {
+    background: #c96442;
+    border-color: #c96442;
+    color: #faf9f5;
   }
 
   .submit-btn {
@@ -72,8 +126,23 @@
     color: #faf9f5;
   }
 
-  .submit-btn:hover {
+  .submit-btn:hover,
+  .inline-btn.primary:hover {
     background: #d97757;
+  }
+
+  .opt-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 18px;
+    background: #f3f0e8;
+    border: 1px solid #e8e6dc;
+  }
+
+  .branch-list {
+    margin-top: 8px;
+    color: #6b665f;
+    font-size: 14px;
   }
 </style>
 
@@ -81,22 +150,86 @@
   <section class="chat-head">
     <h1><%= conversation.character_name %></h1>
     <p><%= conversation.character_summary %></p>
+    <div class="chat-meta">
+      当前对话 ID：<%= conversation.id %>
+      <% if (conversation.parent_conversation_id) { %>
+        · 来自分支对话 <%= conversation.parent_conversation_id %>
+      <% } %>
+      <% if (activeLeafId) { %>
+        · 当前叶子消息：<%= activeLeafId %>
+      <% } %>
+    </div>
   </section>
 
   <section class="chat-log">
-    <% messages.forEach(message => { %>
-      <div class="bubble <%= message.sender_type === 'user' ? 'bubble-user' : 'bubble-character' %>">
+    <% decoratedMessages.forEach(message => { %>
+      <div class="bubble <%= message.sender_type === 'user' ? 'bubble-user' : 'bubble-character' %> <%= message.is_active ? '' : 'bubble-inactive' %>">
         <strong><%= message.sender_type === 'user' ? '你' : conversation.character_name %></strong>
         <div><%= message.content %></div>
+        <small>
+          #<%= message.id %>
+          · <%= message.prompt_kind || 'normal' %>
+          <% if (!message.is_active) { %> · 非当前分支 <% } %>
+        </small>
+
+        <% if (message.child_count > 0) { %>
+          <div class="branch-list">子节点：<%= message.child_leaf_ids.join(', ') %></div>
+        <% } %>
+
+        <div class="bubble-actions">
+          <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
+            <input type="hidden" name="leaf" value="<%= message.id %>" />
+            <button class="inline-btn" type="submit">切到这里</button>
+          </form>
+
+          <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
+            <button class="inline-btn" type="submit">从这里开分支</button>
+          </form>
+
+          <% if (message.sender_type === 'character') { %>
+            <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/regenerate/<%= message.id %>">
+              <button class="inline-btn" type="submit">重新生成</button>
+            </form>
+          <% } %>
+        </div>
+
+        <% if (message.sender_type === 'character') { %>
+          <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
+            <textarea name="content" maxlength="8000" required><%= message.content %></textarea>
+            <button class="inline-btn primary" type="submit">保存 AI 内容</button>
+          </form>
+        <% } %>
       </div>
     <% }) %>
   </section>
 
   <section class="chat-compose">
     <form method="POST" action="/chat/<%= conversation.id %>/message">
+      <input type="hidden" name="parentMessageId" value="<%= activeLeafId || '' %>" />
       <label for="content">继续说点什么</label>
-      <textarea id="content" name="content" maxlength="4000" required placeholder="把你现在想说的话发出去。"></textarea>
+      <textarea id="content" name="content" maxlength="4000" required placeholder="把你现在想说的话发出去。"><%= draftContent || '' %></textarea>
       <button class="submit-btn" type="submit">发送消息</button>
     </form>
+
+    <div class="opt-box">
+      <form method="POST" action="/chat/<%= conversation.id %>/optimize-input">
+        <input type="hidden" name="parentMessageId" value="<%= activeLeafId || '' %>" />
+        <label for="optimizeContent">先帮我优化输入</label>
+        <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="想润色一下，就把原话贴这儿。"><%= draftContent || '' %></textarea>
+        <button class="submit-btn" type="submit">优化输入</button>
+      </form>
+
+      <% if (optimizedContent) { %>
+        <div class="opt-box">
+          <label>优化结果</label>
+          <div style="white-space: pre-wrap;"><%= optimizedContent %></div>
+          <form method="GET" action="/chat/<%= conversation.id %>" style="margin-top: 12px;">
+            <input type="hidden" name="leaf" value="<%= activeLeafId || '' %>" />
+            <input type="hidden" name="draft" value="<%= optimizedContent %>" />
+            <button class="inline-btn primary" type="submit">带回输入框继续发</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
   </section>
 </div>
