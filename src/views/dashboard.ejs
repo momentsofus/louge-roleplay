@@ -1,0 +1,113 @@
+<style>
+  .dashboard-shell {
+    display: grid;
+    gap: 22px;
+  }
+
+  .welcome-card {
+    padding: 30px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #141413 0%, #30302e 100%);
+    color: #faf9f5;
+    border: 1px solid #30302e;
+    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+  }
+
+  .welcome-card h1 {
+    color: #faf9f5;
+    font-size: 44px;
+    margin-bottom: 10px;
+  }
+
+  .welcome-card p {
+    color: #d8d4ca;
+    margin: 0;
+    line-height: 1.8;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .panel-card {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: rgba(20, 20, 19, 0.05) 0px 8px 24px;
+  }
+
+  .panel-card h2 {
+    font-size: 30px;
+    margin-bottom: 16px;
+  }
+
+  .list-item {
+    padding: 14px 0;
+    border-top: 1px solid #f0eee6;
+  }
+
+  .list-item:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .list-item strong,
+  .list-item a {
+    color: #141413;
+    font-size: 18px;
+  }
+
+  .list-item p {
+    margin: 6px 0 0;
+    color: #5e5d59;
+  }
+
+  .muted-line {
+    color: #87867f;
+    font-size: 14px;
+  }
+
+  @media (max-width: 860px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="dashboard-shell">
+  <section class="welcome-card">
+    <h1>晚上好，<%= user.username %></h1>
+    <p>这里是你的安静角落。角色在这边，会话也在这边。想继续旧故事，或者写一个新的开始，都行。</p>
+  </section>
+
+  <section class="dashboard-grid">
+    <div class="panel-card">
+      <h2>我的角色</h2>
+      <% if (characters.length === 0) { %>
+        <p class="muted-line">你还没有创建角色。先去写一个有灵魂的名字吧。</p>
+      <% } %>
+      <% characters.forEach(character => { %>
+        <div class="list-item">
+          <strong><%= character.name %></strong>
+          <p><%= character.summary %></p>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="panel-card">
+      <h2>最近会话</h2>
+      <% if (conversations.length === 0) { %>
+        <p class="muted-line">还没有会话。挑一个角色，先说第一句话。</p>
+      <% } %>
+      <% conversations.forEach(conversation => { %>
+        <div class="list-item">
+          <a href="/chat/<%= conversation.id %>"><strong><%= conversation.character_name %></strong></a>
+          <p class="muted-line">最近更新：<%= conversation.updated_at %></p>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+</div>

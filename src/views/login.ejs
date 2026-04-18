@@ -1,0 +1,66 @@
+<style>
+  .auth-shell {
+    max-width: 560px;
+    margin: 32px auto 0;
+  }
+
+  .auth-card {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 28px;
+    padding: 32px;
+    box-shadow: rgba(20, 20, 19, 0.06) 0px 12px 36px;
+  }
+
+  .auth-card h1 {
+    font-size: 42px;
+    margin-bottom: 12px;
+  }
+
+  .auth-card p {
+    color: #5e5d59;
+    margin-bottom: 22px;
+    line-height: 1.75;
+  }
+
+  .field-group {
+    margin-bottom: 16px;
+  }
+
+  .submit-btn {
+    margin-top: 10px;
+    background: #c96442;
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px #c96442;
+    color: #faf9f5;
+  }
+
+  .submit-btn:hover {
+    background: #d97757;
+  }
+
+  .foot-note {
+    margin-top: 18px;
+    color: #87867f;
+    font-size: 14px;
+  }
+</style>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <h1>欢迎回来</h1>
+    <p>继续你上次没聊完的话。你可以用用户名、邮箱或者手机号登录。</p>
+    <form method="POST" action="/login">
+      <div class="field-group">
+        <label for="login">账号</label>
+        <input id="login" name="login" maxlength="120" required placeholder="用户名 / 邮箱 / 手机号" />
+      </div>
+      <div class="field-group">
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" maxlength="100" required placeholder="输入密码" />
+      </div>
+      <button class="submit-btn" type="submit">登录</button>
+    </form>
+    <div class="foot-note">如果你是第一次来，也可以先去注册，把想见的人写出来。</div>
+  </div>
+</div>

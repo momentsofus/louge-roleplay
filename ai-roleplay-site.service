@@ -1,0 +1,21 @@
+# AI Roleplay Site systemd service
+# 作用：以 systemd 管理最简 AI 角色扮演网站，便于开机自启与统一启停。
+
+[Unit]
+Description=AI Roleplay Site
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/.openclaw/workspace/deployments/local/ai-roleplay-site
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /root/.openclaw/workspace/deployments/local/ai-roleplay-site/src/server.js
+Restart=always
+RestartSec=5
+User=root
+StandardOutput=append:/root/.openclaw/workspace/deployments/local/ai-roleplay-site/logs/app.log
+StandardError=append:/root/.openclaw/workspace/deployments/local/ai-roleplay-site/logs/app-error.log
+
+[Install]
+WantedBy=multi-user.target

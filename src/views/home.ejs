@@ -1,0 +1,183 @@
+<style>
+  .home-shell {
+    display: grid;
+    gap: 24px;
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: 1.2fr 0.9fr;
+    gap: 24px;
+    padding: 32px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #141413 0%, #30302e 100%);
+    color: #faf9f5;
+    border: 1px solid #30302e;
+    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+  }
+
+  .hero-card h1 {
+    font-size: clamp(40px, 5vw, 60px);
+    color: #faf9f5;
+    margin-bottom: 14px;
+  }
+
+  .hero-card p {
+    color: #d8d4ca;
+    font-size: 17px;
+    line-height: 1.75;
+  }
+
+  .hero-meta {
+    display: grid;
+    gap: 14px;
+    align-content: center;
+  }
+
+  .hero-stat {
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: rgba(250, 249, 245, 0.05);
+    border: 1px solid rgba(250, 249, 245, 0.08);
+  }
+
+  .hero-stat strong {
+    display: block;
+    color: #faf9f5;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .hero-stat span {
+    color: #bdb8ae;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .section-head h2 {
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+
+  .section-head p {
+    margin: 0;
+    color: #5e5d59;
+  }
+
+  .character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .character-card {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: rgba(20, 20, 19, 0.05) 0px 8px 24px;
+  }
+
+  .character-card h3 {
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
+
+  .character-card p {
+    margin: 0 0 12px;
+    color: #5e5d59;
+  }
+
+  .character-card .meta {
+    color: #87867f;
+    font-size: 14px;
+  }
+
+  .empty-card {
+    padding: 24px;
+    border-radius: 22px;
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    color: #5e5d59;
+  }
+
+  .btn-brand {
+    background: #c96442;
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px #c96442;
+    color: #faf9f5;
+  }
+
+  .btn-brand:hover {
+    background: #d97757;
+  }
+
+  @media (max-width: 860px) {
+    .hero-card {
+      grid-template-columns: 1fr;
+      padding: 24px;
+    }
+  }
+</style>
+
+<div class="home-shell">
+  <section class="hero-card">
+    <div>
+      <h1>把想说的话，交给一个真正有气质的角色来接住。</h1>
+      <p>楼阁是一个安静的角色对话空间。你可以创建角色、写下他们的性格和开场白，再慢慢把每段对话聊出自己的味道。</p>
+      <p>不赶、不吵，也不故作花哨。只是给角色、故事和情绪留一个舒服的地方。</p>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-stat">
+        <strong>公开角色</strong>
+        <span>在这里逛一逛，先挑一个顺眼的角色开始聊天。</span>
+      </div>
+      <div class="hero-stat">
+        <strong>多用户空间</strong>
+        <span>每个人都能拥有自己的角色、自己的会话和自己的节奏。</span>
+      </div>
+      <div class="hero-stat">
+        <strong>入口</strong>
+        <span>aicafe.momentsofus.cn</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>现在可以聊的角色</h2>
+        <p>挑一个合眼缘的，看看会发生什么。</p>
+      </div>
+    </div>
+  </section>
+
+  <% if (characters.length === 0) { %>
+    <div class="empty-card">还没有公开角色。先注册一个账号，写下第一个角色吧。</div>
+  <% } %>
+
+  <% if (characters.length > 0) { %>
+    <div class="character-grid">
+      <% characters.forEach(character => { %>
+        <div class="character-card">
+          <h3><%= character.name %></h3>
+          <p><%= character.summary %></p>
+          <div class="meta">由 <%= character.username %> 创建</div>
+          <% if (currentUser) { %>
+            <form method="POST" action="/conversations/start/<%= character.id %>" style="margin-top:16px;">
+              <button class="btn-brand" type="submit">开始聊天</button>
+            </form>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>

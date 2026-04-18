@@ -1,0 +1,76 @@
+<style>
+  .editor-shell {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .editor-card {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 28px;
+    padding: 30px;
+    box-shadow: rgba(20, 20, 19, 0.06) 0px 12px 36px;
+  }
+
+  .editor-card h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
+  }
+
+  .editor-card p {
+    color: #5e5d59;
+    line-height: 1.75;
+    margin-bottom: 22px;
+  }
+
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-group textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .field-group.large textarea {
+    min-height: 180px;
+  }
+
+  .submit-btn {
+    margin-top: 10px;
+    background: #c96442;
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px #c96442;
+    color: #faf9f5;
+  }
+
+  .submit-btn:hover {
+    background: #d97757;
+  }
+</style>
+
+<div class="editor-shell">
+  <div class="editor-card">
+    <h1>写一个新角色</h1>
+    <p>给他一个名字、一点脾气、一句像样的开场白。写得越真，后面的对话越容易长出味道。</p>
+    <form method="POST" action="/characters/new">
+      <div class="field-group">
+        <label for="name">角色名</label>
+        <input id="name" name="name" maxlength="100" required placeholder="比如：沈砚、阿迟、旧书店老板" />
+      </div>
+      <div class="field-group">
+        <label for="summary">一句简介</label>
+        <textarea id="summary" name="summary" maxlength="500" required placeholder="用一句话，让人知道他大概是什么样的人。"></textarea>
+      </div>
+      <div class="field-group large">
+        <label for="personality">性格设定</label>
+        <textarea id="personality" name="personality" maxlength="3000" required placeholder="写他的说话方式、脾气、边界、习惯，越具体越好。"></textarea>
+      </div>
+      <div class="field-group large">
+        <label for="firstMessage">开场白</label>
+        <textarea id="firstMessage" name="firstMessage" maxlength="2000" required placeholder="这是用户点进来后，角色看到的第一句话。"></textarea>
+      </div>
+      <button class="submit-btn" type="submit">创建角色</button>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,517 @@
+<!--
+  @file src/views/register.ejs
+  @description 注册页模板。按国内/国外注册流程分区展示，强调最简但清晰的注册体验。
+  @notes
+  - 国内用户：手机号 + 图形验证码 + 短信验证码。
+  - 国外用户：邮箱 + 邮箱验证码，仅允许主流邮箱域名。
+  - 邮箱区域默认隐藏；国内场景可手动展开补充邮箱。
+  - 前端保留 refreshCaptcha / sendEmailCode / sendPhoneCode 三个动作，便于后续继续接更完整的认证链路。
+-->
+
+<style>
+  .register-shell {
+    display: grid;
+    grid-template-columns: 1.05fr 1.2fr;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .register-hero {
+    background: linear-gradient(180deg, #141413 0%, #30302e 100%);
+    color: #faf9f5;
+    border: 1px solid #30302e;
+    border-radius: 28px;
+    padding: 32px;
+    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 680px;
+  }
+
+  .register-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(250, 249, 245, 0.08);
+    color: #b0aea5;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .register-hero h1 {
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.08;
+    margin-bottom: 16px;
+    color: #faf9f5;
+  }
+
+  .register-hero p {
+    color: #d8d4ca;
+    font-size: 17px;
+    line-height: 1.75;
+    margin-bottom: 14px;
+  }
+
+  .register-hero-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .register-hero-item {
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(250, 249, 245, 0.1);
+    background: rgba(250, 249, 245, 0.04);
+  }
+
+  .register-hero-item strong {
+    display: block;
+    font-size: 16px;
+    color: #faf9f5;
+    margin-bottom: 6px;
+  }
+
+  .register-hero-item span {
+    color: #bdb8ae;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .register-panel {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: rgba(20, 20, 19, 0.06) 0px 12px 36px;
+  }
+
+  .register-panel-header {
+    margin-bottom: 22px;
+  }
+
+  .register-panel-header h2 {
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+
+  .register-panel-header p {
+    color: #5e5d59;
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .field-group {
+    margin-bottom: 18px;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .field-card {
+    position: relative;
+    padding: 18px;
+    border: 1px solid #e8e6dc;
+    border-radius: 22px;
+    background: #fffdf8;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .field-card.active {
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px rgba(201, 100, 66, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .field-card h3 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .field-card p {
+    font-size: 14px;
+    color: #5e5d59;
+    margin: 0;
+  }
+
+  .choice-radio {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .input-stack {
+    display: grid;
+    gap: 14px;
+  }
+
+  .inline-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .captcha-row {
+    display: grid;
+    grid-template-columns: 1fr 132px auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .captcha-box {
+    min-width: 120px;
+    height: 56px;
+    background: #ffffff;
+    border: 1px solid #e8e6dc;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .captcha-box img {
+    display: block;
+    width: 120px;
+    height: 50px;
+    user-select: none;
+  }
+
+  .section-block {
+    padding: 20px;
+    border: 1px solid #f0eee6;
+    border-radius: 22px;
+    background: #fffdfa;
+    margin-top: 18px;
+  }
+
+  .section-block h4 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-family: Georgia, serif;
+    font-weight: 500;
+    color: #141413;
+  }
+
+  .section-block p {
+    margin: 0 0 16px;
+    color: #5e5d59;
+    font-size: 14px;
+  }
+
+  .email-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #e8e6dc;
+    border-radius: 999px;
+    background: #f5f4ed;
+    color: #4d4c48;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+
+  .email-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+
+  .subtle-note {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #87867f;
+  }
+
+  .btn-brand {
+    background: #c96442;
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px #c96442;
+    color: #faf9f5;
+  }
+
+  .btn-brand:hover {
+    background: #d97757;
+  }
+
+  .btn-soft {
+    background: #e8e6dc;
+    border-color: #e8e6dc;
+    box-shadow: 0px 0px 0px 1px #d1cfc5;
+    color: #4d4c48;
+  }
+
+  .btn-soft:hover {
+    background: #e3e0d4;
+  }
+
+  .submit-wrap {
+    margin-top: 24px;
+  }
+
+  .submit-wrap button {
+    padding: 14px 18px;
+    font-size: 16px;
+    border-radius: 16px;
+  }
+
+  @media (max-width: 980px) {
+    .register-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .register-hero {
+      min-height: auto;
+      padding: 24px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .field-grid,
+    .inline-row,
+    .captcha-row {
+      grid-template-columns: 1fr;
+    }
+
+    .register-panel,
+    .register-hero {
+      border-radius: 22px;
+      padding: 20px;
+    }
+  }
+</style>
+
+<div class="register-shell">
+  <section class="register-hero">
+    <div>
+      <div class="register-kicker">Register</div>
+      <h1>注册账号</h1>
+      <p>按你的地区选择注册方式：国内用户使用手机号验证，国外用户使用邮箱验证。</p>
+      <p>国内默认展示手机号流程；邮箱区域按需展开。国外模式会直接显示邮箱验证区域。</p>
+    </div>
+
+    <div class="register-hero-list">
+      <div class="register-hero-item">
+        <strong>国内用户</strong>
+        <span>填写手机号、图形验证码和短信验证码后完成注册。</span>
+      </div>
+      <div class="register-hero-item">
+        <strong>国外用户</strong>
+        <span>仅支持常见主流邮箱域名，通过邮箱验证码完成注册。</span>
+      </div>
+      <div class="register-hero-item">
+        <strong>账号信息</strong>
+        <span>用户名和密码为必填项，注册后可直接登录并开始使用。</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="register-panel">
+    <div class="register-panel-header">
+      <h2>创建账号</h2>
+      <p>先选择注册地区，再完成对应验证。</p>
+    </div>
+
+    <form method="POST" action="/register">
+      <div class="field-grid">
+        <div class="field-group">
+          <label for="username">用户名</label>
+          <input id="username" name="username" maxlength="50" required placeholder="至少 3 位" />
+        </div>
+        <div class="field-group">
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" maxlength="100" required placeholder="至少 6 位" />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>用户地区</label>
+        <div class="field-grid">
+          <label class="field-card active" id="domesticCard">
+            <input class="choice-radio" type="radio" name="countryType" value="domestic" checked onchange="handleCountryChange()" />
+            <h3>国内用户</h3>
+            <p>手机号为必填项，先过图形验证码，再发送正式短信验证码。</p>
+          </label>
+          <label class="field-card" id="internationalCard">
+            <input class="choice-radio" type="radio" name="countryType" value="international" onchange="handleCountryChange()" />
+            <h3>国外用户</h3>
+            <p>使用主流邮箱注册与登录，不走国内号码认证服务。</p>
+          </label>
+        </div>
+      </div>
+
+      <div id="phoneBlock" class="section-block">
+        <h4>国内手机号验证</h4>
+        <p id="numberAuthHint">已接入阿里云图形认证 / 号码认证参数，当前先以图形验证码 + 正式短信验证码为主流程。</p>
+        <div class="input-stack">
+          <div class="field-group">
+            <label for="phone">手机号</label>
+            <input name="phone" id="phone" maxlength="30" placeholder="请输入国内手机号" />
+          </div>
+
+          <div class="field-group">
+            <label for="captchaText">图形验证码</label>
+            <input type="hidden" name="captchaId" value="<%= captcha.captchaId %>" />
+            <div class="captcha-row">
+              <input id="captchaText" name="captchaText" maxlength="10" placeholder="输入图形验证码" />
+              <div class="captcha-box">
+                <img id="captchaImage" src="<%= captcha.imageUrl %>" alt="图形验证码" />
+              </div>
+              <button class="btn-soft" type="button" onclick="refreshCaptcha()">刷新验证码</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="phoneCode">短信验证码</label>
+            <div class="inline-row">
+              <input id="phoneCode" name="phoneCode" maxlength="6" placeholder="输入 6 位短信验证码" />
+              <button class="btn-soft" type="button" onclick="sendPhoneCode()">发送短信验证码</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group" id="emailToggleWrap">
+        <label class="email-toggle">
+          <input type="checkbox" id="showEmailToggle" onchange="toggleEmailBlock()" />
+          <span>显示邮箱注册项</span>
+        </label>
+        <div class="subtle-note">国内用户可选填邮箱；国外用户会直接显示邮箱区。</div>
+      </div>
+
+      <div id="emailBlock" class="section-block" style="display:none;">
+        <h4>邮箱验证</h4>
+        <p>海外注册仅支持主流邮箱域名。国内用户如果想额外绑定邮箱，也可以在这里操作。</p>
+        <div class="input-stack">
+          <div class="field-group">
+            <label for="email">邮箱</label>
+            <input name="email" id="email" maxlength="120" placeholder="Gmail / Outlook / Hotmail / iCloud / Yahoo / Proton" />
+          </div>
+
+          <div class="field-group">
+            <label for="emailCode">邮箱验证码</label>
+            <div class="inline-row">
+              <input id="emailCode" name="emailCode" maxlength="6" placeholder="输入 6 位邮箱验证码" />
+              <button class="btn-soft" type="button" onclick="sendEmailCode()">发送邮箱验证码</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-wrap">
+        <button class="btn-brand" type="submit">完成注册</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script src="/public/vendor/ct4.js"></script>
+<script src="/public/vendor/numberAuth-web-sdk.js"></script>
+<script>
+  window.AI_ROLEPLAY_AUTH_CONFIG = {
+    graphAuthAppId: '<%= authConfig.graphAuthAppId %>',
+    graphAuthAppKey: '<%= authConfig.graphAuthAppKey %>',
+    numberAuthSchemeCode: '<%= authConfig.numberAuthSchemeCode %>'
+  };
+</script>
+
+<script>
+  function getCountryType() {
+    const checked = document.querySelector('input[name="countryType"]:checked');
+    return checked ? checked.value : 'domestic';
+  }
+
+  function syncCountryCards(countryType) {
+    const domesticCard = document.getElementById('domesticCard');
+    const internationalCard = document.getElementById('internationalCard');
+    domesticCard.classList.toggle('active', countryType === 'domestic');
+    internationalCard.classList.toggle('active', countryType === 'international');
+  }
+
+  function handleCountryChange() {
+    const countryType = getCountryType();
+    const phoneBlock = document.getElementById('phoneBlock');
+    const emailBlock = document.getElementById('emailBlock');
+    const emailToggle = document.getElementById('showEmailToggle');
+    const emailToggleWrap = document.getElementById('emailToggleWrap');
+    const numberAuthHint = document.getElementById('numberAuthHint');
+
+    syncCountryCards(countryType);
+
+    if (countryType === 'domestic') {
+      phoneBlock.style.display = 'block';
+      emailToggleWrap.style.display = 'block';
+      emailBlock.style.display = emailToggle.checked ? 'block' : 'none';
+      numberAuthHint.style.display = 'block';
+    } else {
+      phoneBlock.style.display = 'none';
+      emailBlock.style.display = 'block';
+      emailToggle.checked = true;
+      emailToggleWrap.style.display = 'none';
+      numberAuthHint.style.display = 'none';
+    }
+  }
+
+  function toggleEmailBlock() {
+    const countryType = getCountryType();
+    const emailBlock = document.getElementById('emailBlock');
+    const emailToggle = document.getElementById('showEmailToggle');
+    if (countryType === 'domestic') {
+      emailBlock.style.display = emailToggle.checked ? 'block' : 'none';
+    }
+  }
+
+  async function refreshCaptcha() {
+    const res = await fetch('/api/captcha');
+    const data = await res.json();
+    document.querySelector('input[name="captchaId"]').value = data.captchaId;
+    document.getElementById('captchaImage').src = data.imageUrl + '?t=' + Date.now();
+  }
+
+  async function sendEmailCode() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) {
+      alert('先填邮箱');
+      return;
+    }
+
+    const res = await fetch('/api/send-email-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, countryType: getCountryType() })
+    });
+    const data = await res.json();
+    alert(data.message || '已发送');
+  }
+
+  async function sendPhoneCode() {
+    const phone = document.getElementById('phone').value.trim();
+    const captchaId = document.querySelector('input[name="captchaId"]').value;
+    const captchaText = document.querySelector('input[name="captchaText"]').value.trim();
+    if (!phone || !captchaId || !captchaText) {
+      alert('先填手机号和图形验证码');
+      return;
+    }
+
+    const res = await fetch('/api/send-phone-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, captchaId, captchaText })
+    });
+    const data = await res.json();
+    alert(data.message || '已发送');
+  }
+
+  handleCountryChange();
+</script>

@@ -1,0 +1,102 @@
+<style>
+  .chat-shell {
+    display: grid;
+    gap: 20px;
+  }
+
+  .chat-head {
+    padding: 28px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #141413 0%, #30302e 100%);
+    color: #faf9f5;
+    border: 1px solid #30302e;
+    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+  }
+
+  .chat-head h1 {
+    font-size: 42px;
+    color: #faf9f5;
+    margin-bottom: 10px;
+  }
+
+  .chat-head p {
+    margin: 0;
+    color: #d8d4ca;
+    line-height: 1.75;
+  }
+
+  .chat-log,
+  .chat-compose {
+    background: #faf9f5;
+    border: 1px solid #f0eee6;
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: rgba(20, 20, 19, 0.05) 0px 8px 24px;
+  }
+
+  .bubble {
+    padding: 16px 18px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    white-space: pre-wrap;
+    line-height: 1.75;
+  }
+
+  .bubble-user {
+    background: #efe2da;
+    color: #4d3f39;
+    border: 1px solid #ead3c7;
+  }
+
+  .bubble-character {
+    background: #f3f0e8;
+    color: #2f2e2b;
+    border: 1px solid #e8e6dc;
+  }
+
+  .bubble strong {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .chat-compose textarea {
+    min-height: 140px;
+    resize: vertical;
+  }
+
+  .submit-btn {
+    margin-top: 14px;
+    background: #c96442;
+    border-color: #c96442;
+    box-shadow: 0px 0px 0px 1px #c96442;
+    color: #faf9f5;
+  }
+
+  .submit-btn:hover {
+    background: #d97757;
+  }
+</style>
+
+<div class="chat-shell">
+  <section class="chat-head">
+    <h1><%= conversation.character_name %></h1>
+    <p><%= conversation.character_summary %></p>
+  </section>
+
+  <section class="chat-log">
+    <% messages.forEach(message => { %>
+      <div class="bubble <%= message.sender_type === 'user' ? 'bubble-user' : 'bubble-character' %>">
+        <strong><%= message.sender_type === 'user' ? '你' : conversation.character_name %></strong>
+        <div><%= message.content %></div>
+      </div>
+    <% }) %>
+  </section>
+
+  <section class="chat-compose">
+    <form method="POST" action="/chat/<%= conversation.id %>/message">
+      <label for="content">继续说点什么</label>
+      <textarea id="content" name="content" maxlength="4000" required placeholder="把你现在想说的话发出去。"></textarea>
+      <button class="submit-btn" type="submit">发送消息</button>
+    </form>
+  </section>
+</div>
