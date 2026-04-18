@@ -103,6 +103,15 @@ function buildConversationTitle(characterName, content = '') {
   return tail ? `${characterName} · ${tail}` : `${characterName} · 新分支`;
 }
 
+function buildBranchConversationTitle(conversation, branchLabel, branchSummary) {
+  const compact = [branchLabel, branchSummary]
+    .filter(Boolean)
+    .join(' · ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 42);
+  return compact ? `${conversation.character_name} · ${compact}` : `${conversation.character_name} · 分支对话`;
+}
+
 function buildNextConversationTitle(conversation, userContent) {
   return buildConversationTitle(conversation.character_name, userContent || conversation.character_summary || '');
 }
@@ -126,6 +135,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
     view,
     draftContent: options.draftContent || String(req.query.draft || ''),
     optimizedContent: options.optimizedContent || '',
+    regeneratedPreview: options.regeneratedPreview || null,
   });
 }
 
@@ -679,6 +689,140 @@ async function bootstrap() {
     }
   });
 
+  app.post('/chat/:conversationId/messages/:messageId/replay', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = Number(req.params.conversationId);
+      const messageId = Number(req.params.messageId);
+      const conversation = await loadConversationForUserOrFail(req, res, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const targetMessage = await getMessageById(conversationId, messageId);
+      if (!targetMessage) {
+        return renderPage(res, 'message', { title: '提示', message: '重算起点不存在。' });
+      }
+      if (!targetMessage.parent_message_id) {
+        return renderPage(res, 'message', { title: '提示', message: '根节点不适合做后续重算。' });
+      }
+
+      const allMessages = await listMessages(conversationId);
+      const historyBeforeTarget = buildPathMessages(allMessages, targetMessage.parent_message_id);
+      let newLeafId = null;
+      let regeneratedPreview = [];
+
+      if (targetMessage.sender_type === 'user') {
+        const newUserMessageId = await addMessage({
+          conversationId,
+          senderType: 'user',
+          content: targetMessage.content,
+          parentMessageId: targetMessage.parent_message_id || null,
+          branchFromMessageId: targetMessage.id,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'replay',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'user-replay-branch',
+            sourceMessageId: messageId,
+          }),
+        });
+
+        const reply = await generateReply({
+          character: {
+            name: conversation.character_name,
+            summary: conversation.character_summary,
+            personality: conversation.personality,
+          },
+          messages: [...historyBeforeTarget, { sender_type: 'user', content: targetMessage.content }],
+          userMessage: targetMessage.content,
+          systemHint: '这是一次从旧节点开始的后续重算，请自然延续并给出新的合理走向。',
+        });
+
+        newLeafId = await addMessage({
+          conversationId,
+          senderType: 'character',
+          content: reply,
+          parentMessageId: newUserMessageId,
+          branchFromMessageId: newUserMessageId,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'replay',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'assistant-replay-after-user',
+            sourceMessageId: messageId,
+          }),
+        });
+
+        regeneratedPreview = [
+          { role: '你', content: targetMessage.content },
+          { role: conversation.character_name, content: reply },
+        ];
+      } else {
+        const parentUserMessage = await getMessageById(conversationId, targetMessage.parent_message_id);
+        if (!parentUserMessage || parentUserMessage.sender_type !== 'user') {
+          return renderPage(res, 'message', { title: '提示', message: '找不到与这条 AI 回复对应的用户输入。' });
+        }
+
+        const historyBeforeParentUser = parentUserMessage.parent_message_id
+          ? buildPathMessages(allMessages, parentUserMessage.parent_message_id)
+          : [];
+
+        const newUserMessageId = await addMessage({
+          conversationId,
+          senderType: 'user',
+          content: parentUserMessage.content,
+          parentMessageId: parentUserMessage.parent_message_id || null,
+          branchFromMessageId: parentUserMessage.id,
+          editedFromMessageId: parentUserMessage.id,
+          promptKind: 'replay',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'user-replay-copy-for-ai',
+            sourceMessageId: parentUserMessage.id,
+          }),
+        });
+
+        const reply = await generateReply({
+          character: {
+            name: conversation.character_name,
+            summary: conversation.character_summary,
+            personality: conversation.personality,
+          },
+          messages: [...historyBeforeParentUser, { sender_type: 'user', content: parentUserMessage.content }],
+          userMessage: parentUserMessage.content,
+          systemHint: '这是一次从旧 AI 节点开始的后续重算，请给出与旧回复不同但同样合理的新走向。',
+        });
+
+        newLeafId = await addMessage({
+          conversationId,
+          senderType: 'character',
+          content: reply,
+          parentMessageId: newUserMessageId,
+          branchFromMessageId: newUserMessageId,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'replay',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'assistant-replay-after-ai',
+            sourceMessageId: messageId,
+          }),
+        });
+
+        regeneratedPreview = [
+          { role: '你', content: parentUserMessage.content },
+          { role: conversation.character_name, content: reply },
+        ];
+      }
+
+      await renderChatPage(req, res, conversation, {
+        leafId: newLeafId,
+        regeneratedPreview,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post('/chat/:conversationId/optimize-input', requireAuth, async (req, res, next) => {
     try {
       const conversationId = Number(req.params.conversationId);
@@ -728,7 +872,9 @@ async function bootstrap() {
         return renderPage(res, 'message', { title: '提示', message: '分支起点不存在。' });
       }
 
-      const branchTitle = buildConversationTitle(conversation.character_name, targetMessage.content);
+      const branchTitle = view.currentBranch
+        ? buildBranchConversationTitle(conversation, view.currentBranch.label, view.currentBranch.summary)
+        : buildConversationTitle(conversation.character_name, targetMessage.content);
       const branchResult = await cloneConversationBranch({
         userId: req.session.user.id,
         characterId: conversation.character_id,

@@ -295,11 +295,37 @@
     border-radius: 14px;
     border: 1px solid #e8e6dc;
     background: #f8f5ee;
+    position: relative;
+  }
+
+  .tree-node::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: #d1cfc5;
+  }
+
+  .tree-node::after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: -14px;
+    width: 1px;
+    height: calc(50% + 14px);
+    background: #e1ddd2;
   }
 
   .tree-node.trail {
     border-color: #d9c2b7;
     background: #f5ece8;
+  }
+
+  .tree-node.trail::before,
+  .tree-node.trail::after {
+    background: #d2b0a2;
   }
 
   .tree-node.active {
@@ -365,6 +391,9 @@
         <span class="meta-pill">对话 #<%= conversation.id %></span>
         <span class="meta-pill">当前叶子 #<%= view.activeLeafId || '—' %></span>
         <span class="meta-pill">消息 <%= view.messageCount %> 条</span>
+        <% if (view.currentBranch && view.currentBranch.label) { %>
+          <span class="meta-pill"><%= view.currentBranch.label %></span>
+        <% } %>
         <% if (conversation.parent_conversation_id) { %>
           <span class="meta-pill">分支自对话 #<%= conversation.parent_conversation_id %></span>
         <% } %>
@@ -427,6 +456,10 @@
 
               <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
                 <button class="inline-btn dark" type="submit">新建独立分支对话</button>
+              </form>
+
+              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay">
+                <button class="inline-btn" type="submit">从这里重算后续</button>
               </form>
 
               <% if (message.sender_type === 'character') { %>
@@ -495,6 +528,15 @@
             </div>
           </div>
         <% } %>
+
+        <% if (regeneratedPreview && regeneratedPreview.length) { %>
+          <div class="draft-box">
+            <label>本次重算生成的新片段</label>
+            <pre><% regeneratedPreview.forEach(item => { %><%= item.role %>：<%= item.content %>
+
+<% }) %></pre>
+          </div>
+        <% } %>
       </div>
     </section>
   </div>
@@ -525,7 +567,8 @@
       <% view.branches.forEach(branch => { %>
         <div class="branch-item <%= branch.isActive ? 'active' : '' %>">
           <div class="branch-meta">叶子 #<%= branch.leafId %> · 深度 <%= branch.depth %> · <%= branch.promptKind %></div>
-          <div class="branch-preview"><%= branch.preview || '（空分支）' %></div>
+          <div class="branch-preview"><strong><%= branch.label %></strong></div>
+          <div class="mini-note"><%= branch.summary %></div>
           <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
             <input type="hidden" name="leaf" value="<%= branch.leafId %>" />
             <button class="inline-btn <%= branch.isActive ? 'primary' : '' %>" type="submit">
@@ -542,8 +585,9 @@
         1. 重新生成：给同一条用户输入再生一个 AI 候选。<br />
         2. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。<br />
         3. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。<br />
-        4. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。<br />
-        5. 优化输入：先润色，再一键采用并发送。
+        4. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。<br />
+        5. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。<br />
+        6. 优化输入：先润色，再一键采用并发送。
       </div>
     </section>
   </aside>

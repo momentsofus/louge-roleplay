@@ -8,10 +8,6 @@
  * 2. 支持重生成、编辑分支、任意节点继续对话。
  * 3. 支持从任意节点克隆出新会话分支。
  * 4. 使用 Redis 缓存整棵消息树，降低高频聊天页读取成本。
- *
- * 说明：
- * - 这里尽量把“结构性逻辑”集中在 service 层，避免路由层堆太多细节。
- * - 所有写操作都会主动失效 Redis 缓存，保证页面读到的是新树。
  */
 
 const { query } = require('../lib/db');
@@ -211,11 +207,6 @@ async function createEditedMessageVariant(conversationId, sourceMessageId, conte
     return null;
   }
 
-  const metadataJson = JSON.stringify({
-    sourceMessageId: Number(sourceMessageId),
-    editMode: 'fork-variant',
-  });
-
   return addMessage({
     conversationId,
     senderType: sourceMessage.sender_type,
@@ -224,7 +215,10 @@ async function createEditedMessageVariant(conversationId, sourceMessageId, conte
     branchFromMessageId: sourceMessage.id,
     editedFromMessageId: sourceMessage.id,
     promptKind: 'edit',
-    metadataJson,
+    metadataJson: JSON.stringify({
+      sourceMessageId: Number(sourceMessageId),
+      editMode: 'fork-variant',
+    }),
   });
 }
 
@@ -238,6 +232,10 @@ function safeParseJson(value) {
   } catch (error) {
     return null;
   }
+}
+
+function shortText(value, limit = 40) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
 }
 
 function buildMessageMaps(allMessages) {
@@ -304,34 +302,78 @@ function buildTreeEntries(allMessages, activeIds, childrenMap) {
 
   const entries = [];
 
-  function walk(message, depth, parentActive) {
+  function walk(message, depth) {
     const messageId = Number(message.id);
     const children = childrenMap.get(messageId) || [];
-    const isActive = activeIds.has(messageId);
-    const hasActiveDescendant = children.some((child) => activeIds.has(Number(child.id)) || (childrenMap.get(Number(child.id)) || []).some(() => false));
-    const shortContent = String(message.content || '').replace(/\s+/g, ' ').slice(0, 52);
-
-    entries.push({
+    const entry = {
       id: message.id,
       parentId: message.parent_message_id || null,
       depth,
       senderType: message.sender_type,
       promptKind: message.prompt_kind || 'normal',
-      shortContent,
-      isActive,
-      isOnActiveTrail: isActive || parentActive,
+      shortContent: shortText(message.content, 52),
+      isActive: activeIds.has(messageId),
+      isOnActiveTrail: false,
       childCount: children.length,
-    });
+    };
+    entries.push(entry);
 
+    let subtreeHasActive = entry.isActive;
     children.forEach((child) => {
-      const childId = Number(child.id);
-      const childOnTrail = activeIds.has(childId) || isActive || parentActive || hasActiveDescendant;
-      walk(child, depth + 1, childOnTrail);
+      if (walk(child, depth + 1)) {
+        subtreeHasActive = true;
+      }
     });
+    entry.isOnActiveTrail = subtreeHasActive;
+    return subtreeHasActive;
   }
 
-  roots.forEach((root) => walk(root, 0, false));
+  roots.forEach((root) => walk(root, 0));
   return entries;
+}
+
+function buildBranchDescriptor(allMessages, leaf, normalizedLeafId, childrenMap) {
+  const branchPath = buildPathMessages(allMessages, leaf.id);
+  const divergenceNode = branchPath.find((message) => {
+    const parentId = message.parent_message_id ? Number(message.parent_message_id) : null;
+    if (!parentId) {
+      return false;
+    }
+    return (childrenMap.get(parentId) || []).length > 1;
+  }) || branchPath[0] || leaf;
+
+  const lastUser = [...branchPath].reverse().find((item) => item.sender_type === 'user');
+  const lastAi = [...branchPath].reverse().find((item) => item.sender_type === 'character');
+  const labelParts = [];
+
+  if (divergenceNode) {
+    labelParts.push(`从 #${divergenceNode.id} 分出`);
+  }
+  if (lastUser) {
+    labelParts.push(`你：${shortText(lastUser.content, 14)}`);
+  } else if (lastAi) {
+    labelParts.push(`AI：${shortText(lastAi.content, 14)}`);
+  }
+
+  const summary = branchPath
+    .slice(-4)
+    .map((item) => `${item.sender_type === 'user' ? '你' : 'AI'}：${shortText(item.content, 18)}`)
+    .join(' · ');
+
+  return {
+    leafId: leaf.id,
+    isActive: Number(leaf.id) === normalizedLeafId,
+    depth: branchPath.length,
+    preview: branchPath
+      .slice(-3)
+      .map((item) => `${item.sender_type === 'user' ? '你' : 'AI'}：${shortText(item.content, 24)}`)
+      .join(' · '),
+    senderType: leaf.sender_type,
+    promptKind: leaf.prompt_kind,
+    label: labelParts.join(' · ') || `分支 #${leaf.id}`,
+    summary: summary || '（空分支）',
+    divergenceMessageId: divergenceNode ? divergenceNode.id : leaf.id,
+  };
 }
 
 function buildConversationView(allMessages, activeLeafId) {
@@ -347,7 +389,7 @@ function buildConversationView(allMessages, activeLeafId) {
           id: item.id,
           sender_type: item.sender_type,
           prompt_kind: item.prompt_kind,
-          short_content: String(item.content || '').replace(/\s+/g, ' ').slice(0, 40),
+          short_content: shortText(item.content, 40),
           is_active: Number(item.id) === Number(message.id),
         }))
       : [];
@@ -357,7 +399,7 @@ function buildConversationView(allMessages, activeLeafId) {
       id: item.id,
       sender_type: item.sender_type,
       prompt_kind: item.prompt_kind,
-      short_content: String(item.content || '').replace(/\s+/g, ' ').slice(0, 40),
+      short_content: shortText(item.content, 40),
       is_active: activeIds.has(Number(item.id)),
     }));
 
@@ -381,29 +423,15 @@ function buildConversationView(allMessages, activeLeafId) {
     .filter((message) => !nonRootIds.has(Number(message.id)))
     .sort((a, b) => Number(b.id) - Number(a.id));
 
-  const branches = leafMessages.map((leaf) => {
-    const branchPath = buildPathMessages(allMessages, leaf.id);
-    const preview = branchPath
-      .slice(-3)
-      .map((item) => `${item.sender_type === 'user' ? '你' : 'AI'}：${String(item.content || '').replace(/\s+/g, ' ').slice(0, 24)}`)
-      .join(' · ');
-
-    return {
-      leafId: leaf.id,
-      isActive: Number(leaf.id) === normalizedLeafId,
-      depth: branchPath.length,
-      preview,
-      senderType: leaf.sender_type,
-      promptKind: leaf.prompt_kind,
-    };
-  });
-
+  const branches = leafMessages.map((leaf) => buildBranchDescriptor(allMessages, leaf, normalizedLeafId, childrenMap));
+  const currentBranch = branches.find((branch) => branch.isActive) || null;
   const treeEntries = buildTreeEntries(allMessages, activeIds, childrenMap);
 
   return {
     pathMessages,
     branches,
     treeEntries,
+    currentBranch,
     activeLeafId: normalizedLeafId,
     messageCount: allMessages.length,
   };
