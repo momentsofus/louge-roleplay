@@ -1,0 +1,720 @@
+<style>
+  .admin-shell {
+    display: grid;
+    gap: 22px;
+    animation: fadeIn var(--duration-slow) var(--ease-out) both;
+  }
+
+  .hero-card,
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .hero-card h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .metric {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    border-left: 3px solid var(--brand);
+  }
+
+  .metric:nth-child(2) { border-left-color: var(--accent-green); }
+  .metric:nth-child(3) { border-left-color: var(--accent-blue); }
+  .metric:nth-child(4) { border-left-color: #f59e0b; }
+
+  .metric strong {
+    display: block;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .metric span {
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 12px 10px;
+    border-top: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  td {
+    color: var(--text);
+  }
+
+  tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.01);
+  }
+
+  td form {
+    display: grid;
+    gap: 8px;
+  }
+
+  .inline-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .provider-card,
+  .prompt-block-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-top: 14px;
+    background: var(--bg-elevated);
+  }
+
+  .prompt-block-item {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    background: var(--bg-elevated);
+    margin-top: 14px;
+    cursor: grab;
+    transition: all var(--duration-fast) ease;
+  }
+
+  .prompt-block-item:hover {
+    border-color: var(--border-hover);
+  }
+
+  .prompt-block-item.dragging {
+    opacity: 0.5;
+    border-color: var(--brand);
+  }
+
+  .prompt-preview {
+    white-space: pre-wrap;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-top: 8px;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 13px;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    background: var(--brand-subtle);
+    color: var(--brand-hover);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .drag-tip {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .toolbar-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .danger-button {
+    background: rgba(249, 112, 102, 0.1);
+    color: #fca5a0;
+    border: 1px solid rgba(249, 112, 102, 0.2);
+  }
+
+  .danger-button:hover {
+    background: rgba(249, 112, 102, 0.15);
+    box-shadow: none;
+  }
+
+  .hidden-field {
+    display: none;
+  }
+
+  .model-picker {
+    display: grid;
+    gap: 8px;
+  }
+
+  .model-picker select {
+    min-height: 42px;
+  }
+
+  .model-picker small {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .context-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .muted-text {
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+
+  @media (max-width: 960px) {
+    .metrics,
+    .inline-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<div class="admin-shell">
+  <section class="hero-card">
+    <h1>管理员后台</h1>
+    <p class="muted-text">这边不是装样子的后台，是给你真正运营 LLM 平台用的：用户角色、套餐、优先级、provider 配置、请求队列和消耗，都从这里管。</p>
+    <div class="metrics">
+      <div class="metric"><strong><%= overview.totalUsers %></strong><span>用户总数</span></div>
+      <div class="metric"><strong><%= overview.activeSubscriptions %></strong><span>有效套餐</span></div>
+      <div class="metric"><strong><%= overview.activeProviders %> / <%= overview.totalProviders %></strong><span>Provider 状态</span></div>
+      <div class="metric"><strong><%= overview.queuedJobs %></strong><span>队列中作业</span></div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <h2>新增套餐</h2>
+    <div class="provider-card">
+      <form method="post" action="/admin/plans/new">
+        <div class="inline-grid">
+          <label>Code<input type="text" name="code" placeholder="free/basic/pro" /></label>
+          <label>名称<input type="text" name="name" placeholder="比如 企业版" /></label>
+        </div>
+        <label>描述<input type="text" name="description" placeholder="一句话描述套餐" /></label>
+        <div class="inline-grid">
+          <label>
+            计费方式
+            <select name="billingMode" data-billing-mode>
+              <option value="per_request">per_request</option>
+              <option value="per_token">per_token</option>
+            </select>
+          </label>
+          <label>
+            配额周期
+            <select name="quotaPeriod">
+              <option value="daily">daily</option>
+              <option value="monthly" selected>monthly</option>
+              <option value="lifetime">lifetime</option>
+            </select>
+          </label>
+        </div>
+        <div class="inline-grid" data-plan-quota-group>
+          <label data-request-quota-field>
+            请求额度<input type="number" name="requestQuota" value="0" min="0" />
+          </label>
+          <label data-token-quota-field>
+            Token 额度<input type="number" name="tokenQuota" value="0" min="0" />
+          </label>
+        </div>
+        <div class="inline-grid">
+          <label>优先级<input type="number" name="priorityWeight" value="0" /></label>
+          <label>并发保障<input type="number" name="concurrencyLimit" value="1" min="1" /></label>
+        </div>
+        <div class="inline-grid">
+          <label>最大输出 Token<input type="number" name="maxOutputTokens" value="1024" min="1" /></label>
+          <label>排序<input type="number" name="sortOrder" value="0" /></label>
+        </div>
+        <div class="inline-grid">
+          <label>
+            状态
+            <select name="status">
+              <option value="active">active</option>
+              <option value="archived">archived</option>
+            </select>
+          </label>
+          <label>
+            默认套餐
+            <select name="isDefault">
+              <option value="0">否</option>
+              <option value="1">是</option>
+            </select>
+          </label>
+        </div>
+        <button type="submit">新增套餐</button>
+      </form>
+    </div>
+  </section>
+  <section class="section-card">
+    <h2>套餐方案</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>计费方式</th>
+            <th>额度</th>
+            <th>优先级/并发</th>
+            <th>编辑</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% plans.forEach(plan => { %>
+            <tr>
+              <td>
+                <strong><%= plan.name %></strong>
+                <div class="muted-text"><%= plan.code %> <% if (plan.is_default) { %>· 默认<% } %></div>
+              </td>
+              <td><%= plan.billing_mode %> · <%= plan.quota_period %></td>
+              <td>请求 <%= plan.request_quota %> · Token <%= plan.token_quota %></td>
+              <td>优先级 <%= plan.priority_weight %> · 并发 <%= plan.concurrency_limit %></td>
+              <td>
+                <form method="post" action="/admin/plans/<%= plan.id %>">
+                  <div class="inline-grid">
+                    <label>名称<input type="text" name="name" value="<%= plan.name %>" /></label>
+                    <label>描述<input type="text" name="description" value="<%= plan.description || '' %>" /></label>
+                  </div>
+                  <div class="inline-grid">
+                    <label>
+                      计费方式
+                      <select name="billingMode" data-billing-mode>
+                        <option value="per_request" <%= plan.billing_mode === 'per_request' ? 'selected' : '' %>>per_request</option>
+                        <option value="per_token" <%= plan.billing_mode === 'per_token' ? 'selected' : '' %>>per_token</option>
+                      </select>
+                    </label>
+                    <label>
+                      配额周期
+                      <select name="quotaPeriod">
+                        <option value="daily" <%= plan.quota_period === 'daily' ? 'selected' : '' %>>daily</option>
+                        <option value="monthly" <%= plan.quota_period === 'monthly' ? 'selected' : '' %>>monthly</option>
+                        <option value="lifetime" <%= plan.quota_period === 'lifetime' ? 'selected' : '' %>>lifetime</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="inline-grid" data-plan-quota-group>
+                    <label data-request-quota-field>请求额度<input type="number" name="requestQuota" value="<%= plan.request_quota %>" min="0" /></label>
+                    <label data-token-quota-field>Token 额度<input type="number" name="tokenQuota" value="<%= plan.token_quota %>" min="0" /></label>
+                  </div>
+                  <div class="inline-grid">
+                    <label>优先级<input type="number" name="priorityWeight" value="<%= plan.priority_weight %>" /></label>
+                    <label>并发保障<input type="number" name="concurrencyLimit" value="<%= plan.concurrency_limit %>" min="1" /></label>
+                  </div>
+                  <div class="inline-grid">
+                    <label>最大输出 Token<input type="number" name="maxOutputTokens" value="<%= plan.max_output_tokens %>" min="1" /></label>
+                    <label>排序<input type="number" name="sortOrder" value="<%= plan.sort_order %>" /></label>
+                  </div>
+                  <div class="inline-grid">
+                    <label>
+                      状态
+                      <select name="status">
+                        <option value="active" <%= plan.status === 'active' ? 'selected' : '' %>>active</option>
+                        <option value="archived" <%= plan.status === 'archived' ? 'selected' : '' %>>archived</option>
+                      </select>
+                    </label>
+                    <label>
+                      默认套餐
+                      <select name="isDefault">
+                        <option value="0" <%= plan.is_default ? '' : 'selected' %>>否</option>
+                        <option value="1" <%= plan.is_default ? 'selected' : '' %>>是</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="toolbar-row">
+                    <button type="submit">保存套餐</button>
+                  </div>
+                </form>
+                <form method="post" action="/admin/plans/<%= plan.id %>/delete" onsubmit="return confirm('确定删除这个套餐？若已被用户订阅，将无法删除。');">
+                  <button class="danger-button" type="submit">删除套餐</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="section-card">
+    <h2>用户与权限</h2>
+    <p class="muted-text">下面每条都是一个真实用户。调整角色或套餐后即刻生效，不走审批。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>用户</th>
+            <th>联系</th>
+            <th>当前套餐</th>
+            <th>角色切换</th>
+            <th>套餐切换</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(u => { %>
+            <tr>
+              <td>
+                <strong><%= u.username %></strong>
+                <div class="muted-text">
+                  <%= u.nickname || '—' %>
+                  · 状态：<%= u.status %>
+                  · 地区：<%= u.country_type || 'domestic' %>
+                </div>
+              </td>
+              <td class="muted-text">
+                邮箱：<%= u.email || '—' %><br />
+                手机：<%= u.phone || '—' %>
+              </td>
+              <td>
+                <% if (u.plan_name) { %>
+                  <strong><%= u.plan_name %></strong>
+                  <div class="muted-text">
+                    <%= u.billing_mode %>
+                    · 优先级 <%= u.priority_weight %>
+                    · 并发 <%= u.concurrency_limit %>
+                  </div>
+                <% } else { %>
+                  <span class="muted-text">未绑定</span>
+                <% } %>
+              </td>
+              <td>
+                <form method="post" action="/admin/users/<%= u.id %>/role">
+                  <select name="role">
+                    <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>普通用户</option>
+                    <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>管理员</option>
+                  </select>
+                  <button type="submit">保存角色</button>
+                </form>
+              </td>
+              <td>
+                <form method="post" action="/admin/users/<%= u.id %>/plan">
+                  <select name="planId">
+                    <% plans.forEach(plan => { %>
+                      <option value="<%= plan.id %>" <%= plan.code === u.plan_code ? 'selected' : '' %>>
+                        <%= plan.name %> (<%= plan.code %>)
+                      </option>
+                    <% }) %>
+                  </select>
+                  <button type="submit">切换套餐</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <h2>提示词工程 / 全局片段</h2>
+    <p class="muted-text">这里是拼接到每个角色 system prompt 之前的"全局"片段。拖动重新排序，停用就不会进最终提示词。</p>
+
+    <div class="prompt-block-card">
+      <h3>新增片段</h3>
+      <form method="post" action="/admin/prompt-blocks/new">
+        <div class="inline-grid">
+          <label>Key<input type="text" name="key" placeholder="比如：全局边界 / 世界观统一" /></label>
+          <label>排序<input type="number" name="sortOrder" value="0" min="0" /></label>
+        </div>
+        <label>Value<textarea name="value" rows="4" placeholder="写这个全局片段的内容"></textarea></label>
+        <div class="inline-grid">
+          <label>
+            启用
+            <select name="isEnabled">
+              <option value="1" selected>启用</option>
+              <option value="0">停用</option>
+            </select>
+          </label>
+          <div></div>
+        </div>
+        <button type="submit">保存片段</button>
+      </form>
+    </div>
+
+    <div class="prompt-block-card">
+      <div class="toolbar-row">
+        <span class="live-badge">实时排序</span>
+        <span class="drag-tip">拖动每个片段即可调整顺序，保存顺序按钮会按当前排列写回。</span>
+      </div>
+      <form method="post" action="/admin/prompt-blocks/reorder" id="prompt-blocks-reorder-form">
+        <input type="hidden" name="blockIds" id="prompt-blocks-reorder-ids" value="<%= promptBlocks.map(b => b.id).join(',') %>" />
+        <div id="prompt-blocks-list">
+          <% promptBlocks.forEach(block => { %>
+            <div class="prompt-block-item" draggable="true" data-block-id="<%= block.id %>">
+              <form method="post" action="/admin/prompt-blocks/<%= block.id %>">
+                <div class="inline-grid">
+                  <label>Key<input type="text" name="key" value="<%= block.block_key %>" /></label>
+                  <label>排序<input type="number" name="sortOrder" value="<%= block.sort_order %>" min="0" /></label>
+                </div>
+                <label>Value<textarea name="value" rows="4"><%= block.block_value %></textarea></label>
+                <div class="inline-grid">
+                  <label>
+                    启用
+                    <select name="isEnabled">
+                      <option value="1" <%= block.is_enabled ? 'selected' : '' %>>启用</option>
+                      <option value="0" <%= block.is_enabled ? '' : 'selected' %>>停用</option>
+                    </select>
+                  </label>
+                  <div class="muted-text">当前顺序：<span data-order><%= block.sort_order %></span></div>
+                </div>
+                <div class="toolbar-row">
+                  <button type="submit">保存本片段</button>
+                </div>
+              </form>
+              <form method="post" action="/admin/prompt-blocks/<%= block.id %>/delete" onsubmit="return confirm('确定删除这个片段？');">
+                <button class="danger-button" type="submit">删除片段</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+        <div class="toolbar-row" style="margin-top: 14px;">
+          <button type="submit">按当前顺序保存排序</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <h2>最终 Prompt 预览</h2>
+    <p class="muted-text">
+      预览使用 <strong><%= promptPreviewMeta.characterName %></strong>。
+      <%= promptPreviewMeta.dynamicItemsSource %>
+    </p>
+    <div class="prompt-preview"><%= promptPreview %></div>
+  </section>
+
+  <section class="section-card">
+    <h2>新增 Provider</h2>
+    <div class="provider-card">
+      <form method="post" action="/admin/providers/new">
+        <div class="inline-grid">
+          <label>名称<input type="text" name="name" placeholder="比如：自建 OpenAI 兼容网关" required /></label>
+          <label>Base URL<input type="text" name="baseUrl" placeholder="https://your-gateway/v1" required /></label>
+        </div>
+        <label>API Key<input type="text" name="apiKey" placeholder="sk-..." required /></label>
+        <div class="context-grid">
+          <label>最大上下文 Token<input type="number" name="maxContextTokens" value="81920" min="1" /></label>
+          <label>裁剪上下文 Token<input type="number" name="trimContextTokens" value="61440" min="1" /></label>
+        </div>
+        <div class="context-grid">
+          <label>最大并发<input type="number" name="maxConcurrency" value="5" min="1" /></label>
+          <label>超时 (ms)<input type="number" name="timeoutMs" value="60000" min="1" /></label>
+        </div>
+        <div class="context-grid">
+          <label>输入 Token 单价<input type="number" name="inputTokenPrice" value="0" min="0" step="0.0001" /></label>
+          <label>输出 Token 单价<input type="number" name="outputTokenPrice" value="0" min="0" step="0.0001" /></label>
+        </div>
+        <div class="inline-grid">
+          <label>
+            是否启用
+            <select name="isActive">
+              <option value="1" selected>启用</option>
+              <option value="0">停用</option>
+            </select>
+          </label>
+          <label>
+            状态
+            <select name="status">
+              <option value="active">active</option>
+              <option value="archived">archived</option>
+            </select>
+          </label>
+        </div>
+        <p class="muted-text">模型先留空，保存后会自动拉取该 Base URL 可用模型列表，下方 Provider 卡片里再细选标准/越狱/压缩模型。</p>
+        <button type="submit">创建 Provider</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <h2>LLM Provider</h2>
+    <p class="muted-text">每个 Provider 保存后会自动从 Base URL 拉取模型列表；可以对不同"用途"绑定不同模型。勾"刷新模型"重新从上游拉取。</p>
+    <% providers.forEach(provider => { %>
+      <div class="provider-card">
+        <form method="post" action="/admin/providers/<%= provider.id %>">
+          <div class="inline-grid">
+            <label>名称<input type="text" name="name" value="<%= provider.name %>" /></label>
+            <label>Base URL<input type="text" name="baseUrl" value="<%= provider.base_url %>" /></label>
+          </div>
+          <label>
+            API Key
+            <input type="text" name="apiKey" placeholder="留空不改动。当前：<%= provider.api_key_masked || '未设置' %>" />
+          </label>
+
+          <div class="context-grid">
+            <div class="model-picker">
+              <label>标准模型 (standard)</label>
+              <select name="standardModel" data-current="<%= provider.standard_model || provider.model || '' %>">
+                <% (provider.availableModels || []).forEach(option => { %>
+                  <option value="<%= option.value %>" <%= option.value === (provider.standard_model || provider.model) ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+              <small>当前：<%= provider.standard_model || provider.model || '未选择' %></small>
+            </div>
+            <div class="model-picker">
+              <label>越狱模型 (jailbreak)</label>
+              <select name="jailbreakModel">
+                <% (provider.availableModels || []).forEach(option => { %>
+                  <option value="<%= option.value %>" <%= option.value === provider.jailbreak_model ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+              <small>当前：<%= provider.jailbreak_model || '未选择' %></small>
+            </div>
+          </div>
+
+          <div class="context-grid">
+            <div class="model-picker">
+              <label>强越狱模型 (force_jailbreak)</label>
+              <select name="forceJailbreakModel">
+                <% (provider.availableModels || []).forEach(option => { %>
+                  <option value="<%= option.value %>" <%= option.value === provider.force_jailbreak_model ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+              <small>当前：<%= provider.force_jailbreak_model || '未选择' %></small>
+            </div>
+            <div class="model-picker">
+              <label>压缩模型 (compression)</label>
+              <select name="compressionModel">
+                <% (provider.availableModels || []).forEach(option => { %>
+                  <option value="<%= option.value %>" <%= option.value === provider.compression_model ? 'selected' : '' %>><%= option.label %></option>
+                <% }) %>
+              </select>
+              <small>当前：<%= provider.compression_model || '未选择' %></small>
+            </div>
+          </div>
+
+          <div class="context-grid">
+            <label>最大上下文 Token<input type="number" name="maxContextTokens" value="<%= provider.max_context_tokens %>" min="1" /></label>
+            <label>裁剪上下文 Token<input type="number" name="trimContextTokens" value="<%= provider.trim_context_tokens %>" min="1" /></label>
+          </div>
+
+          <div class="context-grid">
+            <label>最大并发<input type="number" name="maxConcurrency" value="<%= provider.max_concurrency %>" min="1" /></label>
+            <label>超时 (ms)<input type="number" name="timeoutMs" value="<%= provider.timeout_ms %>" min="1" /></label>
+          </div>
+
+          <div class="context-grid">
+            <label>输入 Token 单价<input type="number" name="inputTokenPrice" value="<%= provider.input_token_price %>" min="0" step="0.0001" /></label>
+            <label>输出 Token 单价<input type="number" name="outputTokenPrice" value="<%= provider.output_token_price %>" min="0" step="0.0001" /></label>
+          </div>
+
+          <div class="inline-grid">
+            <label>
+              是否启用
+              <select name="isActive">
+                <option value="1" <%= provider.is_active ? 'selected' : '' %>>启用</option>
+                <option value="0" <%= provider.is_active ? '' : 'selected' %>>停用</option>
+              </select>
+            </label>
+            <label>
+              状态
+              <select name="status">
+                <option value="active" <%= provider.status === 'active' ? 'selected' : '' %>>active</option>
+                <option value="archived" <%= provider.status === 'archived' ? 'selected' : '' %>>archived</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="toolbar-row" style="gap: 6px;">
+            <input type="checkbox" name="refreshModels" value="1" />
+            <span>保存时从上游重新拉取模型列表</span>
+          </label>
+
+          <div class="toolbar-row">
+            <button type="submit">保存 Provider</button>
+            <span class="muted-text">
+              Provider ID #<%= provider.id %>
+              · 类型 <%= provider.provider_type %>
+              · 最近更新 <%= provider.updated_at %>
+            </span>
+          </div>
+        </form>
+      </div>
+    <% }) %>
+  </section>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll('[data-billing-mode]').forEach((select) => {
+      const group = select.closest('form')?.querySelector('[data-plan-quota-group]');
+      if (!group) return;
+      const requestField = group.querySelector('[data-request-quota-field]');
+      const tokenField = group.querySelector('[data-token-quota-field]');
+      function apply() {
+        const mode = select.value;
+        if (requestField) requestField.style.display = mode === 'per_request' ? '' : 'none';
+        if (tokenField) tokenField.style.display = mode === 'per_token' ? '' : 'none';
+      }
+      select.addEventListener('change', apply);
+      apply();
+    });
+  })();
+
+  (function () {
+    const list = document.getElementById('prompt-blocks-list');
+    if (!list) return;
+    const hidden = document.getElementById('prompt-blocks-reorder-ids');
+    let dragging = null;
+
+    function syncOrder() {
+      const ids = Array.from(list.querySelectorAll('.prompt-block-item')).map((item) => item.dataset.blockId);
+      if (hidden) hidden.value = ids.join(',');
+      Array.from(list.querySelectorAll('.prompt-block-item')).forEach((item, index) => {
+        const label = item.querySelector('[data-order]');
+        if (label) label.textContent = index;
+      });
+    }
+
+    Array.from(list.querySelectorAll('.prompt-block-item')).forEach((item) => {
+      item.addEventListener('dragstart', () => {
+        dragging = item;
+        item.classList.add('dragging');
+      });
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        dragging = null;
+        syncOrder();
+      });
+      item.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!dragging || dragging === item) return;
+        const rect = item.getBoundingClientRect();
+        const after = event.clientY > rect.top + rect.height / 2;
+        if (after) item.after(dragging);
+        else item.before(dragging);
+      });
+    });
+
+    syncOrder();
+  })();
+</script>

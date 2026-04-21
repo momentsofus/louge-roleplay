@@ -1,28 +1,43 @@
 <style>
   .dashboard-shell {
     display: grid;
-    gap: 22px;
+    gap: 24px;
+    animation: fadeIn var(--duration-slow) var(--ease-out) both;
   }
 
   .welcome-card {
-    padding: 30px;
-    border-radius: 28px;
-    background: #141413;
-    color: #faf9f5;
-    border: 1px solid #30302e;
-    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+    padding: 36px;
+    border-radius: var(--radius-2xl);
+    background: linear-gradient(135deg, #12101f 0%, #1a1530 50%, #0f1628 100%);
+    color: var(--text);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .welcome-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(124, 92, 252, 0.1) 0%, transparent 70%);
+    pointer-events: none;
   }
 
   .welcome-card h1 {
-    color: #faf9f5;
-    font-size: 44px;
+    color: #fff;
+    font-size: 36px;
     margin-bottom: 10px;
   }
 
   .welcome-card p {
-    color: #b0aea5;
+    color: var(--text-secondary);
     margin: 0;
     line-height: 1.8;
+    font-size: 15px;
   }
 
   .dashboard-grid {
@@ -32,21 +47,42 @@
   }
 
   .panel-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
     padding: 24px;
-    box-shadow: rgba(20, 20, 19, 0.05) 0px 8px 24px;
+    box-shadow: var(--shadow-sm);
+    animation: slideUp var(--duration-slow) var(--ease-out) both;
   }
 
+  .panel-card:nth-child(1) { animation-delay: 0.05s; }
+  .panel-card:nth-child(2) { animation-delay: 0.1s; }
+  .panel-card:nth-child(3) { animation-delay: 0.15s; }
+
   .panel-card h2 {
-    font-size: 30px;
+    font-size: 22px;
     margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
   }
 
   .list-item {
     padding: 14px 0;
-    border-top: 1px solid #f0eee6;
+    border-top: 1px solid var(--border);
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .list-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 0;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--brand);
+    opacity: 0.4;
   }
 
   .list-item:first-of-type {
@@ -54,25 +90,69 @@
     padding-top: 0;
   }
 
+  .list-item:first-of-type::before {
+    top: 0;
+  }
+
   .list-item strong,
   .list-item a {
-    color: #141413;
-    font-size: 18px;
+    color: var(--text);
+    font-size: 16px;
+  }
+
+  .list-item a:hover {
+    color: var(--brand-hover);
   }
 
   .list-item p {
     margin: 6px 0 0;
-    color: #5e5d59;
+    color: var(--text-secondary);
   }
 
   .muted-line {
-    color: #87867f;
+    color: var(--text-tertiary);
     font-size: 14px;
+  }
+
+  .item-actions {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .text-btn {
+    appearance: none;
+    border: none;
+    background: none;
+    color: var(--brand);
+    padding: 0;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .text-btn:hover {
+    color: var(--brand-hover);
+  }
+
+  .text-btn.danger {
+    color: #f97066;
+  }
+
+  .text-btn.danger:hover {
+    color: #ff8f86;
   }
 
   @media (max-width: 860px) {
     .dashboard-grid {
       grid-template-columns: 1fr;
+    }
+    .welcome-card {
+      padding: 28px;
+    }
+    .welcome-card h1 {
+      font-size: 28px;
     }
   }
 </style>
@@ -85,6 +165,37 @@
 
   <section class="dashboard-grid">
     <div class="panel-card">
+      <h2>账号状态</h2>
+      <div class="list-item">
+        <strong><%= user.username %></strong>
+        <p class="muted-line">
+          角色：<%= user.role === 'admin' ? '管理员' : '普通用户' %>
+          · 状态：<%= user.status === 'active' ? '正常' : '已限制' %>
+        </p>
+      </div>
+      <div class="list-item">
+        <strong><%= subscription ? subscription.plan_name : '未绑定套餐' %></strong>
+        <p class="muted-line">
+          计费：<%= subscription ? subscription.billing_mode : '未配置' %>
+          <% if (subscription) { %>
+            · 优先级：<%= subscription.priority_weight %>
+            · 并发保障：<%= subscription.concurrency_limit %>
+            · 请求额度：<%= subscription.request_quota %>
+            · Token 额度：<%= subscription.token_quota %>
+          <% } %>
+        </p>
+        <% if (quota && quota.usage) { %>
+          <p class="muted-line">
+            已用请求：<%= quota.usage.usedRequests %>
+            · 剩余请求：<%= quota.remainingRequests %>
+            · 已用 Token：<%= quota.usage.usedTokens %>
+            · 剩余 Token：<%= quota.remainingTokens %>
+          </p>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="panel-card">
       <h2>我的角色</h2>
       <% if (characters.length === 0) { %>
         <p class="muted-line">你还没有创建角色。先去写一个有灵魂的名字吧。</p>
@@ -93,6 +204,16 @@
         <div class="list-item">
           <strong><%= character.name %></strong>
           <p><%= character.summary %></p>
+          <div class="item-actions">
+            <a href="/characters/<%= character.id %>/edit">编辑这个角色</a>
+            <form method="POST" action="/conversations/start/<%= character.id %>">
+              <button class="text-btn" type="submit">进入对话</button>
+            </form>
+            <span class="muted-line">可见性：<%= character.visibility === 'private' ? '私有' : '公开' %></span>
+            <form method="POST" action="/characters/<%= character.id %>/delete" onsubmit="return confirm('确认删除这个角色吗？只有从未开过对话的角色才能删除。');">
+              <button class="text-btn danger" type="submit">删除角色</button>
+            </form>
+          </div>
         </div>
       <% }) %>
     </div>
@@ -115,6 +236,12 @@
               · 分支自：#<%= conversation.parent_conversation_id %>
             <% } %>
           </p>
+          <div class="item-actions">
+            <a href="/chat/<%= conversation.id %>">进入对话</a>
+            <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。');">
+              <button class="text-btn danger" type="submit">删除对话</button>
+            </form>
+          </div>
         </div>
       <% }) %>
     </div>

@@ -4,41 +4,76 @@
     grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
     gap: 22px;
     align-items: start;
+    animation: fadeIn var(--duration-slow) var(--ease-out) both;
   }
 
   .chat-main {
     display: grid;
-    gap: 20px;
+    gap: 18px;
+    min-width: 0;
   }
 
   .chat-side {
     display: grid;
-    gap: 20px;
+    gap: 16px;
     position: sticky;
-    top: 24px;
+    top: 78px;
+    max-height: calc(100vh - 96px);
+    overflow: auto;
+    padding-right: 2px;
   }
 
   .chat-head {
-    padding: 30px;
-    border-radius: 32px;
-    background: #141413;
-    color: #faf9f5;
-    border: 1px solid #30302e;
-    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
+    padding: 28px;
+    border-radius: var(--radius-2xl);
+    background: linear-gradient(135deg, #12101f 0%, #1a1530 50%, #0f1628 100%);
+    color: var(--text);
+    border: 1px solid rgba(124, 92, 252, 0.12);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chat-head::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--brand-glow), transparent);
   }
 
   .chat-head h1 {
-    font-size: 42px;
-    color: #faf9f5;
-    margin-bottom: 10px;
-    line-height: 1.12;
+    font-size: 32px;
+    color: #fff;
+    margin-bottom: 8px;
+    line-height: 1.15;
   }
 
   .chat-head p {
     margin: 0;
-    color: #b0aea5;
+    color: var(--text-secondary);
     line-height: 1.7;
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .chat-head-actions {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .inline-btn.danger {
+    color: #ffd3ce;
+    border-color: rgba(249, 112, 102, 0.28);
+    background: rgba(249, 112, 102, 0.12);
+  }
+
+  .inline-btn.danger:hover {
+    border-color: rgba(249, 112, 102, 0.42);
+    background: rgba(249, 112, 102, 0.18);
   }
 
   .chat-meta {
@@ -51,11 +86,11 @@
   .meta-pill {
     display: inline-flex;
     align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(250, 249, 245, 0.08);
-    border: 1px solid #30302e;
-    color: #b0aea5;
+    padding: 5px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.15);
+    color: var(--text-secondary);
     font-size: 12px;
     letter-spacing: 0.12px;
   }
@@ -63,51 +98,58 @@
   .panel,
   .compose-card,
   .sidebar-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 24px;
-    padding: 22px;
-    box-shadow: rgba(20, 20, 19, 0.05) 0px 4px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
   }
 
   .panel-title,
   .sidebar-card h2,
   .compose-card h2 {
-    font-size: 26px;
-    line-height: 1.18;
+    font-size: 20px;
+    line-height: 1.2;
     margin-bottom: 14px;
   }
 
   .conversation-path {
     display: grid;
-    gap: 14px;
+    gap: 16px;
   }
 
   .bubble {
-    padding: 18px 18px 16px;
-    border-radius: 22px;
+    padding: 16px;
+    border-radius: 20px;
     white-space: pre-wrap;
     line-height: 1.75;
     position: relative;
     border: 1px solid transparent;
+    transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+    display: grid;
+    gap: 10px;
   }
 
   .bubble-user {
-    background: #efe2da;
-    color: #4d3f39;
-    border-color: #ead3c7;
+    background: rgba(124, 92, 252, 0.08);
+    color: var(--text);
+    border-color: rgba(124, 92, 252, 0.15);
+    border-radius: 20px 20px 6px 20px;
   }
 
   .bubble-character {
-    background: #f3f0e8;
-    color: #2f2e2b;
-    border-color: #e8e6dc;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    border-color: var(--border);
+    border-radius: 20px 20px 20px 6px;
   }
 
   .bubble-system {
-    background: #f5f1e7;
-    color: #5e5d59;
-    border-color: #e8e6dc;
+    background: rgba(96, 165, 250, 0.05);
+    color: var(--text-secondary);
+    border-color: rgba(96, 165, 250, 0.1);
+    border-radius: var(--radius-lg);
+    font-size: 14px;
   }
 
   .bubble-header {
@@ -115,26 +157,36 @@
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    margin-bottom: 10px;
+    min-width: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0;
   }
 
   .bubble-role {
-    font-weight: 500;
-    font-size: 15px;
-    color: #141413;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.2;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   .bubble-kind {
-    color: #87867f;
-    font-size: 12px;
-    letter-spacing: 0.12px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    letter-spacing: 0.08px;
+    line-height: 1.2;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    text-align: right;
   }
 
   .variant-strip,
   .next-strip {
     margin-top: 14px;
     padding-top: 14px;
-    border-top: 1px solid rgba(94, 93, 89, 0.12);
+    border-top: 1px solid var(--border);
     display: grid;
     gap: 10px;
   }
@@ -143,8 +195,7 @@
   .next-strip h4 {
     margin: 0;
     font-size: 13px;
-    color: #5e5d59;
-    font-family: Arial, sans-serif;
+    color: var(--text-tertiary);
   }
 
   .chip-list {
@@ -157,26 +208,215 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 10px;
-    border-radius: 999px;
-    background: #e8e6dc;
-    color: #4d4c48;
-    border: 1px solid #d1cfc5;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    background: var(--surface-strong);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
     font-size: 12px;
     line-height: 1;
+    transition: all var(--duration-fast) ease;
+  }
+
+  .chip:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
   }
 
   .chip.active {
-    background: #c96442;
-    border-color: #c96442;
-    color: #faf9f5;
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--brand-glow);
+  }
+  .bubble-rich {
+    display: grid;
+    gap: 10px;
+    padding-top: 2px;
+  }
+
+  .bubble-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .bubble-text-streaming-tail {
+    opacity: 0.82;
+  }
+
+  .bubble-quote {
+    display: inline;
+    padding: 0 0.2em;
+    border-radius: 0.38em;
+    background: rgba(124, 92, 255, 0.14);
+    color: #d9cbff;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .bubble-rich hr {
+    border: 0;
+    height: 1px;
+    margin: 10px 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    opacity: 0.9;
+  }
+
+  .bubble-folds {
+    display: grid;
+    gap: 10px;
+  }
+
+  .bubble-fold {
+    border: 1px solid var(--border-strong);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .bubble-fold summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    transition: color var(--duration-fast) ease;
+  }
+
+  .bubble-fold summary:hover {
+    color: var(--text-secondary);
+  }
+
+  .bubble-fold summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .bubble-fold summary::after {
+    content: '展开';
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .bubble-fold[open] summary::after {
+    content: '收起';
+  }
+
+  .bubble-fold-body {
+    padding: 0 14px 14px;
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  .bubble-rich a {
+    color: #8eb7ff;
+    text-decoration: underline;
+  }
+
+  .bubble-rich img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+  }
+
+  .bubble-rich pre,
+  .bubble-rich code {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+  }
+
+  .bubble-rich pre {
+    margin: 0;
+    padding: 12px 14px;
+    overflow: auto;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+  }
+
+  .bubble-rich blockquote {
+    margin: 0;
+    padding-left: 14px;
+    border-left: 3px solid rgba(124, 92, 255, 0.55);
+    color: var(--text-secondary);
   }
 
   .bubble-actions {
     display: flex;
+    gap: 8px;
     flex-wrap: wrap;
+    margin-top: 4px;
+    opacity: 1;
+  }
+
+  .message-tools {
+    display: grid;
     gap: 10px;
-    margin-top: 14px;
+    padding-top: 4px;
+  }
+
+  .tool-details,
+  .sidebar-details,
+  .compose-details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    overflow: hidden;
+  }
+
+  .tool-details summary,
+  .sidebar-details summary,
+  .compose-details summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    color: var(--text-soft);
+    font-size: 14px;
+    user-select: none;
+  }
+
+  .tool-details summary::-webkit-details-marker,
+  .sidebar-details summary::-webkit-details-marker,
+  .compose-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tool-details summary::after,
+  .sidebar-details summary::after,
+  .compose-details summary::after {
+    content: '展开';
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  .tool-details[open] summary::after,
+  .sidebar-details[open] summary::after,
+  .compose-details[open] summary::after {
+    content: '收起';
+  }
+
+  .tool-details-body,
+  .sidebar-details-body,
+  .compose-details-body {
+    padding: 0 14px 14px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .tool-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .inline-form {
@@ -185,37 +425,53 @@
     align-items: center;
     flex-wrap: wrap;
     margin: 0;
+    min-width: 0;
   }
 
   .inline-form textarea {
-    width: min(100%, 560px);
-    min-height: 108px;
+    width: 100%;
+    min-height: 120px;
     resize: vertical;
   }
 
   .inline-btn {
-    padding: 9px 12px;
-    border-radius: 10px;
-    background: #e8e6dc;
-    color: #4d4c48;
-    border: 1px solid #d1cfc5;
-    box-shadow: 0px 0px 0px 1px #d1cfc5;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-strong);
+    color: var(--text-soft);
+    border: 1px solid var(--border-strong);
+    box-shadow: none;
+    font-size: 13px;
+    width: auto;
+  }
+
+  .inline-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
+    box-shadow: none;
   }
 
   .inline-btn.primary {
-    background: #c96442;
-    border-color: #c96442;
-    box-shadow: 0px 0px 0px 1px #c96442;
-    color: #faf9f5;
+    background: linear-gradient(135deg, #7c5cfc 0%, #9178ff 100%);
+    border-color: rgba(124, 92, 252, 0.4);
+    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.2);
+    color: #fff;
+  }
+
+  .inline-btn.primary:hover {
+    box-shadow: 0 4px 16px rgba(124, 92, 252, 0.3);
   }
 
   .inline-btn.dark {
-    background: #30302e;
-    border-color: #30302e;
-    box-shadow: 0px 0px 0px 1px #30302e;
-    color: #faf9f5;
+    background: var(--bg);
+    border-color: var(--border-strong);
+    color: var(--text-soft);
   }
 
+  .inline-btn.dark:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-hover);
+  }
   .compose-card textarea {
     min-height: 150px;
     resize: vertical;
@@ -223,170 +479,257 @@
 
   .submit-btn {
     margin-top: 14px;
-    background: #c96442;
-    border-color: #c96442;
-    box-shadow: 0px 0px 0px 1px #c96442;
-    color: #faf9f5;
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 15px;
   }
 
   .draft-box {
-    margin-top: 16px;
+    margin-top: 8px;
     padding: 16px;
-    border-radius: 18px;
-    background: #f3f0e8;
-    border: 1px solid #e8e6dc;
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
   }
 
-  .draft-box pre {
-    margin: 0;
-    white-space: pre-wrap;
-    color: #4d4c48;
-    line-height: 1.7;
+  .editor-form {
+    display: grid;
+    gap: 10px;
+  }
+
+  .rich-preview {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
   }
 
   .branch-item {
     display: grid;
     gap: 8px;
     padding: 14px;
-    border-radius: 16px;
-    background: #f5f1e7;
-    border: 1px solid #e8e6dc;
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     margin-bottom: 10px;
+    transition: all var(--duration-fast) ease;
+  }
+
+  .branch-item:hover {
+    border-color: var(--border-hover);
   }
 
   .branch-item.active {
-    background: #141413;
-    border-color: #30302e;
+    background: linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(96, 165, 250, 0.05));
+    border-color: rgba(124, 92, 252, 0.25);
   }
 
   .branch-item.active .branch-meta,
   .branch-item.active .branch-preview {
-    color: #b0aea5;
+    color: var(--text-soft);
   }
 
   .branch-meta {
     font-size: 12px;
     letter-spacing: 0.12px;
-    color: #87867f;
+    color: var(--text-tertiary);
   }
 
   .branch-preview {
-    color: #4d4c48;
+    color: var(--text-secondary);
     line-height: 1.55;
     font-size: 14px;
   }
 
   .mini-note {
     font-size: 13px;
-    color: #87867f;
+    color: var(--text-tertiary);
     line-height: 1.5;
+  }
+
+  .section-subtitle {
+    margin: -4px 0 6px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .mode-card {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mode-option-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mode-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    transition: all var(--duration-fast) ease;
+    cursor: pointer;
+  }
+
+  .mode-option:hover {
+    border-color: var(--border-hover);
+  }
+
+  .mode-option.active {
+    border-color: var(--brand);
+    background: var(--brand-subtle);
+  }
+
+  .mode-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: var(--brand);
   }
 
   .tree-list {
     display: grid;
     gap: 8px;
+    max-height: 420px;
+    overflow: auto;
+    padding-right: 2px;
   }
 
   .tree-node {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid #e8e6dc;
-    background: #f8f5ee;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
     position: relative;
+    transition: all var(--duration-fast) ease;
+    font-size: 13px;
   }
 
   .tree-node::before {
     content: '';
     position: absolute;
-    left: -10px;
+    left: -8px;
     top: 50%;
-    width: 10px;
+    width: 8px;
     height: 1px;
-    background: #d1cfc5;
+    background: var(--border-strong);
   }
 
   .tree-node::after {
     content: '';
     position: absolute;
-    left: -10px;
-    top: -14px;
+    left: -8px;
+    top: -10px;
     width: 1px;
-    height: calc(50% + 14px);
-    background: #e1ddd2;
+    height: calc(50% + 10px);
+    background: var(--border-strong);
   }
 
   .tree-node.trail {
-    border-color: #d9c2b7;
-    background: #f5ece8;
+    border-color: rgba(124, 92, 252, 0.15);
+    background: rgba(124, 92, 252, 0.04);
   }
 
   .tree-node.trail::before,
   .tree-node.trail::after {
-    background: #d2b0a2;
+    background: rgba(124, 92, 252, 0.2);
   }
 
   .tree-node.active {
-    background: #141413;
-    border-color: #30302e;
+    background: linear-gradient(135deg, rgba(124, 92, 252, 0.12), rgba(96, 165, 250, 0.06));
+    border-color: rgba(124, 92, 252, 0.3);
+    box-shadow: 0 0 12px rgba(124, 92, 252, 0.1);
   }
 
   .tree-node.active .tree-content,
   .tree-node.active .tree-kind,
   .tree-node.active .tree-id {
-    color: #faf9f5;
+    color: var(--text);
   }
 
   .tree-line {
-    width: 18px;
+    width: 14px;
     height: 1px;
-    background: #d1cfc5;
+    background: var(--border-strong);
     flex: 0 0 auto;
   }
 
   .tree-id {
-    font-size: 12px;
-    color: #87867f;
-    min-width: 42px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    min-width: 36px;
   }
 
   .tree-kind {
-    font-size: 12px;
-    color: #87867f;
-    min-width: 52px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    min-width: 28px;
   }
 
   .tree-content {
-    color: #4d4c48;
-    line-height: 1.4;
-    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    font-size: 12px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    flex: 1;
   }
 
   .tree-node form {
     margin-left: auto;
+    align-self: center;
+  }
+
+  .sidebar-card.compact {
+    padding: 16px 18px;
+  }
+
+  .sidebar-card.compact h2 {
+    margin-bottom: 8px;
   }
 
   @media (max-width: 980px) {
     .chat-shell {
       grid-template-columns: 1fr;
     }
-
     .chat-side {
       position: static;
+      max-height: none;
+      overflow: visible;
     }
   }
 </style>
-
+<% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+  <div style="background:rgba(249,112,102,0.1);border:1px solid rgba(249,112,102,0.2);color:#fca5a0;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+    <%= errorMessage %>
+  </div>
+<% } %>
 <div class="chat-shell">
   <div class="chat-main">
     <section class="chat-head">
       <h1><%= conversation.character_name %></h1>
       <p><%= conversation.character_summary %></p>
+      <div class="chat-head-actions">
+        <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。');">
+          <button class="inline-btn danger" type="submit">删除这条对话</button>
+        </form>
+      </div>
+      <% if (conversation.composed_system_prompt) { %>
+        <div class="chat-meta" style="margin-top:10px;">
+          <span class="meta-pill">后台控制模型</span>
+          <span class="meta-pill">已启用提示词拼接</span>
+        </div>
+      <% } %>
       <div class="chat-meta">
         <span class="meta-pill">对话 #<%= conversation.id %></span>
         <span class="meta-pill">当前叶子 #<%= view.activeLeafId || '—' %></span>
@@ -402,6 +745,7 @@
 
     <section class="panel">
       <h2 class="panel-title">当前分支</h2>
+      <p class="section-subtitle">先把这一条线顺着读完。分支、重算、改写都收在每条消息下面，不抢正文。</p>
       <div class="conversation-path">
         <% view.pathMessages.forEach(message => { %>
           <article class="bubble bubble-<%= message.sender_type === 'system' ? 'system' : message.sender_type %>">
@@ -412,7 +756,7 @@
               <span class="bubble-kind">#<%= message.id %> · <%= message.prompt_kind || 'normal' %></span>
             </div>
 
-            <div><%= message.content %></div>
+            <div class="bubble-rich" data-message-content><div class="bubble-text"><%= message.content %></div></div>
 
             <% if (message.siblingCount > 1) { %>
               <div class="variant-strip">
@@ -448,46 +792,58 @@
               </div>
             <% } %>
 
-            <div class="bubble-actions">
-              <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-                <input type="hidden" name="leaf" value="<%= message.id %>" />
-                <button class="inline-btn" type="submit">切到这里</button>
-              </form>
+            <div class="message-tools">
+              <div class="bubble-actions">
+                <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
+                  <input type="hidden" name="leaf" value="<%= message.id %>" />
+                  <button class="inline-btn" type="submit">切到这里</button>
+                </form>
 
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
-                <button class="inline-btn dark" type="submit">新建独立分支对话</button>
-              </form>
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
+                  <button class="inline-btn dark" type="submit">新建独立分支对话</button>
+                </form>
 
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay">
-                <button class="inline-btn" type="submit">从这里重算后续</button>
-              </form>
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay">
+                  <button class="inline-btn" type="submit">从这里重算后续</button>
+                </form>
+
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/delete" onsubmit="return confirm('确认删除这条对话记录吗？现在只允许删除没有后续消息、也没有独立分支会话引用的末端记录。');">
+                  <button class="inline-btn danger" type="submit">删除这条记录</button>
+                </form>
+
+                <% if (message.sender_type === 'character') { %>
+                  <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/regenerate/<%= message.id %>">
+                    <button class="inline-btn" type="submit">重新生成候选</button>
+                  </form>
+                <% } %>
+              </div>
 
               <% if (message.sender_type === 'character') { %>
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/regenerate/<%= message.id %>">
-                  <button class="inline-btn" type="submit">重新生成候选</button>
-                </form>
+                <details class="tool-details">
+                  <summary>改写这条 AI 回复</summary>
+                  <div class="tool-details-body">
+                    <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
+                      <textarea name="content" maxlength="8000" required><%= message.visibleContent %></textarea>
+                      <button class="inline-btn primary" type="submit">保存为新 AI 分支</button>
+                    </form>
+                    <div class="mini-note">这里只放可见正文，不带 think 思考内容；保存后会作为新的 AI 变体分支。</div>
+                  </div>
+                </details>
+              <% } %>
+
+              <% if (message.sender_type === 'user') { %>
+                <details class="tool-details">
+                  <summary>修改这句用户输入并重开分支</summary>
+                  <div class="tool-details-body">
+                    <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
+                      <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
+                      <button class="inline-btn primary" type="submit">修改这句并从这里重开分支</button>
+                    </form>
+                    <div class="mini-note">会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。</div>
+                  </div>
+                </details>
               <% } %>
             </div>
-
-            <% if (message.sender_type === 'character') { %>
-              <div class="draft-box">
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
-                  <textarea name="content" maxlength="8000" required><%= message.content %></textarea>
-                  <button class="inline-btn primary" type="submit">保存为新 AI 分支</button>
-                </form>
-                <div class="mini-note">不会覆盖旧内容，而是从同一父节点下创建新的 AI 变体。</div>
-              </div>
-            <% } %>
-
-            <% if (message.sender_type === 'user') { %>
-              <div class="draft-box">
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
-                  <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
-                  <button class="inline-btn primary" type="submit">修改这句并从这里重开分支</button>
-                </form>
-                <div class="mini-note">会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。</div>
-              </div>
-            <% } %>
           </article>
         <% }) %>
       </div>
@@ -495,59 +851,95 @@
 
     <section class="compose-card">
       <h2>继续写这一支</h2>
-      <form method="POST" action="/chat/<%= conversation.id %>/message">
+      <p class="section-subtitle">高频动作只留发送，模型切换和输入优化收起来，别把页面挤成控制台。</p>
+      <% if (chatModelSelector && chatModelSelector.options && chatModelSelector.options.length) { %>
+        <details class="compose-details">
+          <summary>模型模式</summary>
+          <div class="compose-details-body">
+            <div class="mini-note">你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 <%= chatModelSelector.maxContextTokens %>，超出后会裁到 <%= chatModelSelector.trimContextTokens %> 并自动用第 4 模型压缩历史。</div>
+            <form method="POST" action="/chat/<%= conversation.id %>/model">
+              <div class="mode-option-list">
+                <% chatModelSelector.options.forEach((option, index) => { %>
+                  <label class="mode-option <%= (conversation.selected_model_mode || 'standard') === option.mode ? 'active' : '' %>">
+                    <input type="radio" name="modelMode" value="<%= option.mode %>" <%= (conversation.selected_model_mode || 'standard') === option.mode ? 'checked' : '' %> />
+                    <div>
+                      <div><strong><%= index + 1 %>. <%= option.label %></strong></div>
+                      <div class="mini-note">已绑定可用模型，前台不展示具体 model ID。</div>
+                    </div>
+                  </label>
+                <% }) %>
+              </div>
+              <button class="inline-btn primary" type="submit">切换模型模式</button>
+            </form>
+          </div>
+        </details>
+      <% } %>
+
+      <form method="POST" action="/chat/<%= conversation.id %>/message" id="chat-compose-form" data-stream-endpoint="/chat/<%= conversation.id %>/message/stream" data-message-count="<%= view.messageCount %>">
         <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
         <label for="content">从当前节点往下写</label>
-        <textarea id="content" name="content" maxlength="4000" required placeholder="把你现在想说的话发出去。"><%= draftContent || '' %></textarea>
-        <button class="submit-btn" type="submit">发送消息</button>
+        <textarea id="content" name="content" maxlength="4000" placeholder="<%= view.messageCount === 0 ? '第一次可以直接点发送开始对话；也可以先输入你想说的话。' : '把你现在想说的话发出去。' %>"><%= draftContent || '' %></textarea>
+        <button class="submit-btn" type="submit"><%= view.messageCount === 0 ? '开始 / 发送' : '发送消息' %></button>
       </form>
 
-      <div class="draft-box">
-        <form method="POST" action="/chat/<%= conversation.id %>/optimize-input">
-          <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-          <label for="optimizeContent">先优化输入</label>
-          <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="想润色一下，就把原话贴这儿。"><%= draftContent || '' %></textarea>
-          <button class="submit-btn" type="submit">优化输入</button>
-        </form>
+      <details class="compose-details">
+        <summary>优化输入</summary>
+        <div class="compose-details-body">
+          <form method="POST" action="/chat/<%= conversation.id %>/optimize-input" class="editor-form">
+            <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
+            <label for="optimizeContent">先优化输入</label>
+            <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="想润色一下，就把原话贴这儿。"><%= draftContent || '' %></textarea>
+            <button class="submit-btn" type="submit">优化输入</button>
+          </form>
 
-        <% if (optimizedContent) { %>
-          <div class="draft-box">
-            <label>优化结果</label>
-            <pre><%= optimizedContent %></pre>
-            <div class="bubble-actions">
-              <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-                <input type="hidden" name="leaf" value="<%= view.activeLeafId || '' %>" />
-                <input type="hidden" name="draft" value="<%= optimizedContent %>" />
-                <button class="inline-btn" type="submit">带回输入框</button>
-              </form>
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/message">
-                <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-                <input type="hidden" name="content" value="<%= optimizedContent %>" />
-                <button class="inline-btn primary" type="submit">一键采用并发送</button>
-              </form>
+          <% if (optimizedContent) { %>
+            <div class="draft-box">
+              <label>优化结果</label>
+              <div class="rich-preview" data-message-content><div class="bubble-text"><%= optimizedContent %></div></div>
+              <div class="bubble-actions" style="opacity:1;">
+                <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
+                  <input type="hidden" name="leaf" value="<%= view.activeLeafId || '' %>" />
+                  <input type="hidden" name="draft" value="<%= optimizedContent %>" />
+                  <button class="inline-btn" type="submit">带回输入框</button>
+                </form>
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/message">
+                  <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
+                  <input type="hidden" name="content" value="<%= optimizedContent %>" />
+                  <button class="inline-btn primary" type="submit">一键采用并发送</button>
+                </form>
+              </div>
             </div>
-          </div>
-        <% } %>
+          <% } %>
+        </div>
+      </details>
 
-        <% if (regeneratedPreview && regeneratedPreview.length) { %>
-          <div class="draft-box">
-            <label>本次重算生成的新片段</label>
-            <pre><% regeneratedPreview.forEach(item => { %><%= item.role %>：<%= item.content %>
-
-<% }) %></pre>
+      <% if (regeneratedPreview && regeneratedPreview.length) { %>
+        <div class="draft-box">
+          <label>本次重算生成的新片段</label>
+          <div class="rich-preview">
+            <% regeneratedPreview.forEach(item => { %>
+              <div>
+                <strong><%= item.role %>：</strong>
+                <div data-message-content><div class="bubble-text"><%= item.content %></div></div>
+              </div>
+            <% }) %>
           </div>
-        <% } %>
-      </div>
+        </div>
+      <% } %>
     </section>
   </div>
-
   <aside class="chat-side">
+    <section class="sidebar-card compact">
+      <h2>分支导航</h2>
+      <p class="mini-note">右边只保留导航用途：先看当前路径，再决定要不要切树、切叶子。</p>
+    </section>
+
     <section class="sidebar-card">
       <h2>对话树</h2>
-      <p class="mini-note">像 codeview 一样看整棵消息树。高亮的是你当前这条线，切节点就能跳过去。</p>
+      <p class="mini-note">高亮的是你当前这条线，树节点支持两行摘要，切换时不用盯着一排编号猜内容。</p>
       <div class="tree-list">
         <% view.treeEntries.forEach(node => { %>
-          <div class="tree-node <%= node.isActive ? 'active' : '' %> <%= node.isOnActiveTrail ? 'trail' : '' %>" style="margin-left: <%= node.depth * 18 %>px;">
+          <div class="tree-node <%= node.isActive ? 'active' : '' %> <%= node.isOnActiveTrail ? 'trail' : '' %>" style="margin-left: <%= node.depth * 16 %>px;">
             <span class="tree-line"></span>
             <span class="tree-id">#<%= node.id %></span>
             <span class="tree-kind"><%= node.senderType === 'user' ? '你' : 'AI' %></span>
@@ -563,7 +955,7 @@
 
     <section class="sidebar-card">
       <h2>叶子分支</h2>
-      <p class="mini-note">这里列的是当前对话里所有叶子分支。切换叶子，就等于切换你正在看的那条剧情线。</p>
+      <p class="mini-note">这里只保留“切到哪一支”的信息，避免把主阅读区打散。</p>
       <% view.branches.forEach(branch => { %>
         <div class="branch-item <%= branch.isActive ? 'active' : '' %>">
           <div class="branch-meta">叶子 #<%= branch.leafId %> · 深度 <%= branch.depth %> · <%= branch.promptKind %></div>
@@ -579,16 +971,620 @@
       <% }) %>
     </section>
 
-    <section class="sidebar-card">
-      <h2>使用方式</h2>
-      <div class="mini-note">
-        1. 重新生成：给同一条用户输入再生一个 AI 候选。<br />
-        2. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。<br />
-        3. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。<br />
-        4. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。<br />
-        5. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。<br />
-        6. 优化输入：先润色，再一键采用并发送。
+    <details class="sidebar-details">
+      <summary>使用方式</summary>
+      <div class="sidebar-details-body mini-note">
+        <div>1. 第一次进入空白对话时，可以直接点发送，系统会自动用“[开始一次新的对话]”起头一次。</div>
+        <div>2. 重新生成：给同一条用户输入再生一个 AI 候选。</div>
+        <div>3. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。</div>
+        <div>4. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。</div>
+        <div>5. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。</div>
+        <div>6. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。</div>
+        <div>7. 优化输入：先润色，再一键采用并发送。</div>
       </div>
-    </section>
+    </details>
   </aside>
 </div>
+<script>
+  (function () {
+    const form = document.getElementById('chat-compose-form');
+    const textarea = document.getElementById('content');
+    if (!form || !textarea) return;
+
+    const messageCount = Number(form.dataset.messageCount || '0');
+    const streamEndpoint = form.dataset.streamEndpoint || form.action;
+    const pathContainer = document.querySelector('.conversation-path');
+    let isSubmitting = false;
+
+    function ensureStartMessage() {
+      if (messageCount === 0 && !textarea.value.trim()) {
+        textarea.value = '[开始一次新的对话]';
+      }
+    }
+
+    function createBubble(roleLabel, kindLabel, senderClass, content, options) {
+      const article = document.createElement('article');
+      article.className = `bubble bubble-${senderClass}`;
+      if (options && options.isStreaming) {
+        article.dataset.streaming = 'true';
+      }
+
+      const header = document.createElement('div');
+      header.className = 'bubble-header';
+
+      const role = document.createElement('span');
+      role.className = 'bubble-role';
+      role.textContent = roleLabel;
+
+      const kind = document.createElement('span');
+      kind.className = 'bubble-kind';
+      kind.textContent = kindLabel;
+
+      header.appendChild(role);
+      header.appendChild(kind);
+
+      const rich = document.createElement('div');
+      rich.className = 'bubble-rich';
+      rich.setAttribute('data-message-content', '');
+      rich.innerHTML = '<div class="bubble-text"></div>';
+      rich.querySelector('.bubble-text').textContent = content || '';
+
+      article.appendChild(header);
+      article.appendChild(rich);
+      return { article, rich };
+    }
+
+    function appendStreamingPair(userContent) {
+      if (!pathContainer) return null;
+      const user = createBubble('你', '#新消息 · normal', 'user', userContent, { isStreaming: false });
+      const ai = createBubble('<%= conversation.character_name %>', '生成中…', 'character', '', { isStreaming: true });
+      pathContainer.appendChild(user.article);
+      pathContainer.appendChild(ai.article);
+      user.article.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      return ai;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      ensureStartMessage();
+      if (isSubmitting || !window.fetch || !window.ReadableStream || typeof window.renderRichContent !== 'function') {
+        return;
+      }
+
+      event.preventDefault();
+      isSubmitting = true;
+      const submitButton = form.querySelector('button[type="submit"]');
+      const previousButtonText = submitButton ? submitButton.textContent : '';
+      const payload = new FormData(form);
+      const draftContent = String(payload.get('content') || '').trim();
+      const streamBubble = appendStreamingPair(draftContent);
+      if (!draftContent) {
+        isSubmitting = false;
+        if (streamBubble && streamBubble.article && streamBubble.article.parentNode) {
+          streamBubble.article.parentNode.removeChild(streamBubble.article);
+        }
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = previousButtonText || '发送消息';
+        }
+        textarea.disabled = false;
+        textarea.focus();
+        return;
+      }
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = '发送中…';
+      }
+      textarea.disabled = true;
+
+      try {
+        const response = await fetch(streamEndpoint, {
+          method: 'POST',
+          body: new URLSearchParams(payload),
+          headers: {
+            'Accept': 'application/x-ndjson',
+            'X-Requested-With': 'fetch',
+          },
+        });
+
+        const responseType = String(response.headers.get('content-type') || '').toLowerCase();
+        if (!response.ok || !response.body || !responseType.includes('application/x-ndjson')) {
+          throw new Error('STREAM_REQUEST_FAILED');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalLeafId = '';
+        let fullText = '';
+        let committedText = '';
+        let tailText = '';
+
+        const handlePacket = (packet) => {
+          if (!packet || !streamBubble) return;
+          if (packet.type === 'delta') {
+            fullText = String(packet.full || '');
+            if (!committedText && !tailText) {
+              const preview = splitStreamingSegments(fullText);
+              committedText = preview.committed;
+              tailText = preview.tail;
+            }
+            window.renderRichContent(streamBubble.rich, fullText, {
+              streaming: true,
+              finalPass: false,
+              lineMode: true,
+              committed: committedText,
+              tail: tailText,
+            });
+            streamBubble.article.scrollIntoView({ block: 'end', behavior: 'smooth' });
+          } else if (packet.type === 'line') {
+            fullText = String(packet.full || fullText || '');
+            committedText = String(packet.committed || '');
+            tailText = String(packet.tail || '');
+            window.renderRichContent(streamBubble.rich, fullText, {
+              streaming: true,
+              finalPass: false,
+              lineMode: true,
+              committed: committedText,
+              tail: tailText,
+            });
+          } else if (packet.type === 'done') {
+            fullText = String(packet.full || fullText || '');
+            finalLeafId = String(packet.leafId || packet.replyMessageId || '');
+            streamBubble.article.dataset.streaming = 'false';
+            const kind = streamBubble.article.querySelector('.bubble-kind');
+            if (kind) {
+              kind.textContent = `#${finalLeafId || '新回复'} · normal`;
+            }
+            window.renderRichContent(streamBubble.rich, fullText, { streaming: false, finalPass: true, lineMode: false });
+          } else if (packet.type === 'error') {
+            const message = String(packet.message || 'AI 回复失败，请稍后重试。');
+            window.renderRichContent(streamBubble.rich, message, { streaming: false, finalPass: true, lineMode: false });
+            streamBubble.article.classList.add('bubble-system');
+          }
+        };
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          lines.forEach((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            try {
+              handlePacket(JSON.parse(trimmed));
+            } catch (_) {}
+          });
+        }
+
+        if (buffer.trim()) {
+          try {
+            handlePacket(JSON.parse(buffer.trim()));
+          } catch (_) {}
+        }
+
+        if (finalLeafId) {
+          const nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set('leaf', finalLeafId);
+          window.history.replaceState({}, '', nextUrl.toString());
+        }
+
+        textarea.value = '';
+      } catch (error) {
+        console.error(error);
+        form.submit();
+        return;
+      } finally {
+        isSubmitting = false;
+        textarea.disabled = false;
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = previousButtonText || '发送消息';
+        }
+      }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const draft = params.get('draft');
+    if (draft && !textarea.value.trim()) {
+      textarea.value = draft;
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+  })();
+
+  (function () {
+    const THINK_BLOCK_RE = /<(think|thinking)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+    const GENERIC_FOLD_TAG_RE = /<([a-z][\w:-]*)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+    const SCRIPTISH_TAG_RE = /<\s*\/?\s*(script|iframe|object|embed|meta|link|base|form)\b[^>]*>/gi;
+    const HTML_TAG_RE = /<\/?[a-z][^>]*>/i;
+    const QUOTE_RE = /(“[^”<>\n]{0,280}”|‘[^’<>\n]{0,280}’|「[^」<>\n]{0,280}」|&quot;[^<>\n]{0,280}&quot;|&#39;[^<>\n]{0,280}&#39;|"[^"<>\n]{0,280}"|'[^'<>\n]{0,280}')/g;
+    const ALLOWED_TAGS = new Set(['p', 'br', 'pre', 'code', 'strong', 'em', 'b', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'details', 'summary', 'style', 'a', 'img']);
+    let scopeSeed = 0;
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildFold(title, body, openByDefault) {
+      const details = document.createElement('details');
+      details.className = 'bubble-fold';
+      if (openByDefault) {
+        details.open = true;
+      }
+
+      const summary = document.createElement('summary');
+      summary.textContent = title;
+
+      const content = document.createElement('div');
+      content.className = 'bubble-fold-body';
+      content.textContent = body;
+
+      details.appendChild(summary);
+      details.appendChild(content);
+      return details;
+    }
+
+    function collectFoldBlocks(raw) {
+      const folds = [];
+      let foldIndex = 0;
+      let text = String(raw || '');
+
+      text = text.replace(THINK_BLOCK_RE, (_, _tagName, inner) => {
+        const key = `__FOLD_BLOCK_${foldIndex++}__`;
+        folds.push({ key, title: '思考内容', body: String(inner || '').trim(), open: false });
+        return key;
+      });
+
+      text = text.replace(GENERIC_FOLD_TAG_RE, (full, tagName, inner) => {
+        const normalizedTag = String(tagName || '').toLowerCase();
+        if (['p', 'br', 'pre', 'code', 'strong', 'em', 'b', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'details', 'summary', 'style', 'a', 'img', 'think', 'thinking'].includes(normalizedTag)) {
+          return full;
+        }
+        const plainInner = String(inner || '').replace(/<[^>]+>/g, '').trim();
+        if (!plainInner) {
+          return full;
+        }
+        const key = `__FOLD_BLOCK_${foldIndex++}__`;
+        folds.push({ key, title: `标签内容：<${normalizedTag}>`, body: plainInner, open: false });
+        return key;
+      });
+
+      return { text, folds };
+    }
+
+    function sanitizeCss(cssText, scopeSelector) {
+      const cleaned = String(cssText || '')
+        .replace(/@import[\s\S]*?;/gi, '')
+        .replace(/@charset[\s\S]*?;/gi, '')
+        .replace(/@namespace[\s\S]*?;/gi, '')
+        .replace(/expression\s*\([^)]*\)/gi, '')
+        .replace(/behavior\s*:[^;}{]+[;}]?/gi, '')
+        .replace(/-moz-binding\s*:[^;}{]+[;}]?/gi, '')
+        .replace(/url\s*\(\s*(['"]?)\s*(javascript:|data:text\/html|data:application\/javascript)[^)]+\)/gi, 'url(#)');
+
+      return cleaned.replace(/(^|})\s*([^@}{][^{]*){/g, (full, prefix, selectorGroup) => {
+        const scopedSelectors = selectorGroup
+          .split(',')
+          .map((selector) => selector.trim())
+          .filter(Boolean)
+          .map((selector) => {
+            if (/^(html|body|:root)$/i.test(selector)) {
+              return scopeSelector;
+            }
+            return `${scopeSelector} ${selector}`;
+          })
+          .join(', ');
+        return `${prefix} ${scopedSelectors} {`;
+      });
+    }
+
+    function highlightQuotesInHtml(html) {
+      return String(html || '').replace(QUOTE_RE, (full) => `<span class="bubble-quote">${full}</span>`);
+    }
+
+    function normalizeMarkdownLines(text) {
+      return String(text || '')
+        .replace(/\r\n?/g, '\n')
+        .replace(/^(\s*)&gt;\s?/gm, '$1> ')
+        .replace(/^(\s*)([-*_])\2\2\s*$/gm, '$1---');
+    }
+
+    function applyInlineMarkdown(text) {
+      return String(text || '')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*(?!\s)(.+?)(?!\s)\*/g, '$1<em>$2</em>')
+        .replace(/(^|[^_])_(?!\s)(.+?)(?!\s)_/g, '$1<em>$2</em>')
+        .replace(/~~(.+?)~~/g, '<s>$1</s>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img alt="$1" src="$2">')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    }
+
+    function markdownToHtml(text) {
+      const normalized = normalizeMarkdownLines(text);
+      const escaped = escapeHtml(normalized);
+      const fenced = [];
+      let htmlSeed = escaped.replace(/```([\w-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        const key = `__CODE_BLOCK_${fenced.length}__`;
+        fenced.push(`<pre><code class="lang-${escapeHtml(lang || 'plain')}">${code}</code></pre>`);
+        return key;
+      });
+
+      const lines = htmlSeed.split('\n');
+      const parts = [];
+      let paragraphLines = [];
+
+      const flushParagraph = () => {
+        if (!paragraphLines.length) {
+          return;
+        }
+        const content = paragraphLines.join('<br>');
+        parts.push(`<p>${applyInlineMarkdown(content)}</p>`);
+        paragraphLines = [];
+      };
+
+      const isBlank = (line) => !String(line || '').trim();
+      const isFencePlaceholder = (line) => /^__CODE_BLOCK_\d+__$/.test(String(line || '').trim());
+      const isHr = (line) => /^(?:---|\*\*\*|___)\s*$/.test(String(line || '').trim());
+      const parseHeading = (line) => String(line || '').match(/^(#{1,6})\s+(.+)$/);
+      const isBullet = (line) => /^[-*]\s+.+$/.test(String(line || '').trim());
+      const isOrdered = (line) => /^\d+\.\s+.+$/.test(String(line || '').trim());
+      const isQuoted = (line) => /^(?:>|&gt;)\s?.*$/.test(String(line || '').trim());
+      const isQuoteMarkerOnly = (line) => /^(?:>|&gt;)\s*$/.test(String(line || '').trim());
+
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        const trimmed = String(line || '').trim();
+
+        if (isBlank(line)) {
+          flushParagraph();
+          continue;
+        }
+
+        if (isFencePlaceholder(trimmed)) {
+          flushParagraph();
+          parts.push(trimmed);
+          continue;
+        }
+
+        if (isHr(line)) {
+          flushParagraph();
+          parts.push('<hr>');
+          continue;
+        }
+
+        const headingMatch = parseHeading(line);
+        if (headingMatch) {
+          flushParagraph();
+          const level = headingMatch[1].length;
+          parts.push(`<h${level}>${applyInlineMarkdown(headingMatch[2].trim())}</h${level}>`);
+          continue;
+        }
+
+        if (isQuoted(line)) {
+          flushParagraph();
+          const quoteLines = [];
+
+          if (isQuoteMarkerOnly(line)) {
+            i += 1;
+            while (i < lines.length && !isBlank(lines[i])) {
+              quoteLines.push(lines[i]);
+              i += 1;
+            }
+            i -= 1;
+          } else {
+            while (i < lines.length && isQuoted(lines[i]) && !isQuoteMarkerOnly(lines[i])) {
+              quoteLines.push(String(lines[i] || '').replace(/^(?:>|&gt;)\s?/, ''));
+              i += 1;
+            }
+            i -= 1;
+          }
+
+          const quoteContent = quoteLines.join('<br>').trim();
+          parts.push(`<blockquote>${applyInlineMarkdown(quoteContent)}</blockquote>`);
+          continue;
+        }
+
+        if (isBullet(line)) {
+          flushParagraph();
+          const items = [];
+          while (i < lines.length && isBullet(lines[i])) {
+            items.push(String(lines[i] || '').trim().replace(/^[-*]\s+/, ''));
+            i += 1;
+          }
+          i -= 1;
+          parts.push(`<ul>${items.map((item) => `<li>${applyInlineMarkdown(item)}</li>`).join('')}</ul>`);
+          continue;
+        }
+
+        if (isOrdered(line)) {
+          flushParagraph();
+          const items = [];
+          while (i < lines.length && isOrdered(lines[i])) {
+            items.push(String(lines[i] || '').trim().replace(/^\d+\.\s+/, ''));
+            i += 1;
+          }
+          i -= 1;
+          parts.push(`<ol>${items.map((item) => `<li>${applyInlineMarkdown(item)}</li>`).join('')}</ol>`);
+          continue;
+        }
+
+        paragraphLines.push(trimmed);
+      }
+
+      flushParagraph();
+      let html = parts.join('');
+
+      fenced.forEach((snippet, index) => {
+        html = html.replace(`__CODE_BLOCK_${index}__`, snippet);
+      });
+
+      return highlightQuotesInHtml(html);
+    }
+
+    function splitStreamingSegments(raw) {
+      const source = String(raw || '');
+      const parts = source.split(/\r?\n/);
+      if (parts.length <= 1) {
+        return { committed: '', tail: source };
+      }
+      return {
+        committed: parts.slice(0, -1).join('\n'),
+        tail: parts[parts.length - 1],
+      };
+    }
+
+    function buildStreamingPreviewHtml(text) {
+      const safe = escapeHtml(text || '');
+      if (!safe) {
+        return '';
+      }
+      return safe
+        .split(/\n/)
+        .map((line) => `<div class="bubble-text">${line || '&nbsp;'}</div>`)
+        .join('');
+    }
+
+    function sanitizeNodeTree(root, scopeSelector) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
+      const toProcess = [];
+      while (walker.nextNode()) {
+        toProcess.push(walker.currentNode);
+      }
+
+      toProcess.forEach((node) => {
+        const tag = node.tagName.toLowerCase();
+        if (!ALLOWED_TAGS.has(tag)) {
+          const fragment = document.createDocumentFragment();
+          while (node.firstChild) {
+            fragment.appendChild(node.firstChild);
+          }
+          node.replaceWith(fragment);
+          return;
+        }
+
+        Array.from(node.attributes).forEach((attr) => {
+          const name = attr.name.toLowerCase();
+          const value = String(attr.value || '');
+          if (name.startsWith('on')) {
+            node.removeAttribute(attr.name);
+            return;
+          }
+          if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(value)) {
+            node.removeAttribute(attr.name);
+            return;
+          }
+          if (name === 'style') {
+            node.removeAttribute(attr.name);
+            return;
+          }
+          if (tag !== 'a' && (name === 'target' || name === 'rel')) {
+            node.removeAttribute(attr.name);
+          }
+        });
+
+        if (tag === 'a') {
+          const href = String(node.getAttribute('href') || '');
+          if (!/^https?:\/\//i.test(href)) {
+            node.removeAttribute('href');
+          }
+          node.setAttribute('rel', 'noopener noreferrer nofollow');
+          node.setAttribute('target', '_blank');
+        }
+
+        if (tag === 'img') {
+          const src = String(node.getAttribute('src') || '');
+          if (!/^https?:\/\//i.test(src)) {
+            node.removeAttribute('src');
+          }
+          node.removeAttribute('srcset');
+          node.removeAttribute('sizes');
+          node.setAttribute('loading', 'lazy');
+          node.setAttribute('decoding', 'async');
+          node.setAttribute('referrerpolicy', 'no-referrer');
+        }
+
+        if (tag === 'style') {
+          node.textContent = sanitizeCss(node.textContent || '', scopeSelector);
+        }
+      });
+    }
+
+    function renderRichContent(container, input, options) {
+      const textNode = container.querySelector('.bubble-text');
+      const raw = input !== undefined ? String(input || '') : String((textNode && textNode.textContent) || '');
+      const mode = Object.assign({ streaming: false, finalPass: true, lineMode: false, committed: '', tail: '' }, options || {});
+      const sourceText = mode.lineMode
+        ? `${String(mode.committed || '')}${mode.committed && mode.tail ? '\n' : ''}${String(mode.tail || '')}`
+        : raw;
+      const { text, folds } = collectFoldBlocks(sourceText);
+      const safeHtmlSeed = text.replace(SCRIPTISH_TAG_RE, '');
+      const scopeId = container.dataset.renderScope || `render-scope-${Date.now()}-${++scopeSeed}`;
+      const scopeSelector = `[data-render-scope="${scopeId}"]`;
+
+      let html = '';
+      if (mode.streaming && mode.lineMode) {
+        const committedText = String(mode.committed || '');
+        const tailText = String(mode.tail || '');
+        const committedSafeSeed = committedText.replace(SCRIPTISH_TAG_RE, '');
+        const committedHtml = committedText
+          ? (HTML_TAG_RE.test(committedSafeSeed)
+            ? committedSafeSeed
+            : markdownToHtml(committedText))
+          : '';
+        const tailHtml = tailText ? `<div class="bubble-text bubble-text-streaming-tail">${escapeHtml(tailText)}</div>` : '';
+        html = `${committedHtml}${tailHtml}` || buildStreamingPreviewHtml(sourceText);
+      } else {
+        html = markdownToHtml(safeHtmlSeed);
+        if (HTML_TAG_RE.test(safeHtmlSeed)) {
+          html = safeHtmlSeed;
+        }
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+      const root = doc.body.firstElementChild || doc.body;
+      sanitizeNodeTree(root, scopeSelector);
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bubble-rich';
+      wrapper.setAttribute('data-render-scope', scopeId);
+
+      while (root.firstChild) {
+        wrapper.appendChild(root.firstChild);
+      }
+
+      if (!wrapper.childNodes.length) {
+        const fallbackText = document.createElement('div');
+        fallbackText.className = 'bubble-text';
+        fallbackText.textContent = sourceText;
+        wrapper.appendChild(fallbackText);
+      }
+
+      if (folds.length) {
+        const foldsWrap = document.createElement('div');
+        foldsWrap.className = 'bubble-folds';
+        folds.forEach((fold) => {
+          foldsWrap.appendChild(buildFold(fold.title, fold.body, fold.open));
+        });
+        wrapper.appendChild(foldsWrap);
+      }
+
+      container.replaceChildren(...wrapper.childNodes);
+      container.dataset.renderScope = scopeId;
+      container.dataset.lineMode = mode.lineMode ? 'true' : 'false';
+      container.dataset.finalPass = mode.finalPass ? 'true' : 'false';
+    }
+
+    window.renderRichContent = renderRichContent;
+    document.querySelectorAll('[data-message-content]').forEach((node) => renderRichContent(node));
+  })();
+</script>

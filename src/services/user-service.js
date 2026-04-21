@@ -1,46 +1,153 @@
 /**
  * @file src/services/user-service.js
- * @description 用户注册、登录查询与基础资料查询服务。
+ * @description
+ * 用户账户服务：注册、登录查询、用户信息读取、角色变更。
+ *
+ * 所有写操作（createUser）通过 withTransaction() 保证原子性，
+ * 兼容 MySQL 真实事务与 SQLite 的 BEGIN/COMMIT 模拟事务。
+ *
+ * 公共函数：
+ *   createUser(options)              创建新用户并自动分配默认套餐，返回新用户 ID
+ *   findUserByUsername(username)     按用户名查询
+ *   findUserByEmail(email)           按邮箱查询
+ *   findUserByPhone(phone)           按手机号查询
+ *   findUserByLogin(login)           按用户名/邮箱/手机号任一查询（用于登录）
+ *   findUserById(id)                 按 ID 查询（返回脱敏字段，不含密码哈希）
+ *   updateUserRole(userId, role)     变更用户角色
  */
 
-const { query } = require('../lib/db');
+'use strict';
 
-async function createUser({ username, passwordHash, email = null, phone = null, countryType = 'domestic', emailVerified = 0, phoneVerified = 0 }) {
-  const result = await query(
-    `INSERT INTO users (
-      username, password_hash, email, phone, country_type, email_verified, phone_verified, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-    [username, passwordHash, email, phone, countryType, emailVerified, phoneVerified],
-  );
-  return result.insertId;
+const { query, withTransaction } = require('../lib/db');
+const { assignDefaultPlanToUser } = require('./plan-service');
+
+/**
+ * 创建新用户，并在同一事务内为其分配默认套餐。
+ *
+ * 若当前无默认套餐，事务回滚并抛出错误，避免产生"无套餐"的脏数据。
+ *
+ * @param {object} options
+ * @param {string} options.username        用户名（唯一）
+ * @param {string} options.passwordHash    bcrypt 密码哈希
+ * @param {string|null} [options.email]    邮箱（可选）
+ * @param {string|null} [options.phone]    手机号（可选）
+ * @param {string} [options.countryType]   'domestic' | 'international'，默认 'domestic'
+ * @param {0|1} [options.emailVerified]    邮箱已验证标记，默认 0
+ * @param {0|1} [options.phoneVerified]    手机号已验证标记，默认 0
+ * @param {string} [options.role]          初始角色，默认 'user'
+ * @param {string} [options.status]        初始状态，默认 'active'
+ * @returns {Promise<number>} 新用户 ID
+ *
+ * @throws {Error} 用户名/邮箱/手机号重复（数据库唯一索引冲突）
+ * @throws {Error} 'Default plan is not configured'（无默认套餐）
+ */
+async function createUser({
+  username,
+  passwordHash,
+  email = null,
+  phone = null,
+  countryType = 'domestic',
+  emailVerified = 0,
+  phoneVerified = 0,
+  role = 'user',
+  status = 'active',
+}) {
+  return withTransaction(async (conn) => {
+    const [result] = await conn.execute(
+      `INSERT INTO users (
+        username, password_hash, email, phone, country_type,
+        email_verified, phone_verified, role, status,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [username, passwordHash, email, phone, countryType, emailVerified, phoneVerified, role, status],
+    );
+
+    const userId = result.insertId;
+
+    // 在同一事务内分配默认套餐，保证用户创建后一定有可用的配额
+    await assignDefaultPlanToUser(conn, userId);
+
+    return userId;
+  });
 }
 
+/**
+ * 按用户名精确查询用户（包含全部字段，用于登录密码验证）。
+ *
+ * @param {string} username
+ * @returns {Promise<object | null>}
+ */
 async function findUserByUsername(username) {
   const rows = await query('SELECT * FROM users WHERE username = ? LIMIT 1', [username]);
   return rows[0] || null;
 }
 
+/**
+ * 按邮箱精确查询用户。
+ *
+ * @param {string} email 小写邮箱
+ * @returns {Promise<object | null>}
+ */
 async function findUserByEmail(email) {
   const rows = await query('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
   return rows[0] || null;
 }
 
+/**
+ * 按手机号精确查询用户。
+ *
+ * @param {string} phone
+ * @returns {Promise<object | null>}
+ */
 async function findUserByPhone(phone) {
   const rows = await query('SELECT * FROM users WHERE phone = ? LIMIT 1', [phone]);
   return rows[0] || null;
 }
 
+/**
+ * 多字段模糊登录查询：依次匹配 username / email / phone。
+ * 用于登录接口，支持用户以任意已绑定字段作为登录账号。
+ *
+ * @param {string} login 用户输入的登录账号
+ * @returns {Promise<object | null>}
+ */
 async function findUserByLogin(login) {
+  const loginLower = String(login || '').toLowerCase();
   const rows = await query(
     'SELECT * FROM users WHERE username = ? OR email = ? OR phone = ? LIMIT 1',
-    [login, login, login],
+    [login, loginLower, login],
   );
   return rows[0] || null;
 }
 
+/**
+ * 按 ID 查询用户基础信息（不含密码哈希，用于页面展示）。
+ *
+ * @param {number} id 用户 ID
+ * @returns {Promise<object | null>}
+ */
 async function findUserById(id) {
-  const rows = await query('SELECT id, username, nickname, email, phone, country_type, email_verified, phone_verified, created_at FROM users WHERE id = ? LIMIT 1', [id]);
+  const rows = await query(
+    `SELECT
+       id, username, nickname, email, phone, country_type,
+       email_verified, phone_verified, role, status, created_at
+     FROM users
+     WHERE id = ?
+     LIMIT 1`,
+    [id],
+  );
   return rows[0] || null;
+}
+
+/**
+ * 更新用户角色（仅管理员操作）。
+ *
+ * @param {number} userId
+ * @param {'user' | 'admin'} role
+ * @returns {Promise<void>}
+ */
+async function updateUserRole(userId, role) {
+  await query('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?', [role, userId]);
 }
 
 module.exports = {
@@ -50,5 +157,5 @@ module.exports = {
   findUserByPhone,
   findUserByLogin,
   findUserById,
+  updateUserRole,
 };
-

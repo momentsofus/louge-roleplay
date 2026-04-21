@@ -4,6 +4,7 @@
  */
 
 const { redisClient } = require('../lib/redis');
+const logger = require('../lib/logger');
 const { sendVerificationEmail } = require('./email-service');
 const { hitLimit } = require('./rate-limit-service');
 const { sendLoginCodeSms } = require('./aliyun-sms-service');
@@ -25,8 +26,17 @@ async function issueEmailCode(email, ip) {
   }
 
   const code = generateCode();
-  await redisClient.setEx(`verify:email:${email}`, CODE_EXPIRE_SECONDS, code);
-  await sendVerificationEmail(email, code);
+  try {
+    await sendVerificationEmail(email, code);
+    await redisClient.setEx(`verify:email:${email}`, CODE_EXPIRE_SECONDS, code);
+  } catch (error) {
+    logger.error('Issue email code failed', {
+      ip,
+      emailMasked: String(email || '').replace(/^(.{2}).*(@.*)$/, '$1***$2'),
+      error: error.message,
+    });
+    throw error;
+  }
 }
 
 async function issuePhoneCode(phone, ip) {
@@ -36,27 +46,52 @@ async function issuePhoneCode(phone, ip) {
   }
 
   const code = generateCode();
-  await redisClient.setEx(`verify:phone:${phone}`, CODE_EXPIRE_SECONDS, code);
-  await sendLoginCodeSms(phone, code);
-  return code;
+  try {
+    await sendLoginCodeSms(phone, code);
+    await redisClient.setEx(`verify:phone:${phone}`, CODE_EXPIRE_SECONDS, code);
+    return code;
+  } catch (error) {
+    logger.error('Issue phone code failed', {
+      ip,
+      phoneMasked: `${String(phone || '').slice(0, 3)}****${String(phone || '').slice(-4)}`,
+      error: error.message,
+    });
+    throw error;
+  }
 }
 
 async function verifyEmailCode(email, code) {
-  const stored = await redisClient.get(`verify:email:${email}`);
-  const ok = Boolean(stored && stored === String(code || '').trim());
-  if (ok) {
-    await redisClient.del(`verify:email:${email}`);
+  try {
+    const stored = await redisClient.get(`verify:email:${email}`);
+    const ok = Boolean(stored && stored === String(code || '').trim());
+    if (ok) {
+      await redisClient.del(`verify:email:${email}`);
+    }
+    return ok;
+  } catch (error) {
+    logger.error('Verify email code failed', {
+      emailMasked: String(email || '').replace(/^(.{2}).*(@.*)$/, '$1***$2'),
+      error: error.message,
+    });
+    return false;
   }
-  return ok;
 }
 
 async function verifyPhoneCode(phone, code) {
-  const stored = await redisClient.get(`verify:phone:${phone}`);
-  const ok = Boolean(stored && stored === String(code || '').trim());
-  if (ok) {
-    await redisClient.del(`verify:phone:${phone}`);
+  try {
+    const stored = await redisClient.get(`verify:phone:${phone}`);
+    const ok = Boolean(stored && stored === String(code || '').trim());
+    if (ok) {
+      await redisClient.del(`verify:phone:${phone}`);
+    }
+    return ok;
+  } catch (error) {
+    logger.error('Verify phone code failed', {
+      phoneMasked: `${String(phone || '').slice(0, 3)}****${String(phone || '').slice(-4)}`,
+      error: error.message,
+    });
+    return false;
   }
-  return ok;
 }
 
 module.exports = {

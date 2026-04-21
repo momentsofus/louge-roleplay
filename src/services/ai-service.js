@@ -6,6 +6,96 @@
 const config = require('../config');
 const logger = require('../lib/logger');
 
+const THINK_TAG_PATTERN = /<\s*(think|thinking)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
+
+function normalizeTextContent(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+        if (item && typeof item === 'object') {
+          if (typeof item.text === 'string') {
+            return item.text;
+          }
+          if (typeof item.content === 'string') {
+            return item.content;
+          }
+          if (item.type === 'text' && typeof item?.text?.value === 'string') {
+            return item.text.value;
+          }
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('');
+  }
+
+  if (value && typeof value === 'object') {
+    if (typeof value.text === 'string') {
+      return value.text;
+    }
+    if (typeof value.content === 'string') {
+      return value.content;
+    }
+  }
+
+  return typeof value === 'string' ? value : '';
+}
+
+function stripThinkTags(text) {
+  return String(text || '')
+    .replace(THINK_TAG_PATTERN, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function extractReasoningText(data) {
+  const message = data?.choices?.[0]?.message || {};
+  const candidates = [
+    message.reasoning_content,
+    message.reasoning,
+    message.reasoning_text,
+    data?.choices?.[0]?.reasoning_content,
+    data?.choices?.[0]?.reasoning,
+    data?.reasoning_content,
+    data?.reasoning,
+  ];
+
+  for (const candidate of candidates) {
+    const text = normalizeTextContent(candidate).trim();
+    if (text) {
+      return text;
+    }
+  }
+
+  return '';
+}
+
+function extractMessageContent(data) {
+  const message = data?.choices?.[0]?.message || {};
+  const text = normalizeTextContent(message.content).trim();
+  if (text) {
+    return text;
+  }
+
+  return normalizeTextContent(data?.choices?.[0]?.text).trim();
+}
+
+function combineReplyContent(content, reasoning) {
+  const normalizedContent = String(content || '').trim();
+  const normalizedReasoning = String(reasoning || '').trim();
+
+  if (normalizedReasoning && normalizedContent) {
+    return `<think>\n${normalizedReasoning}\n</think>\n\n${normalizedContent}`;
+  }
+  if (normalizedReasoning) {
+    return `<think>\n${normalizedReasoning}\n</think>`;
+  }
+  return normalizedContent;
+}
+
 function buildPromptMessages({ character, messages, userMessage, systemHint = '' }) {
   return [
     {
@@ -20,10 +110,10 @@ function buildPromptMessages({ character, messages, userMessage, systemHint = ''
     },
     ...messages.slice(-24).map((message) => ({
       role: message.sender_type === 'user' ? 'user' : 'assistant',
-      content: message.content,
+      content: stripThinkTags(message.content),
     })),
     ...(userMessage
-      ? [{ role: 'user', content: userMessage }]
+      ? [{ role: 'user', content: stripThinkTags(userMessage) }]
       : []),
   ];
 }
@@ -49,7 +139,9 @@ async function callProvider(promptMessages) {
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || '……';
+  const content = extractMessageContent(data).trim();
+  const reasoning = extractReasoningText(data).trim();
+  return combineReplyContent(content, reasoning) || '……';
 }
 
 async function generateReply({ character, messages, userMessage, systemHint = '' }) {
