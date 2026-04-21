@@ -49,7 +49,7 @@ async function main() {
 
   checks.push(['config.databaseUrl', Boolean(config.databaseUrl)]);
   checks.push(['config.redisUrl', Boolean(config.redisUrl)]);
-  checks.push(['config.sessionSecret_not_default', config.sessionSecret !== 'replace_me']);
+  checks.push(['config.sessionSecret_configured', !config.sessionSecretIsEphemeral]);
 
   try {
     await checkDatabase();

@@ -88,11 +88,7 @@ function renderRegisterPage(res, options = {}) {
     captcha: options.captcha,
     form: options.form || {},
     formMessage: options.formMessage || '',
-    authConfig: {
-      graphAuthAppId: config.aliyunPhoneAuthAppId,
-      graphAuthAppKey: config.aliyunPhoneAuthAppKey,
-      numberAuthSchemeCode: config.aliyunNumberAuthSchemeCode,
-    },
+    authConfig: config.publicPhoneAuthConfig,
   });
 }
 
