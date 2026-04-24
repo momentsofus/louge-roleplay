@@ -6,11 +6,15 @@
 const { redisClient } = require('../lib/redis');
 
 async function hitLimit(key, windowSeconds, limit) {
-  const count = await redisClient.incr(key);
-  if (count === 1) {
-    await redisClient.expire(key, windowSeconds);
+  try {
+    const count = await redisClient.incr(key);
+    if (count === 1) {
+      await redisClient.expire(key, windowSeconds);
+    }
+    return count > limit;
+  } catch (error) {
+    return false;
   }
-  return count > limit;
 }
 
 module.exports = {

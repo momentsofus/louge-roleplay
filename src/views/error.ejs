@@ -1,38 +1,15 @@
-<style>
-  .error-shell {
-    max-width: 700px;
-    margin: 40px auto 0;
-  }
+<link rel="stylesheet" href="/public/styles/shared-feedback.css" />
 
-  .error-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 28px;
-    padding: 32px;
-    box-shadow: rgba(20, 20, 19, 0.06) 0px 12px 36px;
-  }
-
-  .error-card h1 {
-    font-size: 38px;
-    margin-bottom: 14px;
-  }
-
-  .error-card p {
-    color: #5e5d59;
-    line-height: 1.8;
-    margin-bottom: 12px;
-  }
-
-  .error-code {
-    color: #87867f;
-    font-size: 14px;
-  }
-</style>
-
-<div class="error-shell">
-  <div class="error-card">
-    <h1>出了点小问题</h1>
-    <p><%= message %></p>
-    <div class="error-code">错误码：<%= errorCode %></div>
+<div class="feedback-shell">
+  <div class="feedback-card feedback-card--danger">
+    <div class="feedback-kicker feedback-kicker--danger">Something went wrong</div>
+    <h1 class="feedback-title">出了点小问题</h1>
+    <p class="feedback-copy"><%= message %></p>
+    <div class="feedback-meta">
+      <div class="feedback-code"><strong>错误码</strong><%= errorCode %></div>
+      <% if (requestId) { %>
+        <div class="feedback-request-id"><strong>请求编号</strong><%= requestId %></div>
+      <% } %>
+    </div>
   </div>
 </div>

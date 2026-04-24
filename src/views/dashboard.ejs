@@ -1,81 +1,4 @@
-<style>
-  .dashboard-shell {
-    display: grid;
-    gap: 22px;
-  }
-
-  .welcome-card {
-    padding: 30px;
-    border-radius: 28px;
-    background: #141413;
-    color: #faf9f5;
-    border: 1px solid #30302e;
-    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
-  }
-
-  .welcome-card h1 {
-    color: #faf9f5;
-    font-size: 44px;
-    margin-bottom: 10px;
-  }
-
-  .welcome-card p {
-    color: #b0aea5;
-    margin: 0;
-    line-height: 1.8;
-  }
-
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .panel-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 24px;
-    padding: 24px;
-    box-shadow: rgba(20, 20, 19, 0.05) 0px 8px 24px;
-  }
-
-  .panel-card h2 {
-    font-size: 30px;
-    margin-bottom: 16px;
-  }
-
-  .list-item {
-    padding: 14px 0;
-    border-top: 1px solid #f0eee6;
-  }
-
-  .list-item:first-of-type {
-    border-top: none;
-    padding-top: 0;
-  }
-
-  .list-item strong,
-  .list-item a {
-    color: #141413;
-    font-size: 18px;
-  }
-
-  .list-item p {
-    margin: 6px 0 0;
-    color: #5e5d59;
-  }
-
-  .muted-line {
-    color: #87867f;
-    font-size: 14px;
-  }
-
-  @media (max-width: 860px) {
-    .dashboard-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
 
 <div class="dashboard-shell">
   <section class="welcome-card">
@@ -85,6 +8,37 @@
 
   <section class="dashboard-grid">
     <div class="panel-card">
+      <h2>账号状态</h2>
+      <div class="list-item">
+        <strong><%= user.username %></strong>
+        <p class="muted-line">
+          角色：<%= user.role === 'admin' ? '管理员' : '普通用户' %>
+          · 状态：<%= user.status === 'active' ? '正常' : '已限制' %>
+        </p>
+      </div>
+      <div class="list-item">
+        <strong><%= subscription ? subscription.plan_name : '未绑定套餐' %></strong>
+        <p class="muted-line">
+          计费：<%= subscription ? subscription.billing_mode : '未配置' %>
+          <% if (subscription) { %>
+            · 优先级：<%= subscription.priority_weight %>
+            · 并发保障：<%= subscription.concurrency_limit %>
+            · 请求额度：<%= subscription.request_quota %>
+            · Token 额度：<%= subscription.token_quota %>
+          <% } %>
+        </p>
+        <% if (quota && quota.usage) { %>
+          <p class="muted-line">
+            已用请求：<%= quota.usage.usedRequests %>
+            · 剩余请求：<%= quota.remainingRequests %>
+            · 已用 Token：<%= quota.usage.usedTokens %>
+            · 剩余 Token：<%= quota.remainingTokens %>
+          </p>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="panel-card">
       <h2>我的角色</h2>
       <% if (characters.length === 0) { %>
         <p class="muted-line">你还没有创建角色。先去写一个有灵魂的名字吧。</p>
@@ -93,6 +47,16 @@
         <div class="list-item">
           <strong><%= character.name %></strong>
           <p><%= character.summary %></p>
+          <div class="item-actions">
+            <a href="/characters/<%= character.id %>/edit">编辑这个角色</a>
+            <form method="POST" action="/conversations/start/<%= character.id %>">
+              <button class="text-btn" type="submit">进入对话</button>
+            </form>
+            <span class="muted-line">可见性：<%= character.visibility === 'private' ? '私有' : '公开' %></span>
+            <form method="POST" action="/characters/<%= character.id %>/delete" onsubmit="return confirm('确认删除这个角色吗？只有从未开过对话的角色才能删除。');">
+              <button class="text-btn danger" type="submit">删除角色</button>
+            </form>
+          </div>
         </div>
       <% }) %>
     </div>
@@ -115,6 +79,12 @@
               · 分支自：#<%= conversation.parent_conversation_id %>
             <% } %>
           </p>
+          <div class="item-actions">
+            <a href="/chat/<%= conversation.id %>">进入对话</a>
+            <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。');">
+              <button class="text-btn danger" type="submit">删除对话</button>
+            </form>
+          </div>
         </div>
       <% }) %>
     </div>

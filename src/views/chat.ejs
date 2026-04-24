@@ -1,392 +1,25 @@
-<style>
-  .chat-shell {
-    display: grid;
-    grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
-    gap: 22px;
-    align-items: start;
-  }
-
-  .chat-main {
-    display: grid;
-    gap: 20px;
-  }
-
-  .chat-side {
-    display: grid;
-    gap: 20px;
-    position: sticky;
-    top: 24px;
-  }
-
-  .chat-head {
-    padding: 30px;
-    border-radius: 32px;
-    background: #141413;
-    color: #faf9f5;
-    border: 1px solid #30302e;
-    box-shadow: rgba(20, 20, 19, 0.12) 0px 24px 60px;
-  }
-
-  .chat-head h1 {
-    font-size: 42px;
-    color: #faf9f5;
-    margin-bottom: 10px;
-    line-height: 1.12;
-  }
-
-  .chat-head p {
-    margin: 0;
-    color: #b0aea5;
-    line-height: 1.7;
-    font-size: 16px;
-  }
-
-  .chat-meta {
-    margin-top: 14px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .meta-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(250, 249, 245, 0.08);
-    border: 1px solid #30302e;
-    color: #b0aea5;
-    font-size: 12px;
-    letter-spacing: 0.12px;
-  }
-
-  .panel,
-  .compose-card,
-  .sidebar-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 24px;
-    padding: 22px;
-    box-shadow: rgba(20, 20, 19, 0.05) 0px 4px 24px;
-  }
-
-  .panel-title,
-  .sidebar-card h2,
-  .compose-card h2 {
-    font-size: 26px;
-    line-height: 1.18;
-    margin-bottom: 14px;
-  }
-
-  .conversation-path {
-    display: grid;
-    gap: 14px;
-  }
-
-  .bubble {
-    padding: 18px 18px 16px;
-    border-radius: 22px;
-    white-space: pre-wrap;
-    line-height: 1.75;
-    position: relative;
-    border: 1px solid transparent;
-  }
-
-  .bubble-user {
-    background: #efe2da;
-    color: #4d3f39;
-    border-color: #ead3c7;
-  }
-
-  .bubble-character {
-    background: #f3f0e8;
-    color: #2f2e2b;
-    border-color: #e8e6dc;
-  }
-
-  .bubble-system {
-    background: #f5f1e7;
-    color: #5e5d59;
-    border-color: #e8e6dc;
-  }
-
-  .bubble-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .bubble-role {
-    font-weight: 500;
-    font-size: 15px;
-    color: #141413;
-  }
-
-  .bubble-kind {
-    color: #87867f;
-    font-size: 12px;
-    letter-spacing: 0.12px;
-  }
-
-  .variant-strip,
-  .next-strip {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(94, 93, 89, 0.12);
-    display: grid;
-    gap: 10px;
-  }
-
-  .variant-strip h4,
-  .next-strip h4 {
-    margin: 0;
-    font-size: 13px;
-    color: #5e5d59;
-    font-family: Arial, sans-serif;
-  }
-
-  .chip-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 10px;
-    border-radius: 999px;
-    background: #e8e6dc;
-    color: #4d4c48;
-    border: 1px solid #d1cfc5;
-    font-size: 12px;
-    line-height: 1;
-  }
-
-  .chip.active {
-    background: #c96442;
-    border-color: #c96442;
-    color: #faf9f5;
-  }
-
-  .bubble-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 14px;
-  }
-
-  .inline-form {
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin: 0;
-  }
-
-  .inline-form textarea {
-    width: min(100%, 560px);
-    min-height: 108px;
-    resize: vertical;
-  }
-
-  .inline-btn {
-    padding: 9px 12px;
-    border-radius: 10px;
-    background: #e8e6dc;
-    color: #4d4c48;
-    border: 1px solid #d1cfc5;
-    box-shadow: 0px 0px 0px 1px #d1cfc5;
-  }
-
-  .inline-btn.primary {
-    background: #c96442;
-    border-color: #c96442;
-    box-shadow: 0px 0px 0px 1px #c96442;
-    color: #faf9f5;
-  }
-
-  .inline-btn.dark {
-    background: #30302e;
-    border-color: #30302e;
-    box-shadow: 0px 0px 0px 1px #30302e;
-    color: #faf9f5;
-  }
-
-  .compose-card textarea {
-    min-height: 150px;
-    resize: vertical;
-  }
-
-  .submit-btn {
-    margin-top: 14px;
-    background: #c96442;
-    border-color: #c96442;
-    box-shadow: 0px 0px 0px 1px #c96442;
-    color: #faf9f5;
-  }
-
-  .draft-box {
-    margin-top: 16px;
-    padding: 16px;
-    border-radius: 18px;
-    background: #f3f0e8;
-    border: 1px solid #e8e6dc;
-  }
-
-  .draft-box pre {
-    margin: 0;
-    white-space: pre-wrap;
-    color: #4d4c48;
-    line-height: 1.7;
-  }
-
-  .branch-item {
-    display: grid;
-    gap: 8px;
-    padding: 14px;
-    border-radius: 16px;
-    background: #f5f1e7;
-    border: 1px solid #e8e6dc;
-    margin-bottom: 10px;
-  }
-
-  .branch-item.active {
-    background: #141413;
-    border-color: #30302e;
-  }
-
-  .branch-item.active .branch-meta,
-  .branch-item.active .branch-preview {
-    color: #b0aea5;
-  }
-
-  .branch-meta {
-    font-size: 12px;
-    letter-spacing: 0.12px;
-    color: #87867f;
-  }
-
-  .branch-preview {
-    color: #4d4c48;
-    line-height: 1.55;
-    font-size: 14px;
-  }
-
-  .mini-note {
-    font-size: 13px;
-    color: #87867f;
-    line-height: 1.5;
-  }
-
-  .tree-list {
-    display: grid;
-    gap: 8px;
-  }
-
-  .tree-node {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid #e8e6dc;
-    background: #f8f5ee;
-    position: relative;
-  }
-
-  .tree-node::before {
-    content: '';
-    position: absolute;
-    left: -10px;
-    top: 50%;
-    width: 10px;
-    height: 1px;
-    background: #d1cfc5;
-  }
-
-  .tree-node::after {
-    content: '';
-    position: absolute;
-    left: -10px;
-    top: -14px;
-    width: 1px;
-    height: calc(50% + 14px);
-    background: #e1ddd2;
-  }
-
-  .tree-node.trail {
-    border-color: #d9c2b7;
-    background: #f5ece8;
-  }
-
-  .tree-node.trail::before,
-  .tree-node.trail::after {
-    background: #d2b0a2;
-  }
-
-  .tree-node.active {
-    background: #141413;
-    border-color: #30302e;
-  }
-
-  .tree-node.active .tree-content,
-  .tree-node.active .tree-kind,
-  .tree-node.active .tree-id {
-    color: #faf9f5;
-  }
-
-  .tree-line {
-    width: 18px;
-    height: 1px;
-    background: #d1cfc5;
-    flex: 0 0 auto;
-  }
-
-  .tree-id {
-    font-size: 12px;
-    color: #87867f;
-    min-width: 42px;
-  }
-
-  .tree-kind {
-    font-size: 12px;
-    color: #87867f;
-    min-width: 52px;
-  }
-
-  .tree-content {
-    color: #4d4c48;
-    line-height: 1.4;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tree-node form {
-    margin-left: auto;
-  }
-
-  @media (max-width: 980px) {
-    .chat-shell {
-      grid-template-columns: 1fr;
-    }
-
-    .chat-side {
-      position: static;
-    }
-  }
-</style>
-
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
+<% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+  <div class="chat-error-banner">
+    <%= errorMessage %>
+  </div>
+<% } %>
 <div class="chat-shell">
   <div class="chat-main">
     <section class="chat-head">
       <h1><%= conversation.character_name %></h1>
       <p><%= conversation.character_summary %></p>
+      <div class="chat-head-actions">
+        <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。');">
+          <button class="inline-btn danger" type="submit">删除这条对话</button>
+        </form>
+      </div>
+      <% if (conversation.composed_system_prompt) { %>
+        <div class="chat-meta chat-meta--spaced">
+          <span class="meta-pill">后台控制模型</span>
+          <span class="meta-pill">已启用提示词拼接</span>
+        </div>
+      <% } %>
       <div class="chat-meta">
         <span class="meta-pill">对话 #<%= conversation.id %></span>
         <span class="meta-pill">当前叶子 #<%= view.activeLeafId || '—' %></span>
@@ -402,6 +35,7 @@
 
     <section class="panel">
       <h2 class="panel-title">当前分支</h2>
+      <p class="section-subtitle">先把这一条线顺着读完。分支、重算、改写都收在每条消息下面，不抢正文。</p>
       <div class="conversation-path">
         <% view.pathMessages.forEach(message => { %>
           <article class="bubble bubble-<%= message.sender_type === 'system' ? 'system' : message.sender_type %>">
@@ -412,7 +46,7 @@
               <span class="bubble-kind">#<%= message.id %> · <%= message.prompt_kind || 'normal' %></span>
             </div>
 
-            <div><%= message.content %></div>
+            <div class="bubble-rich" data-message-content><div class="bubble-text"><%= message.content %></div></div>
 
             <% if (message.siblingCount > 1) { %>
               <div class="variant-strip">
@@ -448,46 +82,58 @@
               </div>
             <% } %>
 
-            <div class="bubble-actions">
-              <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-                <input type="hidden" name="leaf" value="<%= message.id %>" />
-                <button class="inline-btn" type="submit">切到这里</button>
-              </form>
+            <div class="message-tools">
+              <div class="bubble-actions bubble-actions--stacked">
+                <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
+                  <input type="hidden" name="leaf" value="<%= message.id %>" />
+                  <button class="inline-btn" type="submit">切到这里</button>
+                </form>
 
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
-                <button class="inline-btn dark" type="submit">新建独立分支对话</button>
-              </form>
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
+                  <button class="inline-btn dark" type="submit">新建独立分支对话</button>
+                </form>
 
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay">
-                <button class="inline-btn" type="submit">从这里重算后续</button>
-              </form>
+      <form method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay" class="inline-form" data-stream-endpoint="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay/stream" data-stream-mode="replay" data-stream-role-label="<%= conversation.character_name %>" data-stream-kind-label="重算中…" data-stream-sender-class="character" data-stream-preview-content="<%= (message.sender_type === 'user' ? message.content : ((message.parent_preview_user_content || message.parentUserPreviewContent || '') || '')) %>">
+                  <button class="inline-btn" type="submit">从这里重算后续</button>
+                </form>
+
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/delete" onsubmit="return confirm('确认删除这条对话记录吗？现在只允许删除没有后续消息、也没有独立分支会话引用的末端记录。');">
+                  <button class="inline-btn danger" type="submit">删除这条记录</button>
+                </form>
+
+                <% if (message.sender_type === 'character') { %>
+                  <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/regenerate/<%= message.id %>" data-stream-endpoint="/chat/<%= conversation.id %>/regenerate/<%= message.id %>/stream" data-stream-mode="regenerate" data-stream-role-label="<%= conversation.character_name %>" data-stream-kind-label="重新生成中…" data-stream-sender-class="character">
+                    <button class="inline-btn" type="submit">重新生成候选</button>
+                  </form>
+                <% } %>
+              </div>
 
               <% if (message.sender_type === 'character') { %>
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/regenerate/<%= message.id %>">
-                  <button class="inline-btn" type="submit">重新生成候选</button>
-                </form>
+                <details class="tool-details">
+                  <summary>改写这条 AI 回复</summary>
+                  <div class="tool-details-body">
+                    <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
+                      <textarea name="content" maxlength="8000" required><%= message.visibleContent %></textarea>
+                      <button class="inline-btn primary" type="submit">保存为新 AI 分支</button>
+                    </form>
+                    <div class="mini-note">这里只放可见正文，不带 think 思考内容；保存后会作为新的 AI 变体分支。</div>
+                  </div>
+                </details>
+              <% } %>
+
+              <% if (message.sender_type === 'user') { %>
+                <details class="tool-details">
+                  <summary>修改这句用户输入并重开分支</summary>
+                  <div class="tool-details-body">
+                    <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
+                      <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
+                      <button class="inline-btn primary" type="submit">修改这句并从这里重开分支</button>
+                    </form>
+                    <div class="mini-note">会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。</div>
+                  </div>
+                </details>
               <% } %>
             </div>
-
-            <% if (message.sender_type === 'character') { %>
-              <div class="draft-box">
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
-                  <textarea name="content" maxlength="8000" required><%= message.content %></textarea>
-                  <button class="inline-btn primary" type="submit">保存为新 AI 分支</button>
-                </form>
-                <div class="mini-note">不会覆盖旧内容，而是从同一父节点下创建新的 AI 变体。</div>
-              </div>
-            <% } %>
-
-            <% if (message.sender_type === 'user') { %>
-              <div class="draft-box">
-                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
-                  <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
-                  <button class="inline-btn primary" type="submit">修改这句并从这里重开分支</button>
-                </form>
-                <div class="mini-note">会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。</div>
-              </div>
-            <% } %>
           </article>
         <% }) %>
       </div>
@@ -495,59 +141,95 @@
 
     <section class="compose-card">
       <h2>继续写这一支</h2>
-      <form method="POST" action="/chat/<%= conversation.id %>/message">
+      <p class="section-subtitle">高频动作只留发送，模型切换和输入优化收起来，别把页面挤成控制台。</p>
+      <% if (chatModelSelector && chatModelSelector.options && chatModelSelector.options.length) { %>
+        <details class="compose-details">
+          <summary>模型模式</summary>
+          <div class="compose-details-body">
+            <div class="mini-note">你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 <%= chatModelSelector.maxContextTokens %>，超出后会裁到 <%= chatModelSelector.trimContextTokens %> 并自动用第 4 模型压缩历史。</div>
+            <form method="POST" action="/chat/<%= conversation.id %>/model">
+              <div class="mode-option-list">
+                <% chatModelSelector.options.forEach((option, index) => { %>
+                  <label class="mode-option <%= (conversation.selected_model_mode || 'standard') === option.mode ? 'active' : '' %>">
+                    <input type="radio" name="modelMode" value="<%= option.mode %>" <%= (conversation.selected_model_mode || 'standard') === option.mode ? 'checked' : '' %> />
+                    <div>
+                      <div><strong><%= index + 1 %>. <%= option.label %></strong></div>
+                      <div class="mini-note">已绑定可用模型，前台不展示具体 model ID。</div>
+                    </div>
+                  </label>
+                <% }) %>
+              </div>
+              <button class="inline-btn primary" type="submit">切换模型模式</button>
+            </form>
+          </div>
+        </details>
+      <% } %>
+
+      <form method="POST" action="/chat/<%= conversation.id %>/message" id="chat-compose-form" data-conversation-id="<%= conversation.id %>" data-character-name="<%= conversation.character_name %>" data-stream-endpoint="/chat/<%= conversation.id %>/message/stream" data-optimize-stream-endpoint="/chat/<%= conversation.id %>/optimize-input/stream" data-message-count="<%= view.messageCount %>">
         <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
         <label for="content">从当前节点往下写</label>
-        <textarea id="content" name="content" maxlength="4000" required placeholder="把你现在想说的话发出去。"><%= draftContent || '' %></textarea>
-        <button class="submit-btn" type="submit">发送消息</button>
+        <textarea id="content" name="content" maxlength="4000" placeholder="<%= view.messageCount === 0 ? '第一次可以直接点发送开始对话；也可以先输入你想说的话。' : '把你现在想说的话发出去。' %>"><%= draftContent || '' %></textarea>
+        <button class="submit-btn" type="submit"><%= view.messageCount === 0 ? '开始 / 发送' : '发送消息' %></button>
       </form>
 
-      <div class="draft-box">
-        <form method="POST" action="/chat/<%= conversation.id %>/optimize-input">
-          <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-          <label for="optimizeContent">先优化输入</label>
-          <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="想润色一下，就把原话贴这儿。"><%= draftContent || '' %></textarea>
-          <button class="submit-btn" type="submit">优化输入</button>
-        </form>
+      <details class="compose-details">
+        <summary>优化输入</summary>
+        <div class="compose-details-body">
+          <form method="POST" action="/chat/<%= conversation.id %>/optimize-input" class="editor-form" id="chat-optimize-form">
+            <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
+            <label for="optimizeContent">先优化输入</label>
+            <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="想润色一下，就把原话贴这儿。"><%= draftContent || '' %></textarea>
+            <button class="submit-btn" type="submit">优化输入</button>
+          </form>
 
-        <% if (optimizedContent) { %>
-          <div class="draft-box">
-            <label>优化结果</label>
-            <pre><%= optimizedContent %></pre>
-            <div class="bubble-actions">
-              <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-                <input type="hidden" name="leaf" value="<%= view.activeLeafId || '' %>" />
-                <input type="hidden" name="draft" value="<%= optimizedContent %>" />
-                <button class="inline-btn" type="submit">带回输入框</button>
-              </form>
-              <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/message">
-                <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-                <input type="hidden" name="content" value="<%= optimizedContent %>" />
-                <button class="inline-btn primary" type="submit">一键采用并发送</button>
-              </form>
+          <% if (optimizedContent) { %>
+            <div class="draft-box">
+              <label>优化结果</label>
+              <div class="rich-preview" data-message-content><div class="bubble-text"><%= optimizedContent %></div></div>
+              <div class="bubble-actions bubble-actions--solid">
+                <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
+                  <input type="hidden" name="leaf" value="<%= view.activeLeafId || '' %>" />
+                  <input type="hidden" name="draft" value="<%= optimizedContent %>" />
+                  <button class="inline-btn" type="submit">带回输入框</button>
+                </form>
+                <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/message">
+                  <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
+                  <input type="hidden" name="content" value="<%= optimizedContent %>" />
+                  <button class="inline-btn primary" type="submit">一键采用并发送</button>
+                </form>
+              </div>
             </div>
-          </div>
-        <% } %>
+          <% } %>
+        </div>
+      </details>
 
-        <% if (regeneratedPreview && regeneratedPreview.length) { %>
-          <div class="draft-box">
-            <label>本次重算生成的新片段</label>
-            <pre><% regeneratedPreview.forEach(item => { %><%= item.role %>：<%= item.content %>
-
-<% }) %></pre>
+      <% if (regeneratedPreview && regeneratedPreview.length) { %>
+        <div class="draft-box">
+          <label>本次重算生成的新片段</label>
+          <div class="rich-preview">
+            <% regeneratedPreview.forEach(item => { %>
+              <div>
+                <strong><%= item.role %>：</strong>
+                <div data-message-content><div class="bubble-text"><%= item.content %></div></div>
+              </div>
+            <% }) %>
           </div>
-        <% } %>
-      </div>
+        </div>
+      <% } %>
     </section>
   </div>
-
   <aside class="chat-side">
+    <section class="sidebar-card compact">
+      <h2>分支导航</h2>
+      <p class="mini-note">右边只保留导航用途：先看当前路径，再决定要不要切树、切叶子。</p>
+    </section>
+
     <section class="sidebar-card">
       <h2>对话树</h2>
-      <p class="mini-note">像 codeview 一样看整棵消息树。高亮的是你当前这条线，切节点就能跳过去。</p>
+      <p class="mini-note">高亮的是你当前这条线，树节点支持两行摘要，切换时不用盯着一排编号猜内容。</p>
       <div class="tree-list">
         <% view.treeEntries.forEach(node => { %>
-          <div class="tree-node <%= node.isActive ? 'active' : '' %> <%= node.isOnActiveTrail ? 'trail' : '' %>" style="margin-left: <%= node.depth * 18 %>px;">
+          <div class="tree-node <%= node.isActive ? 'active' : '' %> <%= node.isOnActiveTrail ? 'trail' : '' %>" style="margin-left: <%= node.depth * 16 %>px;">
             <span class="tree-line"></span>
             <span class="tree-id">#<%= node.id %></span>
             <span class="tree-kind"><%= node.senderType === 'user' ? '你' : 'AI' %></span>
@@ -563,7 +245,7 @@
 
     <section class="sidebar-card">
       <h2>叶子分支</h2>
-      <p class="mini-note">这里列的是当前对话里所有叶子分支。切换叶子，就等于切换你正在看的那条剧情线。</p>
+      <p class="mini-note">这里只保留“切到哪一支”的信息，避免把主阅读区打散。</p>
       <% view.branches.forEach(branch => { %>
         <div class="branch-item <%= branch.isActive ? 'active' : '' %>">
           <div class="branch-meta">叶子 #<%= branch.leafId %> · 深度 <%= branch.depth %> · <%= branch.promptKind %></div>
@@ -579,16 +261,18 @@
       <% }) %>
     </section>
 
-    <section class="sidebar-card">
-      <h2>使用方式</h2>
-      <div class="mini-note">
-        1. 重新生成：给同一条用户输入再生一个 AI 候选。<br />
-        2. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。<br />
-        3. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。<br />
-        4. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。<br />
-        5. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。<br />
-        6. 优化输入：先润色，再一键采用并发送。
+    <details class="sidebar-details">
+      <summary>使用方式</summary>
+      <div class="sidebar-details-body mini-note">
+        <div>1. 第一次进入空白对话时，可以直接点发送，系统会自动用“[开始一次新的对话]”起头一次。</div>
+        <div>2. 重新生成：给同一条用户输入再生一个 AI 候选。</div>
+        <div>3. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。</div>
+        <div>4. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。</div>
+        <div>5. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。</div>
+        <div>6. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。</div>
+        <div>7. 优化输入：先润色，再一键采用并发送。</div>
       </div>
-    </section>
+    </details>
   </aside>
 </div>
+<script src="/public/js/chat-page.js"></script>

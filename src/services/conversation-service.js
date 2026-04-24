@@ -41,17 +41,19 @@ async function createConversation(userId, characterId, options = {}) {
       parent_conversation_id,
       branched_from_message_id,
       current_message_id,
+      selected_model_mode,
       title,
       status,
       last_message_at,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, NULL, ?, 'active', NOW(), NOW(), NOW())`,
+    ) VALUES (?, ?, ?, ?, NULL, ?, ?, 'active', NOW(), NOW(), NOW())`,
     [
       userId,
       characterId,
       options.parentConversationId || null,
       options.branchedFromMessageId || null,
+      options.selectedModelMode || 'standard',
       options.title || '新对话',
     ],
   );
@@ -65,9 +67,16 @@ async function updateConversationTitle(conversationId, title) {
   );
 }
 
+async function updateConversationModelMode(conversationId, selectedModelMode) {
+  await query(
+    'UPDATE conversations SET selected_model_mode = ?, updated_at = NOW() WHERE id = ?',
+    [String(selectedModelMode || 'standard').trim(), conversationId],
+  );
+}
+
 async function getConversationById(id, userId) {
   const rows = await query(
-    `SELECT c.*, ch.name AS character_name, ch.summary AS character_summary, ch.personality, ch.first_message
+    `SELECT c.*, ch.name AS character_name, ch.summary AS character_summary, ch.personality, ch.first_message, ch.prompt_profile_json
      FROM conversations c
      JOIN characters ch ON ch.id = c.character_id
      WHERE c.id = ? AND c.user_id = ?
@@ -234,8 +243,15 @@ function safeParseJson(value) {
   }
 }
 
+function stripThinkTags(value) {
+  return String(value || '')
+    .replace(/<\s*(think|thinking)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function shortText(value, limit = 40) {
-  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
+  return stripThinkTags(value).replace(/\s+/g, ' ').trim().slice(0, limit);
 }
 
 function buildMessageMaps(allMessages) {
@@ -301,9 +317,15 @@ function buildTreeEntries(allMessages, activeIds, childrenMap) {
     });
 
   const entries = [];
+  const visited = new Set();
 
   function walk(message, depth) {
     const messageId = Number(message.id);
+    if (!messageId || visited.has(messageId)) {
+      return false;
+    }
+    visited.add(messageId);
+
     const children = childrenMap.get(messageId) || [];
     const entry = {
       id: message.id,
@@ -319,11 +341,11 @@ function buildTreeEntries(allMessages, activeIds, childrenMap) {
     entries.push(entry);
 
     let subtreeHasActive = entry.isActive;
-    children.forEach((child) => {
+    for (const child of children) {
       if (walk(child, depth + 1)) {
         subtreeHasActive = true;
       }
-    });
+    }
     entry.isOnActiveTrail = subtreeHasActive;
     return subtreeHasActive;
   }
@@ -378,12 +400,13 @@ function buildBranchDescriptor(allMessages, leaf, normalizedLeafId, childrenMap)
 
 function buildConversationView(allMessages, activeLeafId) {
   const normalizedLeafId = activeLeafId ? Number(activeLeafId) : null;
-  const { childrenMap } = buildMessageMaps(allMessages);
+  const { byId, childrenMap } = buildMessageMaps(allMessages);
   const path = buildPathMessages(allMessages, normalizedLeafId);
   const activeIds = new Set(path.map((message) => Number(message.id)));
 
   const pathMessages = path.map((message, index) => {
     const parentId = message.parent_message_id ? Number(message.parent_message_id) : null;
+    const parentMessage = parentId ? byId.get(parentId) || null : null;
     const siblingVariants = parentId && childrenMap.has(parentId)
       ? childrenMap.get(parentId).map((item) => ({
           id: item.id,
@@ -406,6 +429,8 @@ function buildConversationView(allMessages, activeLeafId) {
     return {
       ...message,
       depth: index,
+      visibleContent: stripThinkTags(message.content),
+      parentUserPreviewContent: parentMessage && parentMessage.sender_type === 'user' ? parentMessage.content : '',
       siblingVariants,
       nextChoices,
       siblingCount: siblingVariants.length,
@@ -475,9 +500,93 @@ async function cloneConversationBranch(options) {
   };
 }
 
+async function countChildConversations(conversationId) {
+  const rows = await query(
+    'SELECT COUNT(*) AS childCount FROM conversations WHERE parent_conversation_id = ?',
+    [conversationId],
+  );
+  return Number(rows[0]?.childCount || 0);
+}
+
+async function deleteMessageSafely(conversationId, messageId, userId) {
+  const conversation = await getConversationById(conversationId, userId);
+  if (!conversation) {
+    const error = new Error('CONVERSATION_NOT_FOUND');
+    error.code = 'CONVERSATION_NOT_FOUND';
+    throw error;
+  }
+
+  const targetMessage = await getMessageById(conversationId, messageId);
+  if (!targetMessage) {
+    const error = new Error('MESSAGE_NOT_FOUND');
+    error.code = 'MESSAGE_NOT_FOUND';
+    throw error;
+  }
+
+  const childMessageRows = await query(
+    'SELECT COUNT(*) AS childCount FROM messages WHERE conversation_id = ? AND parent_message_id = ?',
+    [conversationId, messageId],
+  );
+  const childMessageCount = Number(childMessageRows[0]?.childCount || 0);
+  if (childMessageCount > 0) {
+    const error = new Error('MESSAGE_HAS_CHILDREN');
+    error.code = 'MESSAGE_HAS_CHILDREN';
+    error.childMessageCount = childMessageCount;
+    throw error;
+  }
+
+  const branchedConversationRows = await query(
+    'SELECT COUNT(*) AS branchConversationCount FROM conversations WHERE parent_conversation_id = ? AND branched_from_message_id = ?',
+    [conversationId, messageId],
+  );
+  const branchConversationCount = Number(branchedConversationRows[0]?.branchConversationCount || 0);
+  if (branchConversationCount > 0) {
+    const error = new Error('MESSAGE_HAS_BRANCH_CONVERSATIONS');
+    error.code = 'MESSAGE_HAS_BRANCH_CONVERSATIONS';
+    error.branchConversationCount = branchConversationCount;
+    throw error;
+  }
+
+  await query('DELETE FROM messages WHERE id = ? AND conversation_id = ?', [messageId, conversationId]);
+
+  if (Number(conversation.current_message_id || 0) === Number(messageId)) {
+    const fallbackMessageId = targetMessage.parent_message_id ? Number(targetMessage.parent_message_id) : null;
+    await setConversationCurrentMessage(conversationId, fallbackMessageId);
+  }
+
+  await invalidateConversationCache(conversationId);
+
+  return {
+    deletedMessageId: Number(messageId),
+    fallbackMessageId: targetMessage.parent_message_id ? Number(targetMessage.parent_message_id) : null,
+  };
+}
+
+async function deleteConversationSafely(conversationId, userId) {
+  const conversation = await getConversationById(conversationId, userId);
+  if (!conversation) {
+    const error = new Error('CONVERSATION_NOT_FOUND');
+    error.code = 'CONVERSATION_NOT_FOUND';
+    throw error;
+  }
+
+  const childCount = await countChildConversations(conversationId);
+  if (childCount > 0) {
+    const error = new Error('CONVERSATION_HAS_CHILDREN');
+    error.code = 'CONVERSATION_HAS_CHILDREN';
+    error.childCount = childCount;
+    throw error;
+  }
+
+  await query('DELETE FROM messages WHERE conversation_id = ?', [conversationId]);
+  await query('DELETE FROM conversations WHERE id = ? AND user_id = ?', [conversationId, userId]);
+  await invalidateConversationCache(conversationId);
+}
+
 module.exports = {
   createConversation,
   updateConversationTitle,
+  updateConversationModelMode,
   getConversationById,
   listUserConversations,
   listMessages,
@@ -488,5 +597,8 @@ module.exports = {
   buildPathMessages,
   buildConversationView,
   cloneConversationBranch,
+  countChildConversations,
+  deleteMessageSafely,
+  deleteConversationSafely,
   invalidateConversationCache,
 };

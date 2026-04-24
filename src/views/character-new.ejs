@@ -1,76 +1,123 @@
-<style>
-  .editor-shell {
-    max-width: 860px;
-    margin: 0 auto;
-  }
-
-  .editor-card {
-    background: #faf9f5;
-    border: 1px solid #f0eee6;
-    border-radius: 28px;
-    padding: 30px;
-    box-shadow: rgba(20, 20, 19, 0.06) 0px 12px 36px;
-  }
-
-  .editor-card h1 {
-    font-size: 42px;
-    margin-bottom: 10px;
-  }
-
-  .editor-card p {
-    color: #5e5d59;
-    line-height: 1.75;
-    margin-bottom: 22px;
-  }
-
-  .field-group {
-    margin-bottom: 18px;
-  }
-
-  .field-group textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-
-  .field-group.large textarea {
-    min-height: 180px;
-  }
-
-  .submit-btn {
-    margin-top: 10px;
-    background: #c96442;
-    border-color: #c96442;
-    box-shadow: 0px 0px 0px 1px #c96442;
-    color: #faf9f5;
-  }
-
-  .submit-btn:hover {
-    background: #d97757;
-  }
-</style>
-
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
 <div class="editor-shell">
   <div class="editor-card">
-    <h1>写一个新角色</h1>
-    <p>给他一个名字、一点脾气、一句像样的开场白。写得越真，后面的对话越容易长出味道。</p>
-    <form method="POST" action="/characters/new">
+    <h1><%= mode === 'edit' ? '编辑角色' : '创建角色' %></h1>
+    <p>这页不再写那种太虚的描述了。下面这些字段里，哪些会进提示词、怎么进，我都直接摊开给你看。</p>
+
+    <div class="hint-card">
+      <strong>提示词规则</strong>
+      <ul>
+        <li><strong>会进入提示词：</strong>角色名、一句话简介、角色、描述角色性格、当前场景、当前背景、以及你额外添加并启用的片段。</li>
+        <li><strong>不会进入提示词：</strong>开场白、留空的字段、被你手动停用的额外片段。</li>
+        <li><strong>进入方式：</strong>统一按 <code>【[key]】{ value }</code> 拼接到 system prompt 里，下面预览看到的基本就是实际喂给模型的样子。</li>
+      </ul>
+    </div>
+
+    <form method="POST" action="<%= mode === 'edit' ? `/characters/${character.id}/edit` : '/characters/new' %>" id="character-form">
       <div class="field-group">
         <label for="name">角色名</label>
-        <input id="name" name="name" maxlength="100" required placeholder="比如：沈砚、阿迟、旧书店老板" />
+        <input id="name" name="name" maxlength="100" placeholder="比如：沈砚、阿迟、旧书店老板" value="<%= form?.name || '' %>" />
       </div>
+
       <div class="field-group">
-        <label for="summary">一句简介</label>
-        <textarea id="summary" name="summary" maxlength="500" required placeholder="用一句话，让人知道他大概是什么样的人。"></textarea>
+        <label for="summary">一句话简介</label>
+        <textarea id="summary" name="summary" maxlength="500" placeholder="会进入提示词。用于一句话说明这是谁，不写废话。"><%= form?.summary || '' %></textarea>
+        <div class="mini-note">会作为 `【[角色简介]】{ ... }` 进入提示词；留空就不拼接。</div>
       </div>
+
+      <div class="field-group">
+        <label for="role">角色</label>
+        <textarea id="role" name="role" maxlength="1200" placeholder="会进入提示词。写清身份、定位、和用户的关系。"><%= form?.role || '' %></textarea>
+        <div class="mini-note">会作为 `【[角色]】{ ... }` 进入提示词；留空就不拼接。</div>
+      </div>
+
       <div class="field-group large">
-        <label for="personality">性格设定</label>
-        <textarea id="personality" name="personality" maxlength="3000" required placeholder="写他的说话方式、脾气、边界、习惯，越具体越好。"></textarea>
+        <label for="traitDescription">描述角色性格</label>
+        <textarea id="traitDescription" name="traitDescription" maxlength="3000" placeholder="会进入提示词。写性格、说话方式、边界、习惯，不要写成散漫设定集。"><%= form?.traitDescription || '' %></textarea>
+        <div class="mini-note">会作为 `【[描述角色性格]】{ ... }` 进入提示词；留空就不拼接。</div>
       </div>
+
+      <div class="field-group">
+        <label for="currentScene">当前场景</label>
+        <textarea id="currentScene" name="currentScene" maxlength="2000" placeholder="会进入提示词。写此刻角色和用户所处的即时场景。"><%= form?.currentScene || '' %></textarea>
+        <div class="mini-note">会作为 `【[当前场景]】{ ... }` 进入提示词；留空就不拼接。</div>
+      </div>
+
+      <div class="field-group">
+        <label for="currentBackground">当前背景</label>
+        <textarea id="currentBackground" name="currentBackground" maxlength="2500" placeholder="会进入提示词。写支撑当前场景的背景信息、上下文、前情。"><%= form?.currentBackground || '' %></textarea>
+        <div class="mini-note">会作为 `【[当前背景]】{ ... }` 进入提示词；留空就不拼接。</div>
+      </div>
+
+      <div class="field-group">
+        <label for="visibility">是否公开</label>
+        <select id="visibility" name="visibility">
+          <option value="public" <%= (form?.visibility || 'public') === 'public' ? 'selected' : '' %>>公开（会出现在首页公开角色列表）</option>
+          <option value="private" <%= (form?.visibility || 'public') === 'private' ? 'selected' : '' %>>私有（只有我自己能看到和使用）</option>
+        </select>
+        <div class="mini-note">公开角色会显示在首页；私有角色只保留在你的控制台里，别人不能直接开始对话。</div>
+      </div>
+
       <div class="field-group large">
         <label for="firstMessage">开场白</label>
-        <textarea id="firstMessage" name="firstMessage" maxlength="2000" required placeholder="这是用户点进来后，角色看到的第一句话。"></textarea>
+        <textarea id="firstMessage" name="firstMessage" maxlength="2000" placeholder="这句不会写入 system 提示词，只会在首次开始对话时作为角色发出的第一句。"><%= form?.firstMessage || '' %></textarea>
+        <div class="mini-note">不会进入提示词。仅当用户首次开始这段对话时使用：若填写了开场白，系统会先记一条用户消息 `［开始一次新的对话］`，再由角色发出这句开场白。</div>
       </div>
-      <button class="submit-btn" type="submit">创建角色</button>
+      <div class="field-group">
+        <label>额外提示词片段</label>
+        <div class="mini-note">这里只放补充信息。支持拖动排序。空值会自动跳过，停用就不会进提示词。</div>
+        <div class="drag-tip">拖住每一块就能改顺序；下面的预览会实时更新。</div>
+      </div>
+
+      <div id="prompt-items">
+        <% (extraPromptItems || []).forEach((item, index) => { %>
+          <div class="prompt-item" draggable="true">
+            <div class="prompt-grid">
+              <label>
+                key
+                <input type="text" name="extraPromptItemKey" value="<%= item.key %>" placeholder="比如：禁忌 / 世界规则 / 特殊要求" />
+              </label>
+              <label>
+                value
+                <textarea name="extraPromptItemValue" rows="4" placeholder="写这个补充片段的内容"><%= item.value %></textarea>
+              </label>
+              <label>
+                启用
+                <select name="extraPromptItemEnabled">
+                  <option value="1" <%= item.isEnabled ? 'selected' : '' %>>启用</option>
+                  <option value="0" <%= item.isEnabled ? '' : 'selected' %>>停用</option>
+                </select>
+              </label>
+            </div>
+            <div class="prompt-actions">
+              <button type="button" class="ghost-btn" data-action="remove">删除这项</button>
+              <span class="mini-note">当前顺序：<span data-order><%= index + 1 %></span></span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="prompt-actions">
+        <button class="ghost-btn" type="button" id="add-prompt-item">新增额外片段</button>
+        <button class="ghost-btn" type="button" id="preview-character-prompt">刷新预览</button>
+      </div>
+
+      <div id="character-prompt-preview" class="preview-box live"></div>
+
+      <button class="submit-btn" type="submit"><%= mode === 'edit' ? '保存角色' : '创建角色' %></button>
     </form>
+
+    <% if (mode === 'edit' && character) { %>
+      <section class="danger-zone">
+        <h3>危险操作</h3>
+        <p>删除角色会先走后端安全校验。现在只允许删除“还没有任何对话记录”的角色；只要这个角色已经开过对话，就会被拦住，避免把分支会话整串误删。</p>
+        <div class="prompt-actions">
+          <form method="POST" action="/characters/<%= character.id %>/delete" onsubmit="return confirm('确认删除这个角色吗？只有从未开过对话的角色才能删除。');">
+            <button type="submit" class="ghost-btn danger-btn">删除这个角色</button>
+          </form>
+        </div>
+      </section>
+    <% } %>
   </div>
 </div>
+<script src="/public/js/character-editor-page.js"></script>

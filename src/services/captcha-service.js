@@ -59,6 +59,18 @@ async function createCaptcha() {
   };
 }
 
+async function invalidateCaptcha(captchaId) {
+  if (!captchaId) {
+    return;
+  }
+  await redisClient.del(`captcha:${captchaId}`);
+}
+
+async function refreshCaptcha(previousCaptchaId = '') {
+  await invalidateCaptcha(String(previousCaptchaId || '').trim());
+  return createCaptcha();
+}
+
 async function getCaptchaImage(captchaId) {
   if (!captchaId) {
     return null;
@@ -67,7 +79,12 @@ async function getCaptchaImage(captchaId) {
   if (!stored) {
     return null;
   }
-  const parsed = JSON.parse(stored);
+  let parsed;
+  try {
+    parsed = JSON.parse(stored);
+  } catch (_) {
+    return null;
+  }
   return parsed.svg || null;
 }
 
@@ -81,7 +98,12 @@ async function verifyCaptcha(captchaId, captchaText, consume = true) {
     return false;
   }
 
-  const parsed = JSON.parse(stored);
+  let parsed;
+  try {
+    parsed = JSON.parse(stored);
+  } catch (_) {
+    return false;
+  }
   const isValid = parsed.answer === String(captchaText).trim().toUpperCase();
   if (isValid && consume) {
     await redisClient.del(`captcha:${captchaId}`);
@@ -91,6 +113,8 @@ async function verifyCaptcha(captchaId, captchaText, consume = true) {
 
 module.exports = {
   createCaptcha,
+  refreshCaptcha,
+  invalidateCaptcha,
   getCaptchaImage,
   verifyCaptcha,
 };
