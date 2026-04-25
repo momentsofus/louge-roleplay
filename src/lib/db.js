@@ -130,7 +130,8 @@ async function initMySQL() {
     connectionLimit: 10,
     charset: 'utf8mb4',
     connectTimeout: 3000,
-    acquireTimeout: 3000,
+    waitForConnections: true,
+    queueLimit: 0,
   });
 
   // 获取一个连接作为连通性验证，随即归还

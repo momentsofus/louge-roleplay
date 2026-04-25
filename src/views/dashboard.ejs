@@ -26,13 +26,13 @@
   <section class="hero-card dashboard-hero">
     <div class="dashboard-hero-copy">
       <div class="section-kicker">控制台</div>
-      <h1>欢迎回来，<%= user.username %></h1>
+      <h1><%= t('欢迎回来，{username}', { username: user.username }) %></h1>
       <p>这里把账号状态、角色和最近会话都收拢到一页里了。先看状态，再决定是继续聊、补角色，还是顺手整理一下自己的空间。</p>
       <div class="dashboard-actions">
-        <a class="quick-link" href="/characters/new">创建新角色</a>
+        <a class="quick-link" href="/characters/new"><%= t('创建新角色') %></a>
         <a class="quick-link" href="/">逛公开角色</a>
         <% if (conversationList.length > 0) { %>
-          <a class="quick-link" href="/chat/<%= conversationList[0].id %>">继续最近会话</a>
+          <a class="quick-link" href="/chat/<%= conversationList[0].id %>"><%= t('继续最近会话') %></a>
         <% } %>
       </div>
     </div>
@@ -40,15 +40,15 @@
     <div class="hero-meta dashboard-hero-meta">
       <div class="hero-stat">
         <strong>账号身份</strong>
-        <span><%= isAdmin ? '管理员' : '普通用户' %> · <%= isActive ? '状态正常' : '当前受限' %></span>
+        <span><%= t(isAdmin ? '管理员' : '普通用户') %> · <%= t(isActive ? '状态正常' : '当前受限') %></span>
       </div>
       <div class="hero-stat">
         <strong>当前套餐</strong>
-        <span><%= hasSubscription ? subscription.plan_name : '还没有绑定套餐' %></span>
+        <span><%= hasSubscription ? subscription.plan_name : t('还没有绑定套餐') %></span>
       </div>
       <div class="hero-stat">
         <strong>最近可做的事</strong>
-        <span><%= conversationList.length > 0 ? '接着上次会话往下聊，或者回头整理角色设定。' : '先写一个角色，再开始第一段对话。' %></span>
+        <span><%= t(conversationList.length > 0 ? '接着上次会话往下聊，或者回头整理角色设定。' : '先写一个角色，再开始第一段对话。') %></span>
       </div>
     </div>
   </section>
@@ -67,8 +67,8 @@
       <span>累计会话数</span>
     </article>
     <article class="stat-card">
-      <strong><%= hasSubscription ? subscription.plan_name : '未配置' %></strong>
-      <span><%= hasSubscription ? ('计费方式：' + subscription.billing_mode) : '需要管理员先给你绑定套餐' %></span>
+      <strong><%= hasSubscription ? subscription.plan_name : t('未配置') %></strong>
+      <span><%= hasSubscription ? t('计费方式：{billingMode}', { billingMode: subscription.billing_mode }) : t('需要管理员先给你绑定套餐') %></span>
     </article>
   </section>
 
@@ -99,22 +99,22 @@
                 <div class="dashboard-item-head">
                   <div>
                     <h3><%= character.name %></h3>
-                    <p class="dashboard-item-summary"><%= character.summary || '这个角色还没有写简介。' %></p>
+                    <p class="dashboard-item-summary"><%= character.summary || t('这个角色还没有写简介。') %></p>
                   </div>
                   <div class="subscription-meta">
-                    <span class="meta-pill"><%= character.visibility === 'private' ? '私有' : '公开' %></span>
-                    <span class="meta-pill">角色 #<%= character.id %></span>
+                    <span class="meta-pill"><%= t(character.visibility === 'private' ? '私有' : '公开') %></span>
+                    <span class="meta-pill"><%= t('角色 #{id}', { id: character.id }) %></span>
                   </div>
                 </div>
                 <div class="dashboard-item-meta">
-                  <span>创建时间：<%= character.created_at %></span>
+                  <span><%= t('创建时间：{createdAt}', { createdAt: character.created_at }) %></span>
                 </div>
                 <div class="bubble-actions bubble-actions--solid dashboard-actions-row">
-                  <a class="quick-link" href="/characters/<%= character.id %>/edit">编辑角色</a>
+                  <a class="quick-link" href="/characters/<%= character.id %>/edit"><%= t('编辑角色') %></a>
                   <form method="POST" action="/conversations/start/<%= character.id %>">
                     <button class="inline-btn" type="submit">进入对话</button>
                   </form>
-                  <form method="POST" action="/characters/<%= character.id %>/delete" onsubmit="return confirm('确认删除这个角色吗？只有从未开过对话的角色才能删除。');">
+                  <form method="POST" action="/characters/<%= character.id %>/delete" onsubmit="return confirm('<%= t('确认删除这个角色吗？只有从未开过对话的角色才能删除。') %>');">
                     <button class="inline-btn is-danger" type="submit">删除角色</button>
                   </form>
                 </div>
@@ -144,24 +144,24 @@
                 <div class="dashboard-item-head">
                   <div>
                     <h3><%= conversation.character_name %></h3>
-                    <p class="dashboard-item-summary">标题：<%= conversation.title || '未命名对话' %></p>
+                    <p class="dashboard-item-summary"><%= t('标题：{title}', { title: conversation.title || t('未命名对话') }) %></p>
                   </div>
                   <div class="subscription-meta">
-                    <span class="meta-pill">对话 #<%= conversation.id %></span>
+                    <span class="meta-pill"><%= t('对话 #{id}', { id: conversation.id }) %></span>
                     <% if (conversation.current_message_id) { %>
-                      <span class="meta-pill">当前叶子 #<%= conversation.current_message_id %></span>
+                      <span class="meta-pill"><%= t('当前叶子 #{id}', { id: conversation.current_message_id }) %></span>
                     <% } %>
                   </div>
                 </div>
                 <div class="dashboard-item-meta">
-                  <span>最近更新：<%= conversation.updated_at %></span>
+                  <span><%= t('最近更新：{updatedAt}', { updatedAt: conversation.updated_at }) %></span>
                   <% if (conversation.parent_conversation_id) { %>
-                    <span>分支来源：#<%= conversation.parent_conversation_id %></span>
+                    <span><%= t('分支来源：#{id}', { id: conversation.parent_conversation_id }) %></span>
                   <% } %>
                 </div>
                 <div class="bubble-actions bubble-actions--solid dashboard-actions-row">
-                  <a class="quick-link" href="/chat/<%= conversation.id %>">进入对话</a>
-                  <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。');">
+                  <a class="quick-link" href="/chat/<%= conversation.id %>"><%= t('进入对话') %></a>
+                  <form method="POST" action="/chat/<%= conversation.id %>/delete" onsubmit="return confirm('<%= t('确认删除这条对话吗？只有没有子分支会话的末端对话才能删除。') %>');">
                     <button class="inline-btn is-danger" type="submit">删除对话</button>
                   </form>
                 </div>
@@ -185,14 +185,14 @@
         <div class="subscription-card">
           <div>
             <strong><%= user.username %></strong>
-            <p class="dashboard-note"><%= isAdmin ? '管理员账号' : '普通用户账号' %> · <%= isActive ? '目前可正常使用' : '当前状态受限' %></p>
+            <p class="dashboard-note"><%= t(isAdmin ? '管理员账号' : '普通用户账号') %> · <%= t(isActive ? '目前可正常使用' : '当前状态受限') %></p>
           </div>
 
           <% if (hasSubscription) { %>
             <div class="subscription-meta">
               <span class="meta-pill"><%= subscription.plan_name %></span>
               <span class="meta-pill"><%= subscription.billing_mode %></span>
-              <span class="meta-pill">优先级 <%= subscription.priority_weight %></span>
+              <span class="meta-pill"><%= t('优先级 {priority}', { priority: subscription.priority_weight }) %></span>
             </div>
             <ul class="feature-list">
               <li>并发保障：<strong><%= subscription.concurrency_limit %></strong></li>
@@ -224,20 +224,20 @@
               </div>
               <div class="quota-bar"><span style="width: <%= requestUsagePercent %>%"></span></div>
               <div class="dashboard-item-meta">
-                <span>剩余请求：<%= safeNum(quota.remainingRequests) %></span>
-                <span>已用占比：<%= requestUsagePercent %>%</span>
+                <span><%= t('剩余请求：{count}', { count: safeNum(quota.remainingRequests) }) %></span>
+                <span><%= t('已用占比：{percent}%', { percent: requestUsagePercent }) %></span>
               </div>
             </div>
 
             <div class="quota-row">
               <div class="quota-row-head">
-                <span>Token 额度</span>
+                <span><%= t('Token 额度') %></span>
                 <strong><%= safeNum(quota.usage.usedTokens) %> / <%= tokenQuotaTotal %></strong>
               </div>
               <div class="quota-bar"><span style="width: <%= tokenUsagePercent %>%"></span></div>
               <div class="dashboard-item-meta">
-                <span>剩余 Token：<%= safeNum(quota.remainingTokens) %></span>
-                <span>已用占比：<%= tokenUsagePercent %>%</span>
+                <span><%= t('剩余 Token：{count}', { count: safeNum(quota.remainingTokens) }) %></span>
+                <span><%= t('已用占比：{percent}%', { percent: tokenUsagePercent }) %></span>
               </div>
             </div>
           </div>
@@ -258,7 +258,7 @@
         <div class="dashboard-shortcuts">
           <a class="quick-link" href="/characters/new">写一个新角色</a>
           <% if (conversationList.length > 0) { %>
-            <a class="quick-link" href="/chat/<%= conversationList[0].id %>">继续最新会话</a>
+            <a class="quick-link" href="/chat/<%= conversationList[0].id %>"><%= t('继续最新会话') %></a>
           <% } %>
           <% if (isAdmin) { %>
             <a class="quick-link" href="/admin">去管理后台</a>

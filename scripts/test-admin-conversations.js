@@ -7,6 +7,7 @@ const assert = require('assert');
 const path = require('path');
 const ejs = require('ejs');
 const { listAdminConversations, getAdminConversationDetail } = require('../src/services/admin-conversation-service');
+const { translate } = require('../src/i18n');
 
 async function main() {
   const result = await listAdminConversations({ page: 1, pageSize: 5 });
@@ -15,9 +16,11 @@ async function main() {
   assert.ok(result.filterOptions && Array.isArray(result.filterOptions.users), 'users filter options should exist');
   assert.ok(result.filterOptions && Array.isArray(result.filterOptions.characters), 'characters filter options should exist');
 
+  const t = (key, vars) => translate('zh-CN', key, vars);
   const html = await ejs.renderFile(path.join(process.cwd(), 'src/views/admin-conversations.ejs'), {
     conversationResult: result,
     buildPageUrl: (page) => `/admin/conversations?page=${page}`,
+    t,
   });
   assert.ok(html.includes('全局对话记录'), 'list view should render title');
   assert.ok(html.includes('角色卡'), 'list view should render character filter');
@@ -27,7 +30,7 @@ async function main() {
   if (result.conversations.length) {
     const detail = await getAdminConversationDetail(result.conversations[0].id);
     assert.ok(detail && detail.conversation, 'detail should load existing conversation');
-    const detailHtml = await ejs.renderFile(path.join(process.cwd(), 'src/views/admin-conversation-detail.ejs'), { detail });
+    const detailHtml = await ejs.renderFile(path.join(process.cwd(), 'src/views/admin-conversation-detail.ejs'), { detail, t });
     assert.ok(detailHtml.includes('完整消息链'), 'detail view should render message list title');
   }
 

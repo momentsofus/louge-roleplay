@@ -29,7 +29,7 @@
       form.dataset.messageCount = String(Math.max(Number(form.dataset.messageCount || '0'), 1));
       const activeLeafMeta = document.querySelector('[data-active-leaf-label]');
       if (activeLeafMeta) {
-        activeLeafMeta.textContent = `当前叶子 #${normalizedLeafId}`;
+        activeLeafMeta.textContent = t('当前叶子 #{id}', { id: normalizedLeafId });
       }
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('leaf', normalizedLeafId);
@@ -39,7 +39,7 @@
     function ensureStartMessage() {
       const currentMessageCount = Number(form.dataset.messageCount || '0');
       if (currentMessageCount === 0 && !textarea.value.trim()) {
-        textarea.value = '[开始一次新的对话]';
+        textarea.value = t('[开始一次新的对话]');
       }
     }
 

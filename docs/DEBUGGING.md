@@ -63,6 +63,12 @@ journalctl -u ai-roleplay-site.service --since '30 min ago' | grep '<requestId>'
 - `[redis] REDIS_URL 未设置，使用内存模式`：开发可接受，生产不建议。
 - 消息树缓存异常不应阻塞业务；会记录 warning 并回源 DB。
 
+## 全流程测试
+
+- 入口：`npm run full-flow:test`。
+- 覆盖：DB/Redis、用户创建与默认套餐、角色创建/编辑、会话消息树、真实 LLM 流式回复与输入优化、聊天页渲染、后台对话/日志查询、删除保护。
+- 测试脚本使用唯一临时数据，结束时会尽量删除新增用户、角色、会话、LLM job/usage 记录。若中途被强杀，可按输出的 userId / characterId / conversationId 做人工清理。
+
 ## 加日志约定
 
 - 业务成功：`logger.info('xxx succeeded', { requestId, ... })`

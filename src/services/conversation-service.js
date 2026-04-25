@@ -16,6 +16,25 @@ const logger = require('../lib/logger');
 
 const MESSAGE_TREE_CACHE_TTL_SECONDS = 60;
 
+const MESSAGE_PROMPT_KIND_VALUES = new Set([
+  'normal',
+  'regenerate',
+  'branch',
+  'edit',
+  'optimized',
+  'replay',
+  'conversation-start',
+  'first-message',
+]);
+
+function normalizeMessagePromptKind(value) {
+  const raw = String(value || '').trim();
+  if (!raw || raw === 'chat') {
+    return 'normal';
+  }
+  return MESSAGE_PROMPT_KIND_VALUES.has(raw) ? raw : 'normal';
+}
+
 function getConversationMessagesCacheKey(conversationId) {
   return `conversation:${conversationId}:messages:v2`;
 }
@@ -202,7 +221,7 @@ async function addMessage(options) {
       options.parentMessageId || null,
       options.branchFromMessageId || null,
       options.editedFromMessageId || null,
-      options.promptKind || 'normal',
+      normalizeMessagePromptKind(options.promptKind),
       options.metadataJson || null,
     ],
   );
@@ -603,6 +622,7 @@ async function deleteConversationSafely(conversationId, userId) {
 }
 
 module.exports = {
+  normalizeMessagePromptKind,
   createConversation,
   updateConversationTitle,
   updateConversationModelMode,

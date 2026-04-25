@@ -117,6 +117,7 @@ const FILE_NOTES = {
   'src/services/rate-limit-service.js': '基于 Redis/内存 incr+expire 的轻量限流。被登录/注册/验证码调用。',
   'src/services/user-service.js': '用户创建、登录查询、资料更新、角色更新。',
   'src/services/verification-service.js': '邮箱/手机验证码签发与验证编排。调用 email/sms/rate-limit/captcha。',
+  'scripts/full-flow-e2e.js': '全流程 E2E 测试脚本：创建临时用户/角色/会话，验证消息树、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。',
   'public/js/chat-page.js': '聊天页前端核心：流式 NDJSON 消费、富文本/Markdown 渲染、思考块折叠、加载历史、输入优化。',
   'public/js/admin-page.js': '后台交互：套餐字段切换、Prompt 片段排序/预览、后台列表过滤。',
   'public/js/character-editor-page.js': '角色编辑器动态字段：提示词条目增删、排序、预览。',
@@ -153,6 +154,7 @@ const FUNCTION_NOTES = {
   deleteCharacterSafely: '安全删除角色；已有会话时拒绝删除。',
   createConversation: '创建会话，可带父会话/分支来源/模型模式/标题。',
   addMessage: '按 sequence_no 追加消息并失效消息树缓存。',
+  normalizeMessagePromptKind: '规范化 messages.prompt_kind 写库值；兼容旧调用传入 chat，并回落到 normal，避免 MySQL ENUM 写入截断。',
   listMessages: '读取整棵消息树，优先 Redis 缓存，失败回源数据库。',
   buildPathMessages: '从消息树中取当前叶子到根的路径，作为上下文/展示主线。',
   buildConversationView: '构造聊天页需要的路径、树、分支描述等 view model。',
@@ -306,6 +308,10 @@ function generateDebugGuide() {
 `### 5. Redis / 缓存异常\n\n` +
 `- \`[redis] REDIS_URL 未设置，使用内存模式\`：开发可接受，生产不建议。\n` +
 `- 消息树缓存异常不应阻塞业务；会记录 warning 并回源 DB。\n\n` +
+`## 全流程测试\n\n` +
+`- 入口：\`npm run full-flow:test\`。\n` +
+`- 覆盖：DB/Redis、用户创建与默认套餐、角色创建/编辑、会话消息树、真实 LLM 流式回复与输入优化、聊天页渲染、后台对话/日志查询、删除保护。\n` +
+`- 测试脚本使用唯一临时数据，结束时会尽量删除新增用户、角色、会话、LLM job/usage 记录。若中途被强杀，可按输出的 userId / characterId / conversationId 做人工清理。\n\n` +
 `## 加日志约定\n\n` +
 `- 业务成功：\`logger.info('xxx succeeded', { requestId, ... })\`\n` +
 `- 可恢复异常：\`logger.warn('xxx failed but fallback', { requestId, error })\`\n` +

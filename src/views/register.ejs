@@ -79,9 +79,9 @@
             <div class="captcha-row">
               <input id="captchaText" name="captchaText" maxlength="10" placeholder="输入图形验证码" autocomplete="off" />
               <div class="captcha-box">
-                <img id="captchaImage" src="<%= captcha.imageUrl %>" alt="图形验证码" />
+                <img id="captchaImage" src="<%= captcha.imageUrl %>" alt="<%= t('图形验证码') %>" />
               </div>
-              <button class="btn-soft" type="button" onclick="refreshCaptcha('已刷新图形验证码，请输入新的验证码。')">刷新验证码</button>
+              <button class="btn-soft" type="button" onclick="refreshCaptcha(window.AI_ROLEPLAY_I18N.t('已刷新图形验证码，请输入新的验证码。'))">刷新验证码</button>
             </div>
             <div class="subtle-note" id="captchaHint">图形验证码只用于发送短信/邮箱验证码；发送成功后会自动刷新，下一次发送验证码时再填写新的图形验证码。</div>
           </div>

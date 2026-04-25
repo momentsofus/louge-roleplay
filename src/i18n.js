@@ -204,7 +204,7 @@ const ZH_MESSAGES = {
   "删除角色会先走后端安全校验。现在只允许删除“还没有任何对话记录”的角色；只要这个角色已经开过对话，就会被拦住，避免把分支会话整串误删。": "为了保护已有故事，现在只允许删除从未开始过对话的角色。已经聊过的角色会先保留，避免误删整段关系。",
   "同一节点下的候选版本": "这一处的其他版本",
   "会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。": "会从这句话重新长出一条新线，旧版本不会被覆盖。",
-  "你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 {maxContextTokens}，超出后会裁到 {trimContextTokens} 并自动用第 4 模型压缩历史。": "你可以切换不同回应风格。长对话会自动整理记忆，让故事继续顺畅往下走。",
+  "你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 {maxContextTokens}，超出后会裁到 {trimContextTokens} 并自动用第 4 模型压缩历史。": "你可以切换不同回应风格。当前上下文上限 {maxContextTokens}，超出后会裁到 {trimContextTokens}，长对话会自动整理记忆。",
   "已绑定可用模型，前台不展示具体 model ID。": "当前回应风格已可使用。",
   "从当前节点往下写": "从这里继续写",
   "一键采用并发送": "采用并发送",
@@ -320,12 +320,14 @@ const EN_MESSAGES = {
   "图形验证码": "Image check",
   "输入图形验证码": "Enter the image code",
   "刷新验证码": "Refresh image",
+  "图形验证码只用于发送短信/邮箱验证码；发送成功后会自动刷新，下一次发送验证码时再填写新的图形验证码。": "The image check is only used when sending SMS or email codes. After a code is sent successfully, it refreshes automatically; enter the new image code the next time you send a code.",
   "发送验证码后，图形验证码会自动刷新，你需要输入新的验证码。": "After a code is sent, the image will refresh. Enter the new image code before continuing.",
   "短信验证码": "SMS code",
   "输入 6 位短信验证码": "Enter the 6-digit SMS code",
   "发送短信验证码": "Send SMS code",
   "显示邮箱注册项": "Show email sign-up",
   "国内用户可选填邮箱；国外用户会直接显示邮箱区。": "Email is optional for mainland China users and shown by default for international sign-up.",
+  "国内用户可选填邮箱；国外用户会直接显示邮箱区。若填写邮箱，也需要先发送并输入邮箱验证码。": "Email is optional for mainland China users and shown by default for international sign-up. If you enter an email, send and enter the email code first.",
   "邮箱验证": "Email Verification",
   "海外注册仅支持主流邮箱域名。国内用户如果想额外绑定邮箱，也可以在这里操作。": "International sign-up supports major email providers. Mainland China users may also add an email here.",
   "邮箱": "Email",
@@ -359,6 +361,7 @@ const EN_MESSAGES = {
   "控制台": "Dashboard",
   "欢迎回来，{username}": "Welcome back, {username}",
   "这里把账号状态、角色和最近会话都收拢到一页里了。先看状态，再决定是继续聊、补角色，还是顺手整理一下自己的空间。": "Your account, characters, and recent conversations are gathered here. Check what needs attention, then continue a scene, refine a character, or tidy your space.",
+  "创建新角色": "Create new character",
   "逛公开角色": "Browse public characters",
   "继续最近会话": "Continue latest conversation",
   "管理员 · 状态正常": "Admin · active",
@@ -414,6 +417,7 @@ const EN_MESSAGES = {
   "请求额度": "Message allowance",
   "剩余请求：{count}": "Messages left: {count}",
   "已用占比：{percent}%": "Used: {percent}%",
+  "Token 额度": "Writing allowance",
   "剩余 Token：{count}": "Writing allowance left: {count}",
   "当前没有可展示的配额快照。通常是因为账号还没绑定有效套餐。": "No usage snapshot is available yet. This usually means the account has no active plan.",
   "快捷入口": "Shortcuts",
@@ -423,6 +427,41 @@ const EN_MESSAGES = {
   "继续最新会话": "Continue latest conversation",
   "去管理后台": "Open admin",
   "回首页看看": "Back to home",
+
+  "全局对话记录": "Global Conversations",
+  "全站会话集中在这里看。按用户、角色卡、日期筛一下，再点详情看完整消息链，别再翻数据库了。": "All site conversations are gathered here. Filter by user, character, or date, then open details for the full message chain — no database digging needed.",
+  "匹配会话": "Matched conversations",
+  "当前页": "Current page",
+  "本页消息数": "Messages on this page",
+  "日志查询": "Logs",
+  "对话记录": "Conversation records",
+  "角色卡": "Character card",
+  "创建时间": "Created",
+  "更新时间": "Updated",
+  "筛选条件": "Filters",
+  "角色卡、日期、用户都能筛。留空就是看全局。": "Filter by character, date, or user. Leave fields blank to view everything.",
+  "全部用户": "All users",
+  "全部角色卡": "All characters",
+  "日期": "Date",
+  "每页": "Per page",
+  "查询对话": "Search conversations",
+  "清空筛选": "Clear filters",
+  "会话列表": "Conversation List",
+  "上一页": "Previous",
+  "下一页": "Next",
+  "没查到对话": "No conversations found",
+  "换个用户、角色卡或日期试试。": "Try another user, character, or date.",
+  "消息 {count}": "Messages {count}",
+  "更新 {updatedAt}": "Updated {updatedAt}",
+  "查看详情": "View details",
+  "最后消息": "Last message",
+  "暂无消息内容": "No message content yet",
+  "对话 #{id}": "Conversation #{id}",
+  "消息总数": "Total messages",
+  "返回对话列表": "Back to conversation list",
+  "完整消息链": "Full Message Chain",
+  "按 sequence_no 顺序展示。这里是后台只读查看，不会改动对话。": "Displayed by sequence_no. This admin view is read-only and will not change the conversation.",
+  "这条会话还没有消息": "This conversation has no messages yet",
   "Admin Console": "Admin Console",
   "管理员后台": "Admin Console",
   "配置类内容我已经从总后台里拆开了。这里保留总览和用户权限，LLM、套餐、Prompt 都去各自单独页面，终于不挤成一锅了。": "The admin console is now cleaner: overview and user access stay here, while model, plan, and writing-control settings each have their own page.",
@@ -634,7 +673,7 @@ const EN_MESSAGES = {
   "继续写这一支": "Continue this branch",
   "高频动作只留发送，模型切换和输入优化收起来，别把页面挤成控制台。": "The main action stays simple: send. Model choices and polishing tools are tucked away so the page still feels like a conversation.",
   "模型模式": "Response style",
-  "你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 {maxContextTokens}，超出后会裁到 {trimContextTokens} 并自动用第 4 模型压缩历史。": "Choose the response style that fits the scene. Longer conversations will be kept manageable automatically.",
+  "你可以自由切换 1-3 模式。这里只显示模式名称，不显示真实模型 ID。当前 Provider 上下文上限 {maxContextTokens}，超出后会裁到 {trimContextTokens} 并自动用第 4 模型压缩历史。": "Choose response styles 1-3. The real model IDs stay hidden here. Current provider context limit is {maxContextTokens}; after it exceeds that, history is trimmed to {trimContextTokens} and compressed automatically with model 4.",
   "已绑定可用模型，前台不展示具体 model ID。": "A response style is ready to use.",
   "切换模型模式": "Change response style",
   "从当前节点往下写": "Continue from here",
@@ -703,9 +742,11 @@ const EN_MESSAGES = {
   "先填邮箱": "Enter your email first",
   "先填图形验证码": "Enter the image code first",
   "邮箱验证码处理完成，请输入新的图形验证码。": "Email code handled. Enter the new image code before continuing.",
+  "邮箱验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。": "Email code handled. You only need to enter a new image code when sending another code.",
   "已发送": "Sent",
   "先填手机号和图形验证码": "Enter your phone number and image code first",
   "短信验证码处理完成，请输入新的图形验证码。": "SMS code handled. Enter the new image code before continuing.",
+  "短信验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。": "SMS code handled. You only need to enter a new image code when sending another code.",
   "图形验证码已刷新，请输入新的验证码。": "The image code has refreshed. Please enter the new one.",
   "已刷新图形验证码，请输入新的验证码。": "Image code refreshed. Please enter the new one.",
   "这里只有管理员能进。": "Only admins can access this page.",
@@ -728,11 +769,13 @@ const EN_MESSAGES = {
   "海外用户仅支持 Gmail、Outlook、Hotmail、Live、iCloud、Yahoo、AOL、Proton 等主流邮箱，请输入新的图形验证码后重试。": "International sign-up currently supports major email providers such as Gmail, Outlook, Hotmail, Live, iCloud, Yahoo, AOL, and Proton. Enter the new image code and try again.",
   "邮箱已被注册，请输入新的图形验证码后重试。": "This email is already registered. Enter the new image code and try again.",
   "邮箱验证码已发送，请输入新的图形验证码以继续后续操作。": "Email code sent. Enter the new image code before the next step.",
+  "邮箱验证码已发送。图形验证码已刷新；只有再次发送验证码时才需要填写新的图形验证码。": "Email code sent. The image code has refreshed; only enter it again when sending another code.",
   "{errorMessage}，请输入新的图形验证码后重试。": "{errorMessage}. Enter the new image code and try again.",
   "发送失败": "Send failed",
   "请输入正确的国内手机号，并输入新的图形验证码后重试。": "Enter a valid mainland China phone number and the new image code, then try again.",
   "手机号已被注册，请输入新的图形验证码后重试。": "This phone number is already registered. Enter the new image code and try again.",
   "短信验证码已发送，请输入新的图形验证码以继续后续操作。": "SMS code sent. Enter the new image code before the next step.",
+  "短信验证码已发送。图形验证码已刷新；只有再次发送验证码时才需要填写新的图形验证码。": "SMS code sent. The image code has refreshed; only enter it again when sending another code.",
   "{message} 请重新输入新的图形验证码。": "{message} Please enter the new image code.",
   "注册请求太频繁，请稍后再试。": "Too many sign-up attempts. Please try again later.",
   "图形验证码错误或已失效。": "The image code is incorrect or expired.",
@@ -817,7 +860,12 @@ const EN_MESSAGES = {
   "[开始一次新的对话]": "[Start a new conversation]",
   "优化结果": "Polished version",
   "这次生成已中断。": "This generation was interrupted.",
-  "发送消息": "Send message"
+  "发送消息": "Send message",
+  "加载中…": "Loading…",
+  "历史消息加载失败。": "Could not load earlier messages.",
+  "加载之前的对话": "Load earlier messages",
+  "默认只显示最新 3 条，之前的内容按需加载。": "Only the latest 3 messages are shown by default. Load earlier context when needed.",
+  "消息 {count} 条": "{count} messages"
 };
 
 function normalizeLocale(input, options = {}) {
@@ -925,12 +973,13 @@ function translateTextSegment(locale, text) {
     output = output.replace(pattern, replacement);
   });
 
-  const entries = Object.keys(messages)
-    .filter((key) => key && !/\{\w+\}/.test(key))
-    .sort((a, b) => b.length - a.length);
+  const exactMatch = output.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  const leadingWhitespace = exactMatch ? exactMatch[1] : '';
+  const coreText = exactMatch ? exactMatch[2] : output;
+  const trailingWhitespace = exactMatch ? exactMatch[3] : '';
 
-  for (const key of entries) {
-    output = output.split(key).join(messages[key]);
+  if (coreText && Object.prototype.hasOwnProperty.call(messages, coreText) && !/\{\w+\}/.test(coreText)) {
+    return `${leadingWhitespace}${messages[coreText]}${trailingWhitespace}`;
   }
 
   return output;

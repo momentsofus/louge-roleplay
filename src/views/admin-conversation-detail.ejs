@@ -5,14 +5,14 @@
   <section class="hero-card admin-hero">
     <div class="admin-hero-copy">
       <p class="section-kicker">Conversation Detail</p>
-      <h1>对话 #<%= detail.conversation.id %></h1>
-      <p class="muted-text"><%= detail.conversation.title || '未命名对话' %></p>
+      <h1><%= t('对话 #{id}', { id: detail.conversation.id }) %></h1>
+      <p class="muted-text"><%= detail.conversation.title || t('未命名对话') %></p>
     </div>
 
     <div class="metrics metrics--compact">
-      <div class="metric"><strong><%= detail.messages.length %></strong><span>消息总数</span></div>
-      <div class="metric"><strong><%= detail.conversation.username %></strong><span>用户</span></div>
-      <div class="metric"><strong><%= detail.conversation.character_name %></strong><span>角色卡</span></div>
+      <div class="metric"><strong><%= detail.messages.length %></strong><span><%= t('消息总数') %></span></div>
+      <div class="metric"><strong><%= detail.conversation.username %></strong><span><%= t('用户') %></span></div>
+      <div class="metric"><strong><%= detail.conversation.character_name %></strong><span><%= t('角色卡') %></span></div>
     </div>
   </section>
 
@@ -22,27 +22,27 @@
       <a class="quick-link" href="/admin/providers">LLM 配置</a>
       <a class="quick-link" href="/admin/plans">套餐配置</a>
       <a class="quick-link" href="/admin/prompts">Prompt 配置</a>
-      <a class="quick-link" href="/admin/logs">日志查询</a>
-      <a class="quick-link is-active" href="/admin/conversations">对话记录</a>
+      <a class="quick-link" href="/admin/logs"><%= t('日志查询') %></a>
+      <a class="quick-link is-active" href="/admin/conversations"><%= t('对话记录') %></a>
     </div>
 
     <div class="admin-log-meta-grid">
-      <span><strong>用户</strong><%= detail.conversation.nickname ? `${detail.conversation.username}（${detail.conversation.nickname}）` : detail.conversation.username %></span>
-      <span><strong>角色卡</strong><%= detail.conversation.character_name %> · <%= detail.conversation.character_visibility || 'public' %></span>
-      <span><strong>创建时间</strong><%= detail.conversation.display_created_at %></span>
-      <span><strong>更新时间</strong><%= detail.conversation.display_updated_at %></span>
+      <span><strong><%= t('用户') %></strong><%= detail.conversation.nickname ? `${detail.conversation.username}（${detail.conversation.nickname}）` : detail.conversation.username %></span>
+      <span><strong><%= t('角色卡') %></strong><%= detail.conversation.character_name %> · <%= detail.conversation.character_visibility || 'public' %></span>
+      <span><strong><%= t('创建时间') %></strong><%= detail.conversation.display_created_at %></span>
+      <span><strong><%= t('更新时间') %></strong><%= detail.conversation.display_updated_at %></span>
     </div>
 
     <div class="toolbar-row">
-      <a class="quick-link" href="/admin/conversations">返回对话列表</a>
+      <a class="quick-link" href="/admin/conversations"><%= t('返回对话列表') %></a>
     </div>
   </section>
 
   <section class="section-card admin-section">
     <div>
       <p class="section-kicker">Messages</p>
-      <h2>完整消息链</h2>
-      <p class="muted-text">按 sequence_no 顺序展示。这里是后台只读查看，不会改动对话。</p>
+      <h2><%= t('完整消息链') %></h2>
+      <p class="muted-text"><%= t('按 sequence_no 顺序展示。这里是后台只读查看，不会改动对话。') %></p>
     </div>
 
     <div class="admin-conversation-message-list">
@@ -67,7 +67,7 @@
       <% }) %>
       <% if (!detail.messages.length) { %>
         <div class="empty-state">
-          <strong>这条会话还没有消息</strong>
+          <strong><%= t('这条会话还没有消息') %></strong>
         </div>
       <% } %>
     </div>

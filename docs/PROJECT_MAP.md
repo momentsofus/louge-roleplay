@@ -83,6 +83,7 @@
 | `public/js/chat-page.js` | 聊天页前端核心：流式 NDJSON 消费、富文本/Markdown 渲染、思考块折叠、加载历史、输入优化。 |
 | `public/js/i18n-runtime.js` | 浏览器端轻量 t() 翻译函数，供页面脚本复用。 |
 | `public/js/register-page.js` | 注册页交互：国家/地区切换、验证码刷新、邮箱/手机验证码发送。 |
+| `scripts/full-flow-e2e.js` | 全流程 E2E 测试脚本：创建临时用户/角色/会话，验证消息树、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。 |
 | `scripts/grant-admin.js` | /** 手动授予管理员权限。只允许本机显式执行，不走隐式自动提权。 用法：node scripts/grant-admin.js <username> / |
 | `scripts/health-check.js` | /** 基础健康检查：配置、数据库、Redis、公开 HTTP 页面。 / |
 | `scripts/init-db.js` | /** 数据库初始化脚本。根据当前配置自动选择初始化策略： MySQL 模式（DATABASE_URL 已设置）： - 使用 DATABASE_ADMIN_URL 创建数据库（若不存在） - 创建全部业务表并补全历史缺失字段/索引（幂等，可反复执行） - 写入默认套餐与 LLM 提供商种子数据 SQLite 模式（DATABASE_URL 未设置）： - 表结构由 db.js 在首次连接时自动初始化，此脚本无需额外操作 - 数据库文件路径：<项目根>/data/local.db 使用方式： npm run db:init 或 node scripts/init-db.js / |
@@ -160,52 +161,52 @@
 | 433 | `app.post('/api/send-email-code', async (req, res, next) => {` |
 | 477 | `app.post('/api/send-phone-code', async (req, res, next) => {` |
 | 523 | `app.post('/register', async (req, res, next) => {` |
-| 655 | `app.get('/login', (req, res) => renderPage(res, 'login', { title: '登录' }));` |
-| 656 | `app.post('/login', async (req, res, next) => {` |
-| 709 | `app.get('/logout', (req, res) => {` |
-| 713 | `app.get('/dashboard', requireAuth, async (req, res, next) => {` |
-| 730 | `app.get('/profile', requireAuth, async (req, res, next) => {` |
-| 747 | `app.post('/profile', requireAuth, async (req, res, next) => {` |
-| 828 | `app.get('/admin', requireAdmin, async (req, res, next) => {` |
-| 847 | `app.get('/admin/plans', requireAdmin, async (req, res, next) => {` |
-| 864 | `app.get('/admin/providers', requireAdmin, async (req, res, next) => {` |
-| 881 | `app.get('/admin/prompts', requireAdmin, async (req, res, next) => {` |
-| 910 | `app.get('/admin/logs', requireAdmin, async (req, res, next) => {` |
-| 942 | `app.get('/admin/conversations', requireAdmin, async (req, res, next) => {` |
-| 976 | `app.get('/admin/conversations/:conversationId', requireAdmin, async (req, res, next) => {` |
-| 993 | `app.post('/admin/plans/new', requireAdmin, async (req, res, next) => {` |
-| 1025 | `app.post('/admin/plans/:planId', requireAdmin, async (req, res, next) => {` |
-| 1056 | `app.post('/admin/plans/:planId/delete', requireAdmin, async (req, res, next) => {` |
-| 1082 | `app.post('/admin/users/:userId/role', requireAdmin, async (req, res, next) => {` |
-| 1099 | `app.post('/admin/users/:userId/plan', requireAdmin, async (req, res, next) => {` |
-| 1117 | `app.post('/admin/providers/new', requireAdmin, async (req, res, next) => {` |
-| 1152 | `app.post('/admin/providers/:providerId', requireAdmin, async (req, res, next) => {` |
-| 1182 | `app.post('/admin/prompt-blocks/new', requireAdmin, async (req, res, next) => {` |
-| 1205 | `app.post('/admin/prompt-blocks/reorder', requireAdmin, async (req, res, next) => {` |
-| 1221 | `app.post('/admin/prompt-blocks/:blockId', requireAdmin, async (req, res, next) => {` |
-| 1239 | `app.post('/admin/prompt-blocks/:blockId/delete', requireAdmin, async (req, res, next) => {` |
-| 1252 | `app.get('/characters/new', requireAuth, (req, res) => {` |
-| 1261 | `app.get('/characters/:characterId/edit', requireAuth, async (req, res, next) => {` |
-| 1292 | `app.post('/characters/new', requireAuth, async (req, res, next) => {` |
-| 1311 | `app.post('/characters/:characterId/edit', requireAuth, async (req, res, next) => {` |
-| 1336 | `app.post('/characters/:characterId/delete', requireAuth, async (req, res, next) => {` |
-| 1360 | `app.post('/conversations/start/:characterId', requireAuth, async (req, res, next) => {` |
-| 1413 | `app.get('/chat/:conversationId', requireAuth, async (req, res, next) => {` |
-| 1434 | `app.get('/chat/:conversationId/messages/history', requireAuth, async (req, res, next) => {` |
-| 1471 | `app.post('/chat/:conversationId/delete', requireAuth, async (req, res, next) => {` |
-| 1495 | `app.post('/chat/:conversationId/message', requireAuth, async (req, res, next) => {` |
-| 1577 | `app.post('/chat/:conversationId/message/stream', requireAuth, async (req, res, next) => {` |
-| 1685 | `app.post('/chat/:conversationId/regenerate/:messageId/stream', requireAuth, async (req, res, next) => {` |
-| 1778 | `app.post('/chat/:conversationId/regenerate/:messageId', requireAuth, async (req, res, next) => {` |
-| 1836 | `app.post('/chat/:conversationId/messages/:messageId/delete', requireAuth, async (req, res, next) => {` |
-| 1872 | `app.post('/chat/:conversationId/messages/:messageId/edit', requireAuth, async (req, res, next) => {` |
-| 1897 | `app.post('/chat/:conversationId/messages/:messageId/edit-user', requireAuth, async (req, res, next) => {` |
-| 1973 | `app.post('/chat/:conversationId/messages/:messageId/replay/stream', requireAuth, async (req, res, next) => {` |
-| 2156 | `app.post('/chat/:conversationId/messages/:messageId/replay', requireAuth, async (req, res, next) => {` |
-| 2294 | `app.post('/chat/:conversationId/model', requireAuth, async (req, res, next) => {` |
-| 2314 | `app.post('/chat/:conversationId/optimize-input/stream', requireAuth, async (req, res, next) => {` |
-| 2375 | `app.post('/chat/:conversationId/optimize-input', requireAuth, async (req, res, next) => {` |
-| 2411 | `app.post('/chat/:conversationId/branch/:messageId', requireAuth, async (req, res, next) => {` |
+| 647 | `app.get('/login', (req, res) => renderPage(res, 'login', { title: '登录' }));` |
+| 648 | `app.post('/login', async (req, res, next) => {` |
+| 701 | `app.get('/logout', (req, res) => {` |
+| 705 | `app.get('/dashboard', requireAuth, async (req, res, next) => {` |
+| 722 | `app.get('/profile', requireAuth, async (req, res, next) => {` |
+| 739 | `app.post('/profile', requireAuth, async (req, res, next) => {` |
+| 820 | `app.get('/admin', requireAdmin, async (req, res, next) => {` |
+| 839 | `app.get('/admin/plans', requireAdmin, async (req, res, next) => {` |
+| 856 | `app.get('/admin/providers', requireAdmin, async (req, res, next) => {` |
+| 873 | `app.get('/admin/prompts', requireAdmin, async (req, res, next) => {` |
+| 902 | `app.get('/admin/logs', requireAdmin, async (req, res, next) => {` |
+| 934 | `app.get('/admin/conversations', requireAdmin, async (req, res, next) => {` |
+| 968 | `app.get('/admin/conversations/:conversationId', requireAdmin, async (req, res, next) => {` |
+| 985 | `app.post('/admin/plans/new', requireAdmin, async (req, res, next) => {` |
+| 1017 | `app.post('/admin/plans/:planId', requireAdmin, async (req, res, next) => {` |
+| 1048 | `app.post('/admin/plans/:planId/delete', requireAdmin, async (req, res, next) => {` |
+| 1074 | `app.post('/admin/users/:userId/role', requireAdmin, async (req, res, next) => {` |
+| 1091 | `app.post('/admin/users/:userId/plan', requireAdmin, async (req, res, next) => {` |
+| 1109 | `app.post('/admin/providers/new', requireAdmin, async (req, res, next) => {` |
+| 1144 | `app.post('/admin/providers/:providerId', requireAdmin, async (req, res, next) => {` |
+| 1174 | `app.post('/admin/prompt-blocks/new', requireAdmin, async (req, res, next) => {` |
+| 1197 | `app.post('/admin/prompt-blocks/:blockId', requireAdmin, async (req, res, next) => {` |
+| 1215 | `app.post('/admin/prompt-blocks/reorder', requireAdmin, async (req, res, next) => {` |
+| 1231 | `app.post('/admin/prompt-blocks/:blockId/delete', requireAdmin, async (req, res, next) => {` |
+| 1244 | `app.get('/characters/new', requireAuth, (req, res) => {` |
+| 1253 | `app.get('/characters/:characterId/edit', requireAuth, async (req, res, next) => {` |
+| 1284 | `app.post('/characters/new', requireAuth, async (req, res, next) => {` |
+| 1303 | `app.post('/characters/:characterId/edit', requireAuth, async (req, res, next) => {` |
+| 1328 | `app.post('/characters/:characterId/delete', requireAuth, async (req, res, next) => {` |
+| 1352 | `app.post('/conversations/start/:characterId', requireAuth, async (req, res, next) => {` |
+| 1405 | `app.get('/chat/:conversationId', requireAuth, async (req, res, next) => {` |
+| 1426 | `app.get('/chat/:conversationId/messages/history', requireAuth, async (req, res, next) => {` |
+| 1463 | `app.post('/chat/:conversationId/delete', requireAuth, async (req, res, next) => {` |
+| 1487 | `app.post('/chat/:conversationId/message', requireAuth, async (req, res, next) => {` |
+| 1569 | `app.post('/chat/:conversationId/message/stream', requireAuth, async (req, res, next) => {` |
+| 1677 | `app.post('/chat/:conversationId/regenerate/:messageId/stream', requireAuth, async (req, res, next) => {` |
+| 1770 | `app.post('/chat/:conversationId/regenerate/:messageId', requireAuth, async (req, res, next) => {` |
+| 1828 | `app.post('/chat/:conversationId/messages/:messageId/delete', requireAuth, async (req, res, next) => {` |
+| 1864 | `app.post('/chat/:conversationId/messages/:messageId/edit', requireAuth, async (req, res, next) => {` |
+| 1889 | `app.post('/chat/:conversationId/messages/:messageId/edit-user', requireAuth, async (req, res, next) => {` |
+| 1965 | `app.post('/chat/:conversationId/messages/:messageId/replay/stream', requireAuth, async (req, res, next) => {` |
+| 2148 | `app.post('/chat/:conversationId/messages/:messageId/replay', requireAuth, async (req, res, next) => {` |
+| 2286 | `app.post('/chat/:conversationId/model', requireAuth, async (req, res, next) => {` |
+| 2306 | `app.post('/chat/:conversationId/optimize-input/stream', requireAuth, async (req, res, next) => {` |
+| 2367 | `app.post('/chat/:conversationId/optimize-input', requireAuth, async (req, res, next) => {` |
+| 2403 | `app.post('/chat/:conversationId/branch/:messageId', requireAuth, async (req, res, next) => {` |
 
 ## 8. DEBUG 入口
 

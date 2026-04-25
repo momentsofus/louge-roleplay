@@ -13,6 +13,14 @@ const config = require('./config');
 const logger = require('./lib/logger');
 const { translate, translateHtml } = require('./i18n');
 const { parsePromptItemsFromForm, normalizePromptItems } = require('./services/prompt-engineering-service');
+const {
+  getConversationById,
+  listMessages,
+  setConversationCurrentMessage,
+  buildPathMessages,
+  buildConversationView,
+} = require('./services/conversation-service');
+const { getChatModelSelector } = require('./services/llm-gateway-service');
 
 
 function renderPage(res, view, params = {}) {
