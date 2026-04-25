@@ -1,3 +1,15 @@
+#!/usr/bin/env node
+/**
+ * @file scripts/tmp-stream-e2e.js
+ * @description
+ * 临时流式聊天 E2E 调试脚本。
+ *
+ * 调用说明：
+ * - 手动运行 `node scripts/tmp-stream-e2e.js`。
+ * - 会使用 .env 中 APP_URL/DATABASE_URL，登录固定测试用户并请求流式接口。
+ * - 这是排查聊天 NDJSON/最终落库问题的临时脚本，不应放进生产定时任务。
+ */
+
 const path = require('path');
 const crypto = require('crypto');
 require('dotenv').config({ path: path.join(process.cwd(), '.env') });
