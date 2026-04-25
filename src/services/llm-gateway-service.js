@@ -315,6 +315,12 @@ function enqueueWithPriority(task, priority) {
       }
       return a.queuedAt - b.queuedAt;
     });
+    logger.debug('LLM job queued', {
+      priority,
+      pendingQueueLength: pendingQueue.length,
+      activeCount,
+      maxGlobalConcurrency: MAX_GLOBAL_CONCURRENCY,
+    });
     drainQueue();
   });
 }
@@ -323,6 +329,12 @@ function drainQueue() {
   while (activeCount < MAX_GLOBAL_CONCURRENCY && pendingQueue.length > 0) {
     const nextJob = pendingQueue.shift();
     activeCount += 1;
+    logger.debug('LLM job dequeued', {
+      priority: nextJob.priority,
+      waitMs: Date.now() - nextJob.queuedAt,
+      pendingQueueLength: pendingQueue.length,
+      activeCount,
+    });
 
     Promise.resolve()
       .then(() => nextJob.task())
@@ -330,6 +342,10 @@ function drainQueue() {
       .catch((error) => nextJob.reject(error))
       .finally(() => {
         activeCount -= 1;
+        logger.debug('LLM job slot released', {
+          pendingQueueLength: pendingQueue.length,
+          activeCount,
+        });
         drainQueue();
       });
   }
@@ -413,6 +429,16 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
   const controller = new AbortController();
   const externalSignal = hooks.signal;
   let cleanedUp = false;
+  let timeout = null;
+
+  const armIdleTimeout = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      if (!controller.signal.aborted) {
+        controller.abort(new Error('PROVIDER_REQUEST_TIMEOUT'));
+      }
+    }, timeoutMs);
+  };
 
   const cleanup = () => {
     if (cleanedUp) {
@@ -441,11 +467,7 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
     }
   }
 
-  const timeout = setTimeout(() => {
-    if (!controller.signal.aborted) {
-      controller.abort(new Error('PROVIDER_REQUEST_TIMEOUT'));
-    }
-  }, timeoutMs);
+  armIdleTimeout();
 
   logger.info('LLM provider request start', {
     providerId: provider.id,
@@ -481,6 +503,8 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
     cleanup();
     throw normalizeProviderError(error, timeoutMs);
   }
+
+  armIdleTimeout();
 
   logger.info('LLM provider response received', {
     providerId: provider.id,
@@ -626,6 +650,7 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
         break;
       }
 
+      armIdleTimeout();
       buffer += decoder.decode(value, { stream: true });
       const blocks = buffer.split(/\n\n+/);
       buffer = blocks.pop() || '';

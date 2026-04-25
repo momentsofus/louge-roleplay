@@ -3,6 +3,9 @@
  * @description 站点路由注册：公开页、认证、角色、聊天、分支与回放。
  */
 
+const path = require('path');
+const ejs = require('ejs');
+
 const {
   requireAuth,
   requireAdmin,
@@ -50,6 +53,7 @@ const {
   deleteConversationSafely,
   invalidateConversationCache,
 } = require('../services/conversation-service');
+const { translateHtml } = require('../i18n');
 const { generateReplyViaGateway, streamReplyViaGateway, streamOptimizeUserInputViaGateway, optimizeUserInputViaGateway, getChatModelSelector } = require('../services/llm-gateway-service');
 const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = require('../services/verification-service');
 const { hashPassword, verifyPassword } = require('../services/password-service');
@@ -111,6 +115,33 @@ function buildConversationCharacterPayload(conversation) {
     summary: conversation.character_summary,
     personality: conversation.personality,
     prompt_profile_json: conversation.prompt_profile_json,
+  };
+}
+
+const CHAT_MESSAGE_PARTIAL = path.join(__dirname, '..', 'views', 'partials', 'chat-message.ejs');
+
+function renderChatMessageHtml(req, conversation, message) {
+  return new Promise((resolve, reject) => {
+    ejs.renderFile(CHAT_MESSAGE_PARTIAL, { conversation, message }, {}, (error, html) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(translateHtml(req.locale || 'zh-CN', html));
+    });
+  });
+}
+
+async function buildChatMessagePacket(req, conversation, allMessages, activeLeafId, messageId) {
+  const view = buildConversationView(allMessages, activeLeafId || messageId);
+  const message = view.pathMessages.find((item) => Number(item.id) === Number(messageId));
+  if (!message) {
+    return null;
+  }
+  return {
+    id: message.id,
+    senderType: message.sender_type,
+    html: await renderChatMessageHtml(req, conversation, message),
   };
 }
 
@@ -360,6 +391,12 @@ function registerWebRoutes(app) {
   });
 
   app.get('/healthz', async (req, res) => {
+    logger.debug('Health check requested', {
+      requestId: req.requestId,
+      dbType: getDbType(),
+      redisMode: isRedisReal() ? 'redis' : 'memory',
+    });
+
     const checks = {
       ok: true,
       app: config.appName,
@@ -1381,7 +1418,51 @@ function registerWebRoutes(app) {
         return;
       }
 
+      logger.debug('Rendering chat page', {
+        requestId: req.requestId,
+        userId: req.session.user.id,
+        conversationId,
+        requestedLeafId: req.query.leaf || null,
+      });
+
       await renderChatPage(req, res, conversation);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/chat/:conversationId/messages/history', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = parseIdParam(req.params.conversationId, '会话 ID');
+      const beforeId = parseIntegerField(req.query.beforeId || req.query.before, { fieldLabel: '起始消息 ID', min: 1, allowEmpty: true });
+      const limit = Math.min(parseIntegerField(req.query.limit || '10', { fieldLabel: '加载数量', min: 1 }), 30);
+      const conversation = await loadConversationForUserOrFail(req, res, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const allMessages = await listMessages(conversationId);
+      const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
+      const leafId = parseIntegerField(req.query.leaf || fallbackLeafId || '', { fieldLabel: '叶子消息 ID', min: 1, allowEmpty: true }) || fallbackLeafId;
+      const view = buildConversationView(allMessages, leafId);
+      const beforeIndex = beforeId
+        ? view.pathMessages.findIndex((message) => Number(message.id) === Number(beforeId))
+        : view.pathMessages.length;
+      const end = beforeIndex >= 0 ? beforeIndex : view.pathMessages.length;
+      const start = Math.max(0, end - limit);
+      const messages = view.pathMessages.slice(start, end);
+      const htmlParts = [];
+      for (const message of messages) {
+        htmlParts.push(await renderChatMessageHtml(req, conversation, message));
+      }
+
+      res.json({
+        ok: true,
+        html: htmlParts.join('\n'),
+        count: messages.length,
+        hasMore: start > 0,
+        nextBeforeId: messages.length ? messages[0].id : beforeId || null,
+      });
     } catch (error) {
       next(error);
     }
@@ -1532,7 +1613,16 @@ function registerWebRoutes(app) {
         }),
       });
 
-      ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId, content, leafId: userMessageId });
+      const messagesWithUser = await listMessages(conversationId);
+      const userPacket = await buildChatMessagePacket(req, conversation, messagesWithUser, userMessageId, userMessageId);
+      ndjson.safeWrite({
+        type: 'user-message',
+        conversationId,
+        userMessageId,
+        content,
+        leafId: userMessageId,
+        html: userPacket ? userPacket.html : '',
+      });
       ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: userMessageId, mode: 'message' });
 
       const replyContent = await streamChatReplyToNdjson({
@@ -1568,7 +1658,20 @@ function registerWebRoutes(app) {
 
       await updateConversationTitle(conversationId, buildNextConversationTitle(conversation, content));
       await invalidateConversationCache(conversationId);
-      ndjson.safeWrite({ type: 'done', conversationId, replyMessageId, leafId: replyMessageId, full: replyContent, mode: 'message' });
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, replyMessageId);
+      const parentPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, userMessageId);
+      ndjson.safeWrite({
+        type: 'done',
+        conversationId,
+        replyMessageId,
+        leafId: replyMessageId,
+        full: replyContent,
+        mode: 'message',
+        html: replyPacket ? replyPacket.html : '',
+        parentMessageId: userMessageId,
+        parentHtml: parentPacket ? parentPacket.html : '',
+      });
       ndjson.end();
       return;
     } catch (error) {
@@ -1652,6 +1755,8 @@ function registerWebRoutes(app) {
       });
 
       await invalidateConversationCache(conversationId);
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newReplyId, newReplyId);
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -1659,6 +1764,7 @@ function registerWebRoutes(app) {
         leafId: newReplyId,
         full: reply,
         mode: 'regenerate',
+        html: replyPacket ? replyPacket.html : '',
       });
       ndjson.end();
     } catch (error) {
@@ -1911,7 +2017,8 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = targetMessage.content;
-        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay' });
+        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
         reply = await streamChatReplyToNdjson({
@@ -1976,7 +2083,8 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = parentUserMessage.content;
-        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay' });
+        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
         reply = await streamChatReplyToNdjson({
@@ -2015,6 +2123,12 @@ function registerWebRoutes(app) {
       }
 
       await invalidateConversationCache(conversationId);
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafId);
+      const newLeafMessage = messagesWithReply.find((message) => Number(message.id) === Number(newLeafId));
+      const parentPacket = newLeafMessage && newLeafMessage.parent_message_id
+        ? await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafMessage.parent_message_id)
+        : null;
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -2022,6 +2136,9 @@ function registerWebRoutes(app) {
         leafId: newLeafId,
         full: reply,
         mode: 'replay',
+        html: replyPacket ? replyPacket.html : '',
+        parentMessageId: newLeafMessage ? newLeafMessage.parent_message_id : null,
+        parentHtml: parentPacket ? parentPacket.html : '',
         preview: [
           { role: '你', content: previewUserContent },
           { role: conversation.character_name, content: reply },
