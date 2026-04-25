@@ -1469,6 +1469,12 @@ function registerWebRoutes(app) {
         if (error.code === 'CONVERSATION_NOT_FOUND') {
           return renderPage(res, 'message', { title: '提示', message: '会话不存在或无权删除。' });
         }
+        if (error.code === 'CONVERSATION_HAS_MESSAGES') {
+          return renderPage(res, 'message', {
+            title: '暂时不能删除对话',
+            message: `这条对话里已经有 ${error.messageCount} 条消息。为了避免误删长对话，现在已有消息的会话不能直接删除；后续会改成归档/隐藏。`,
+          });
+        }
         if (error.code === 'CONVERSATION_HAS_CHILDREN') {
           return renderPage(res, 'message', {
             title: '暂时不能删除对话',

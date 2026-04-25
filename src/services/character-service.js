@@ -18,7 +18,7 @@ function normalizeVisibility(value) {
 
 async function countCharacterConversations(characterId) {
   const rows = await query(
-    'SELECT COUNT(*) AS conversationCount FROM conversations WHERE character_id = ?',
+    "SELECT COUNT(*) AS conversationCount FROM conversations WHERE character_id = ? AND status <> 'deleted'",
     [characterId],
   );
   return Number(rows[0]?.conversationCount || 0);

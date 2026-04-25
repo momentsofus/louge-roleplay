@@ -98,7 +98,7 @@ async function getConversationById(id, userId) {
     `SELECT c.*, ch.name AS character_name, ch.summary AS character_summary, ch.personality, ch.first_message, ch.prompt_profile_json
      FROM conversations c
      JOIN characters ch ON ch.id = c.character_id
-     WHERE c.id = ? AND c.user_id = ?
+     WHERE c.id = ? AND c.user_id = ? AND c.status <> 'deleted'
      LIMIT 1`,
     [id, userId],
   );
@@ -117,7 +117,7 @@ async function listUserConversations(userId) {
        ch.name AS character_name
      FROM conversations c
      JOIN characters ch ON ch.id = c.character_id
-     WHERE c.user_id = ?
+     WHERE c.user_id = ? AND c.status <> 'deleted'
      ORDER BY c.updated_at DESC, c.id DESC`,
     [userId],
   );
@@ -540,7 +540,7 @@ async function cloneConversationBranch(options) {
 
 async function countChildConversations(conversationId) {
   const rows = await query(
-    'SELECT COUNT(*) AS childCount FROM conversations WHERE parent_conversation_id = ?',
+    "SELECT COUNT(*) AS childCount FROM conversations WHERE parent_conversation_id = ? AND status <> 'deleted'",
     [conversationId],
   );
   return Number(rows[0]?.childCount || 0);
@@ -574,7 +574,7 @@ async function deleteMessageSafely(conversationId, messageId, userId) {
   }
 
   const branchedConversationRows = await query(
-    'SELECT COUNT(*) AS branchConversationCount FROM conversations WHERE parent_conversation_id = ? AND branched_from_message_id = ?',
+    "SELECT COUNT(*) AS branchConversationCount FROM conversations WHERE parent_conversation_id = ? AND branched_from_message_id = ? AND status <> 'deleted'",
     [conversationId, messageId],
   );
   const branchConversationCount = Number(branchedConversationRows[0]?.branchConversationCount || 0);
@@ -608,6 +608,18 @@ async function deleteConversationSafely(conversationId, userId) {
     throw error;
   }
 
+  const messageRows = await query(
+    'SELECT COUNT(*) AS messageCount FROM messages WHERE conversation_id = ?',
+    [conversationId],
+  );
+  const messageCount = Number(messageRows[0]?.messageCount || 0);
+  if (messageCount > 0) {
+    const error = new Error('CONVERSATION_HAS_MESSAGES');
+    error.code = 'CONVERSATION_HAS_MESSAGES';
+    error.messageCount = messageCount;
+    throw error;
+  }
+
   const childCount = await countChildConversations(conversationId);
   if (childCount > 0) {
     const error = new Error('CONVERSATION_HAS_CHILDREN');
@@ -616,8 +628,7 @@ async function deleteConversationSafely(conversationId, userId) {
     throw error;
   }
 
-  await query('DELETE FROM messages WHERE conversation_id = ?', [conversationId]);
-  await query('DELETE FROM conversations WHERE id = ? AND user_id = ?', [conversationId, userId]);
+  await query("UPDATE conversations SET status = 'deleted', updated_at = NOW() WHERE id = ? AND user_id = ?", [conversationId, userId]);
   await invalidateConversationCache(conversationId);
 }
 
