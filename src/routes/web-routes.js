@@ -14,7 +14,7 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, updateUserRole } = require('../services/user-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUsername, updatePasswordHash } = require('../services/user-service');
 const { createCharacter, updateCharacter, listPublicCharacters, listUserCharacters, getCharacterById, deleteCharacterSafely } = require('../services/character-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
 const { listUsersWithPlans, getAdminOverview } = require('../services/admin-service');
@@ -683,16 +683,160 @@ function registerWebRoutes(app) {
     }
   });
 
+  app.get('/profile', requireAuth, async (req, res, next) => {
+    try {
+      const user = await findUserById(req.session.user.id);
+      if (!user) {
+        return req.session.destroy(() => res.redirect('/login'));
+      }
+      renderPage(res, 'profile', {
+        title: '个人资料',
+        user,
+        formMessage: '',
+        formStatus: '',
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/profile', requireAuth, async (req, res, next) => {
+    try {
+      const action = String(req.body.action || '').trim();
+      const userId = req.session.user.id;
+      const user = await findUserById(userId);
+      if (!user) {
+        return req.session.destroy(() => res.redirect('/login'));
+      }
+
+      const renderProfileMessage = (message, status = 'error', targetUser = user) => renderPage(res, 'profile', {
+        title: '个人资料',
+        user: targetUser,
+        formMessage: message,
+        formStatus: status,
+      });
+
+      if (action === 'username') {
+        const username = String(req.body.username || '').trim();
+        if (username.length < 3) {
+          return renderProfileMessage('用户名至少 3 位。');
+        }
+        if (username.length > 50) {
+          return renderProfileMessage('用户名不能超过 50 位。');
+        }
+        if (username === user.username) {
+          return renderProfileMessage('新用户名和当前用户名一样，就别折腾啦。', 'info');
+        }
+
+        const existedUser = await findUserByUsername(username);
+        if (existedUser && Number(existedUser.id) !== Number(userId)) {
+          return renderProfileMessage('这个用户名已经有人用了。');
+        }
+
+        await updateUsername(userId, username);
+        req.session.user.username = username;
+        const refreshedUser = await findUserById(userId);
+        return renderProfileMessage('用户名改好了。', 'success', refreshedUser);
+      }
+
+      if (action === 'password') {
+        const currentPassword = String(req.body.currentPassword || '').trim();
+        const newPassword = String(req.body.newPassword || '').trim();
+        const confirmPassword = String(req.body.confirmPassword || '').trim();
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          return renderProfileMessage('改密码这几项得填完整。');
+        }
+        if (newPassword.length < 6) {
+          return renderProfileMessage('新密码至少 6 位。');
+        }
+        if (newPassword !== confirmPassword) {
+          return renderProfileMessage('两次输入的新密码不一致。');
+        }
+
+        const authUser = await findUserAuthById(userId);
+        if (!authUser) {
+          return req.session.destroy(() => res.redirect('/login'));
+        }
+
+        const isValidPassword = await verifyPassword(currentPassword, authUser.password_hash);
+        if (!isValidPassword) {
+          return renderProfileMessage('当前密码不对。');
+        }
+
+        const isSamePassword = await verifyPassword(newPassword, authUser.password_hash);
+        if (isSamePassword) {
+          return renderProfileMessage('新密码不能和现在这个一样。', 'info');
+        }
+
+        const passwordHash = await hashPassword(newPassword);
+        await updatePasswordHash(userId, passwordHash);
+        const refreshedUser = await findUserById(userId);
+        return renderProfileMessage('密码已经更新好了。', 'success', refreshedUser);
+      }
+
+      return renderProfileMessage('不认识这个资料操作。');
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get('/admin', requireAdmin, async (req, res, next) => {
     try {
-      const [overview, users, plans, providers, promptBlocks] = await Promise.all([
+      const [overview, users, plans] = await Promise.all([
         getAdminOverview(),
         listUsersWithPlans(),
         listPlans(),
-        listProviders(),
-        listPromptBlocks(),
       ]);
 
+      renderPage(res, 'admin', {
+        title: '管理员后台',
+        overview,
+        users,
+        plans,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/plans', requireAdmin, async (req, res, next) => {
+    try {
+      const [overview, plans] = await Promise.all([
+        getAdminOverview(),
+        listPlans(),
+      ]);
+
+      renderPage(res, 'admin-plans', {
+        title: '套餐配置',
+        overview,
+        plans,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/providers', requireAdmin, async (req, res, next) => {
+    try {
+      const [overview, providers] = await Promise.all([
+        getAdminOverview(),
+        listProviders(),
+      ]);
+
+      renderPage(res, 'admin-providers', {
+        title: 'LLM 配置',
+        overview,
+        providers,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/prompts', requireAdmin, async (req, res, next) => {
+    try {
+      const promptBlocks = await listPromptBlocks();
       const promptPreview = buildPromptPreview({
         promptBlocks: promptBlocks.map((item) => ({
           key: item.block_key,

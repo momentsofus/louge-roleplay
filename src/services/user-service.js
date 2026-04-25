@@ -13,7 +13,10 @@
  *   findUserByPhone(phone)           按手机号查询
  *   findUserByLogin(login)           按用户名/邮箱/手机号任一查询（用于登录）
  *   findUserById(id)                 按 ID 查询（返回脱敏字段，不含密码哈希）
+ *   findUserAuthById(id)             按 ID 查询用户完整认证字段（含密码哈希）
  *   updateUserRole(userId, role)     变更用户角色
+ *   updateUsername(userId, username) 更新用户名
+ *   updatePasswordHash(userId, hash) 更新密码哈希
  */
 
 'use strict';
@@ -140,6 +143,46 @@ async function findUserById(id) {
 }
 
 /**
+ * 按 ID 查询用户认证信息（包含密码哈希，用于资料页改密校验）。
+ *
+ * @param {number} id 用户 ID
+ * @returns {Promise<object | null>}
+ */
+async function findUserAuthById(id) {
+  const rows = await query(
+    `SELECT
+       id, username, password_hash, email, phone, role, status, created_at, updated_at
+     FROM users
+     WHERE id = ?
+     LIMIT 1`,
+    [id],
+  );
+  return rows[0] || null;
+}
+
+/**
+ * 更新用户名。
+ *
+ * @param {number} userId
+ * @param {string} username
+ * @returns {Promise<void>}
+ */
+async function updateUsername(userId, username) {
+  await query('UPDATE users SET username = ?, updated_at = NOW() WHERE id = ?', [username, userId]);
+}
+
+/**
+ * 更新密码哈希。
+ *
+ * @param {number} userId
+ * @param {string} passwordHash
+ * @returns {Promise<void>}
+ */
+async function updatePasswordHash(userId, passwordHash) {
+  await query('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?', [passwordHash, userId]);
+}
+
+/**
  * 更新用户角色（仅管理员操作）。
  *
  * @param {number} userId
@@ -157,5 +200,8 @@ module.exports = {
   findUserByPhone,
   findUserByLogin,
   findUserById,
+  findUserAuthById,
   updateUserRole,
+  updateUsername,
+  updatePasswordHash,
 };

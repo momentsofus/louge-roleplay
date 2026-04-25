@@ -1,0 +1,111 @@
+<!-- @file src/views/profile.ejs
+     @description 个人资料页模板。调用说明：GET/POST /profile 渲染与处理用户名/密码更新。
+-->
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
+
+<%
+  const currentName = user?.username || '';
+  const currentRole = user?.role === 'admin' ? '管理员' : '普通用户';
+  const emailText = user?.email || '未绑定';
+  const phoneText = user?.phone || '未绑定';
+  const joinedAt = user?.created_at || '—';
+  const statusClass = formStatus ? `form-message form-message--${formStatus}` : 'form-message';
+%>
+
+<div class="profile-shell">
+  <section class="hero-card profile-hero">
+    <div class="profile-hero-copy">
+      <div class="section-kicker">Profile</div>
+      <h1>个人资料</h1>
+      <p>这页就做两件事：改用户名，和改密码。别的先不掺，保持干净。</p>
+      <div class="dashboard-actions">
+        <a class="quick-link" href="/dashboard">回控制台</a>
+        <a class="quick-link" href="/characters/new">新建角色</a>
+      </div>
+    </div>
+
+    <div class="hero-meta profile-hero-meta">
+      <div class="hero-stat">
+        <strong>当前用户名</strong>
+        <span><%= currentName %></span>
+      </div>
+      <div class="hero-stat">
+        <strong>账号身份</strong>
+        <span><%= currentRole %></span>
+      </div>
+      <div class="hero-stat">
+        <strong>注册时间</strong>
+        <span><%= joinedAt %></span>
+      </div>
+    </div>
+  </section>
+
+  <% if (formMessage) { %>
+    <div class="<%= statusClass %>"><%= formMessage %></div>
+  <% } %>
+
+  <section class="profile-grid">
+    <article class="panel profile-card">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">Username</div>
+          <h2>修改用户名</h2>
+          <p>用户名会同步到当前登录会话里，改完不用重新登录。</p>
+        </div>
+      </div>
+
+      <div class="profile-summary-list">
+        <div class="profile-summary-item">
+          <span>当前用户名</span>
+          <strong><%= currentName %></strong>
+        </div>
+        <div class="profile-summary-item">
+          <span>邮箱</span>
+          <strong><%= emailText %></strong>
+        </div>
+        <div class="profile-summary-item">
+          <span>手机号</span>
+          <strong><%= phoneText %></strong>
+        </div>
+      </div>
+
+      <form method="POST" action="/profile" class="profile-form">
+        <input type="hidden" name="action" value="username" />
+        <div class="field-group">
+          <label for="username">新用户名</label>
+          <input id="username" name="username" maxlength="50" required value="<%= currentName %>" placeholder="至少 3 位" />
+          <div class="mini-note">用户名唯一；如果和当前用户名一样，我会直接拦住。</div>
+        </div>
+        <button class="submit-btn" type="submit">保存用户名</button>
+      </form>
+    </article>
+
+    <article class="panel profile-card">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">Password</div>
+          <h2>修改密码</h2>
+          <p>改密码需要先验证当前密码，免得别人碰到你电脑就乱改。</p>
+        </div>
+      </div>
+
+      <form method="POST" action="/profile" class="profile-form">
+        <input type="hidden" name="action" value="password" />
+        <div class="field-group">
+          <label for="currentPassword">当前密码</label>
+          <input id="currentPassword" name="currentPassword" type="password" maxlength="100" required placeholder="先输入当前密码" />
+        </div>
+        <div class="field-group">
+          <label for="newPassword">新密码</label>
+          <input id="newPassword" name="newPassword" type="password" maxlength="100" required placeholder="至少 6 位" />
+        </div>
+        <div class="field-group">
+          <label for="confirmPassword">确认新密码</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" maxlength="100" required placeholder="再输一次新密码" />
+          <div class="mini-note">新密码不能和当前密码一样。</div>
+        </div>
+        <button class="submit-btn" type="submit">更新密码</button>
+      </form>
+    </article>
+  </section>
+</div>
