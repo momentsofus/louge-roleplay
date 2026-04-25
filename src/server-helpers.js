@@ -12,6 +12,7 @@
 const config = require('./config');
 const logger = require('./lib/logger');
 const { translate, translateHtml } = require('./i18n');
+const { parsePromptItemsFromForm, normalizePromptItems } = require('./services/prompt-engineering-service');
 
 
 function renderPage(res, view, params = {}) {
