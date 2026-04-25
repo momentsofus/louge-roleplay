@@ -17,6 +17,7 @@ const logger = require('./lib/logger');
 const { waitReady: waitDbReady, getDbType } = require('./lib/db');
 const { initRedis, redisClient, isRedisReal } = require('./lib/redis');
 const { requestContext } = require('./middleware/request-context');
+const { attachI18n } = require('./middleware/i18n');
 const { errorHandler } = require('./middleware/error-handler');
 const { renderPage } = require('./server-helpers');
 const { registerWebRoutes } = require('./routes/web-routes');
@@ -74,13 +75,14 @@ async function bootstrap() {
   }));
 
   app.use(requestContext);
+  app.use(attachI18n);
   registerWebRoutes(app);
 
   app.use((req, res) => {
     res.status(404);
     renderPage(res, 'error', {
-      title: '页面不存在',
-      message: `找不到 ${req.path}，请确认地址是否正确。`,
+      title: req.t('页面不存在'),
+      message: req.t('找不到 {path}，请确认地址是否正确。', { path: req.path }),
       errorCode: 'NOT_FOUND',
       requestId: req.requestId,
     });

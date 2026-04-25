@@ -10,6 +10,8 @@
     return checked ? checked.value : 'domestic';
   }
 
+  const t = window.AI_ROLEPLAY_I18N?.t || ((key) => key);
+
   function syncCountryCards(countryType) {
     const domesticCard = document.getElementById('domesticCard');
     const internationalCard = document.getElementById('internationalCard');
@@ -65,7 +67,7 @@
     captchaIdInput.value = data.captchaId;
     document.getElementById('captchaImage').src = data.imageUrl + '?t=' + Date.now();
     captchaTextInput.value = '';
-    showCaptchaHint(message || '图形验证码已刷新，请输入新的验证码。');
+    showCaptchaHint(message || t('图形验证码已刷新，请输入新的验证码。'));
     captchaTextInput.focus();
   }
 
@@ -77,7 +79,7 @@
     document.getElementById('captchaImage').src = data.nextCaptchaImageUrl + '?t=' + Date.now();
     const captchaTextInput = document.getElementById('captchaText');
     captchaTextInput.value = '';
-    showCaptchaHint(data.message || fallbackMessage || '图形验证码已刷新，请输入新的验证码。');
+    showCaptchaHint(t(data.message || fallbackMessage || '图形验证码已刷新；只有再次发送短信/邮箱验证码时才需要填写新的图形验证码。'));
     captchaTextInput.focus();
   }
 
@@ -86,11 +88,11 @@
     const captchaId = document.querySelector('input[name="captchaId"]').value;
     const captchaText = document.getElementById('captchaText').value.trim();
     if (!email) {
-      alert('先填邮箱');
+      alert(t('先填邮箱'));
       return;
     }
     if (!captchaId || !captchaText) {
-      alert('先填图形验证码');
+      alert(t('先填图形验证码'));
       return;
     }
 
@@ -100,8 +102,8 @@
       body: JSON.stringify({ email, countryType: getCountryType(), captchaId, captchaText })
     });
     const data = await res.json();
-    applyCaptchaRefreshFromResponse(data, '邮箱验证码处理完成，请输入新的图形验证码。');
-    alert(data.message || '已发送');
+    applyCaptchaRefreshFromResponse(data, t('邮箱验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
+    alert(t(data.message || '已发送'));
   }
 
   async function sendPhoneCode() {
@@ -109,7 +111,7 @@
     const captchaId = document.querySelector('input[name="captchaId"]').value;
     const captchaText = document.querySelector('input[name="captchaText"]').value.trim();
     if (!phone || !captchaId || !captchaText) {
-      alert('先填手机号和图形验证码');
+      alert(t('先填手机号和图形验证码'));
       return;
     }
 
@@ -119,8 +121,8 @@
       body: JSON.stringify({ phone, captchaId, captchaText })
     });
     const data = await res.json();
-    applyCaptchaRefreshFromResponse(data, '短信验证码处理完成，请输入新的图形验证码。');
-    alert(data.message || '已发送');
+    applyCaptchaRefreshFromResponse(data, t('短信验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
+    alert(t(data.message || '已发送'));
   }
 
   handleCountryChange();

@@ -1,89 +1,48 @@
 /**
- * @file src/server.js
+ * @file src/server-helpers.js
  * @description
- * Web 应用主入口，负责中间件初始化、路由注册、会话管理与站点启动。
+ * 路由层公共辅助函数集合：页面渲染、参数解析、日志脱敏、聊天页 view model、NDJSON 流响应等。
  *
- * 设计原则：
- * - 路由层只保留“编排逻辑”和参数校验。
- * - 结构化的消息树、分支克隆、缓存等尽量下沉到 service。
- * - DEBUG 信息统一写日志，页面只给必要状态，不暴露堆栈。
+ * 调用说明：
+ * - `src/routes/web-routes.js` 是主要调用方。
+ * - service 层不要反向依赖本文件，避免形成“业务服务 -> 路由工具”的耦合。
+ * - DEBUG 信息统一走 logger，页面只展示必要状态，不暴露内部堆栈。
  */
-
-const path = require('path');
-const express = require('express');
-const session = require('express-session');
-const { RedisStore } = require('connect-redis');
-const compression = require('compression');
-const helmet = require('helmet');
-const morgan = require('morgan');
 
 const config = require('./config');
 const logger = require('./lib/logger');
-const { query, waitReady: waitDbReady, getDbType } = require('./lib/db');
-const { initRedis, redisClient, isRedisReal } = require('./lib/redis');
-const { requestContext } = require('./middleware/request-context');
-const { errorHandler } = require('./middleware/error-handler');
-const { requireAuth, requireAdmin } = require('./middleware/auth');
-const { hashPassword, verifyPassword } = require('./services/password-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, updateUserRole } = require('./services/user-service');
-const { createCharacter, updateCharacter, listPublicCharacters, listUserCharacters, getCharacterById, deleteCharacterSafely } = require('./services/character-service');
-const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('./services/plan-service');
-const { listUsersWithPlans, getAdminOverview } = require('./services/admin-service');
-const { listProviders, createProvider, updateProvider } = require('./services/llm-provider-service');
-const {
-  listPromptBlocks,
-  createPromptBlock,
-  updatePromptBlock,
-  reorderPromptBlocks,
-  deletePromptBlock,
-  parsePromptItemsFromForm,
-  normalizePromptItems,
-  buildPromptPreview,
-} = require('./services/prompt-engineering-service');
-const {
-  createConversation,
-  updateConversationTitle,
-  updateConversationModelMode,
-  getConversationById,
-  listUserConversations,
-  listMessages,
-  getMessageById,
-  addMessage,
-  setConversationCurrentMessage,
-  createEditedMessageVariant,
-  buildPathMessages,
-  buildConversationView,
-  cloneConversationBranch,
-  deleteMessageSafely,
-  deleteConversationSafely,
-  invalidateConversationCache,
-} = require('./services/conversation-service');
-const { generateReplyViaGateway, streamReplyViaGateway, optimizeUserInputViaGateway, getChatModelSelector } = require('./services/llm-gateway-service');
-const { createCaptcha, refreshCaptcha, getCaptchaImage, verifyCaptcha } = require('./services/captcha-service');
-const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = require('./services/verification-service');
-const { verifyDomesticPhoneIdentity } = require('./services/phone-auth-service');
-const { hitLimit } = require('./services/rate-limit-service');
+const { translate, translateHtml } = require('./i18n');
 
 
 function renderPage(res, view, params = {}) {
+  const locale = res.locals.locale || 'zh-CN';
+  const t = res.locals.t || ((key, vars) => translate(locale, key, vars));
+  const titleSource = params.title || config.appName;
+  const title = translateHtml(locale, t(titleSource));
   res.render(view, params, (viewError, html) => {
     if (viewError) {
       logger.error('[renderPage] View 渲染失败', { view, error: viewError.message });
-      return res.status(500).type('text').send('页面渲染失败，请稍后重试。');
+      return res.status(500).type('text').send(t('页面渲染失败，请稍后重试。'));
     }
+    const translatedHtml = translateHtml(locale, html);
     res.render('layout', {
-      title: params.title || config.appName,
-      body: html,
+      title,
+      body: translatedHtml,
       currentUser: res.locals.currentUser,
       appName: config.appName,
       appUrl: config.appUrl,
+      locale,
+      t,
+      clientI18nMessages: res.locals.clientI18nMessages || {},
+      localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
     });
   });
 }
 
 function renderRegisterPage(res, options = {}) {
+  const t = res.locals.t || ((key, vars) => translate(res.locals.locale || 'zh-CN', key, vars));
   renderPage(res, 'register', {
-    title: '注册',
+    title: t('注册'),
     captcha: options.captcha,
     form: options.form || {},
     formMessage: options.formMessage || '',
@@ -140,8 +99,9 @@ function buildLoginLogMeta(req, payload = {}) {
   };
 }
 
-function renderValidationMessage(res, message, title = '提示') {
-  return renderPage(res, 'message', { title, message });
+function renderValidationMessage(res, message, title) {
+  const t = res.locals.t || ((key, vars) => translate(res.locals.locale || 'zh-CN', key, vars));
+  return renderPage(res, 'message', { title: title || t('提示'), message });
 }
 
 function writeNdjson(res, payload) {
@@ -384,10 +344,14 @@ async function renderChatPage(req, res, conversation, options = {}) {
   }
 
   const view = buildConversationView(allMessages, activeLeafId);
+  const initialVisibleCount = Number(options.initialVisibleCount || 3);
+  view.visiblePathMessages = view.pathMessages.slice(-initialVisibleCount);
+  view.hasOlderMessages = view.pathMessages.length > view.visiblePathMessages.length;
+  view.oldestVisibleMessageId = view.visiblePathMessages.length ? view.visiblePathMessages[0].id : null;
   const chatModelSelector = await getChatModelSelector();
 
   renderPage(res, 'chat', {
-    title: '聊天',
+    title: req.t ? req.t('聊天') : '聊天',
     conversation,
     view,
     draftContent: options.draftContent || String(req.query.draft || ''),
@@ -401,7 +365,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
 async function loadConversationForUserOrFail(req, res, conversationId) {
   const conversation = await getConversationById(conversationId, req.session.user.id);
   if (!conversation) {
-    renderPage(res, 'message', { title: '提示', message: '会话不存在或无权访问。' });
+    renderPage(res, 'message', { title: req.t ? req.t('提示') : '提示', message: req.t ? req.t('会话不存在或无权访问。') : '会话不存在或无权访问。' });
     return null;
   }
   return conversation;

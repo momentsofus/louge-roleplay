@@ -5,12 +5,14 @@
 
 const logger = require('../lib/logger');
 const config = require('../config');
+const { translate } = require('../i18n');
 
 /**
  * 将错误视图渲染到 layout 中，保证错误页拥有完整的导航与样式。
  * 若 layout 渲染本身失败，退化为纯文本响应，避免死循环。
  */
 function renderErrorWithLayout(res, statusCode, title, message, errorCode) {
+  const t = res.locals.t || ((key, vars) => translate(res.locals.locale || 'zh-CN', key, vars));
   const errorParams = { title, message, errorCode, requestId: res.locals.requestId };
   res.render('error', errorParams, (viewErr, html) => {
     if (viewErr) {
@@ -22,6 +24,10 @@ function renderErrorWithLayout(res, statusCode, title, message, errorCode) {
       currentUser: res.locals.currentUser,
       appName: config.appName,
       appUrl: config.appUrl,
+      locale: res.locals.locale,
+      t,
+      clientI18nMessages: res.locals.clientI18nMessages || {},
+      localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
     });
   });
 }
