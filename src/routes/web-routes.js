@@ -3,6 +3,9 @@
  * @description 站点路由注册：公开页、认证、角色、聊天、分支与回放。
  */
 
+const path = require('path');
+const ejs = require('ejs');
+
 const {
   requireAuth,
   requireAdmin,
@@ -14,10 +17,12 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, updateUserRole } = require('../services/user-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUsername, updatePasswordHash } = require('../services/user-service');
 const { createCharacter, updateCharacter, listPublicCharacters, listUserCharacters, getCharacterById, deleteCharacterSafely } = require('../services/character-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
 const { listUsersWithPlans, getAdminOverview } = require('../services/admin-service');
+const { listLogEntries } = require('../services/log-service');
+const { getAdminConversationDetail, listAdminConversations } = require('../services/admin-conversation-service');
 const { listProviders, createProvider, updateProvider } = require('../services/llm-provider-service');
 const {
   listPromptBlocks,
@@ -28,6 +33,7 @@ const {
   parsePromptItemsFromForm,
   normalizePromptItems,
   buildPromptPreview,
+  applyRuntimeTemplate,
 } = require('../services/prompt-engineering-service');
 const {
   createConversation,
@@ -47,11 +53,13 @@ const {
   deleteConversationSafely,
   invalidateConversationCache,
 } = require('../services/conversation-service');
+const { translateHtml } = require('../i18n');
 const { generateReplyViaGateway, streamReplyViaGateway, streamOptimizeUserInputViaGateway, optimizeUserInputViaGateway, getChatModelSelector } = require('../services/llm-gateway-service');
 const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = require('../services/verification-service');
 const { hashPassword, verifyPassword } = require('../services/password-service');
 const { verifyDomesticPhoneIdentity } = require('../services/phone-auth-service');
 const { hitLimit } = require('../services/rate-limit-service');
+const { CSS_CACHE_TTL_MS, FONT_CACHE_TTL_MS, getGoogleFontCss, getFontFile, logFontProxyError } = require('../services/font-proxy-service');
 const logger = require('../lib/logger');
 const config = require('../config');
 const { query, getDbType } = require('../lib/db');
@@ -107,6 +115,33 @@ function buildConversationCharacterPayload(conversation) {
     summary: conversation.character_summary,
     personality: conversation.personality,
     prompt_profile_json: conversation.prompt_profile_json,
+  };
+}
+
+const CHAT_MESSAGE_PARTIAL = path.join(__dirname, '..', 'views', 'partials', 'chat-message.ejs');
+
+function renderChatMessageHtml(req, conversation, message) {
+  return new Promise((resolve, reject) => {
+    ejs.renderFile(CHAT_MESSAGE_PARTIAL, { conversation, message }, {}, (error, html) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(translateHtml(req.locale || 'zh-CN', html));
+    });
+  });
+}
+
+async function buildChatMessagePacket(req, conversation, allMessages, activeLeafId, messageId) {
+  const view = buildConversationView(allMessages, activeLeafId || messageId);
+  const message = view.pathMessages.find((item) => Number(item.id) === Number(messageId));
+  if (!message) {
+    return null;
+  }
+  return {
+    id: message.id,
+    senderType: message.sender_type,
+    html: await renderChatMessageHtml(req, conversation, message),
   };
 }
 
@@ -181,6 +216,7 @@ async function streamChatReplyToNdjson({
   modelMode = 'standard',
   signal,
   safeWrite,
+  user = null,
 }) {
   let lineBuffer = '';
   const streamed = await streamReplyViaGateway({
@@ -194,6 +230,7 @@ async function streamChatReplyToNdjson({
     promptKind,
     modelMode,
     signal,
+    user,
     onDelta: async (deltaText, fullContent) => {
       safeWrite({ type: 'delta', delta: deltaText, full: fullContent });
       lineBuffer += deltaText;
@@ -235,6 +272,7 @@ async function streamOptimizedInputToNdjson({
   modelMode = 'standard',
   signal,
   safeWrite,
+  user = null,
 }) {
   let lineBuffer = '';
   const streamed = await streamOptimizeUserInputViaGateway({
@@ -246,6 +284,7 @@ async function streamOptimizedInputToNdjson({
     userInput,
     modelMode,
     signal,
+    user,
     onDelta: async (deltaText, fullContent) => {
       safeWrite({ type: 'delta', delta: deltaText, full: fullContent });
       lineBuffer += deltaText;
@@ -278,6 +317,37 @@ async function streamOptimizedInputToNdjson({
 }
 
 function registerWebRoutes(app) {
+  logger.debug('Registering web routes', {
+    routeGroups: ['fonts', 'public', 'auth', 'profile', 'admin', 'characters', 'chat'],
+  });
+
+  app.get('/fonts/google.css', async (req, res) => {
+    try {
+      const css = await getGoogleFontCss();
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      res.setHeader('Cache-Control', `public, max-age=${Math.floor(CSS_CACHE_TTL_MS / 1000)}, stale-while-revalidate=86400`);
+      return res.send(css);
+    } catch (error) {
+      logFontProxyError(error, { route: '/fonts/google.css' });
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      return res.status(200).send('/* Google Fonts proxy unavailable; system fonts fallback is active. */');
+    }
+  });
+
+  app.get('/fonts/google/file', async (req, res) => {
+    try {
+      const rawUrl = String(req.query.url || '').trim();
+      const fontFile = await getFontFile(rawUrl);
+      res.setHeader('Content-Type', fontFile.contentType);
+      res.setHeader('Cache-Control', `public, max-age=${Math.floor(FONT_CACHE_TTL_MS / 1000)}, immutable`);
+      return res.send(fontFile.buffer);
+    } catch (error) {
+      logFontProxyError(error, { route: '/fonts/google/file' });
+      return res.status(error.statusCode || 502).send('font unavailable');
+    }
+  });
+
   app.get('/', async (req, res, next) => {
     try {
       const characters = await listPublicCharacters();
@@ -321,6 +391,12 @@ function registerWebRoutes(app) {
   });
 
   app.get('/healthz', async (req, res) => {
+    logger.debug('Health check requested', {
+      requestId: req.requestId,
+      dbType: getDbType(),
+      redisMode: isRedisReal() ? 'redis' : 'memory',
+    });
+
     const checks = {
       ok: true,
       app: config.appName,
@@ -388,7 +464,7 @@ function registerWebRoutes(app) {
       }
 
       await issueEmailCode(email, ip);
-      return refreshAndRespond(200, { message: '邮箱验证码已发送，请输入新的图形验证码以继续后续操作。' });
+      return refreshAndRespond(200, { message: '邮箱验证码已发送。图形验证码已刷新；只有再次发送验证码时才需要填写新的图形验证码。' });
     } catch (error) {
       try {
         return refreshAndRespond(400, { message: `${error.message || '发送失败'}，请输入新的图形验证码后重试。` });
@@ -434,7 +510,7 @@ function registerWebRoutes(app) {
         phoneMasked: `${phone.slice(0, 3)}****${phone.slice(-4)}`,
         provider: 'aliyun-sms',
       });
-      return refreshAndRespond(200, { message: '短信验证码已发送，请输入新的图形验证码以继续后续操作。' });
+      return refreshAndRespond(200, { message: '短信验证码已发送。图形验证码已刷新；只有再次发送验证码时才需要填写新的图形验证码。' });
     } catch (error) {
       try {
         return refreshAndRespond(400, { message: `${error.message || '发送失败'}，请输入新的图形验证码后重试。` });
@@ -465,11 +541,11 @@ function registerWebRoutes(app) {
         ...registerLogMeta(),
         reason: reason || message,
       });
-      const nextCaptcha = await refreshCaptcha(String(req.body.captchaId || '').trim());
+      const nextCaptcha = await createCaptcha();
       return renderRegisterPage(res, {
         captcha: nextCaptcha,
         form: buildFormState(),
-        formMessage: `${message} 请重新输入新的图形验证码。`,
+        formMessage: message,
       });
     };
 
@@ -487,14 +563,6 @@ function registerWebRoutes(app) {
       const emailCode = String(req.body.emailCode || '').trim();
       const phone = String(req.body.phone || '').trim() || null;
       const phoneCode = String(req.body.phoneCode || '').trim();
-      const captchaId = String(req.body.captchaId || '').trim();
-      const captchaText = String(req.body.captchaText || '').trim();
-
-      const captchaPassed = await verifyCaptcha(captchaId, captchaText, true);
-      if (!captchaPassed) {
-        return renderRegisterError('图形验证码错误或已失效。', 'CAPTCHA_INVALID');
-      }
-
       if (username.length < 3 || password.length < 6) {
         return renderRegisterError('用户名至少 3 位，密码至少 6 位。', 'USERNAME_OR_PASSWORD_TOO_SHORT');
       }
@@ -651,16 +719,160 @@ function registerWebRoutes(app) {
     }
   });
 
+  app.get('/profile', requireAuth, async (req, res, next) => {
+    try {
+      const user = await findUserById(req.session.user.id);
+      if (!user) {
+        return req.session.destroy(() => res.redirect('/login'));
+      }
+      renderPage(res, 'profile', {
+        title: '个人资料',
+        user,
+        formMessage: '',
+        formStatus: '',
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/profile', requireAuth, async (req, res, next) => {
+    try {
+      const action = String(req.body.action || '').trim();
+      const userId = req.session.user.id;
+      const user = await findUserById(userId);
+      if (!user) {
+        return req.session.destroy(() => res.redirect('/login'));
+      }
+
+      const renderProfileMessage = (message, status = 'error', targetUser = user) => renderPage(res, 'profile', {
+        title: '个人资料',
+        user: targetUser,
+        formMessage: message,
+        formStatus: status,
+      });
+
+      if (action === 'username') {
+        const username = String(req.body.username || '').trim();
+        if (username.length < 3) {
+          return renderProfileMessage('用户名至少 3 位。');
+        }
+        if (username.length > 50) {
+          return renderProfileMessage('用户名不能超过 50 位。');
+        }
+        if (username === user.username) {
+          return renderProfileMessage('新用户名和当前用户名一样，就别折腾啦。', 'info');
+        }
+
+        const existedUser = await findUserByUsername(username);
+        if (existedUser && Number(existedUser.id) !== Number(userId)) {
+          return renderProfileMessage('这个用户名已经有人用了。');
+        }
+
+        await updateUsername(userId, username);
+        req.session.user.username = username;
+        const refreshedUser = await findUserById(userId);
+        return renderProfileMessage('用户名改好了。', 'success', refreshedUser);
+      }
+
+      if (action === 'password') {
+        const currentPassword = String(req.body.currentPassword || '').trim();
+        const newPassword = String(req.body.newPassword || '').trim();
+        const confirmPassword = String(req.body.confirmPassword || '').trim();
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+          return renderProfileMessage('改密码这几项得填完整。');
+        }
+        if (newPassword.length < 6) {
+          return renderProfileMessage('新密码至少 6 位。');
+        }
+        if (newPassword !== confirmPassword) {
+          return renderProfileMessage('两次输入的新密码不一致。');
+        }
+
+        const authUser = await findUserAuthById(userId);
+        if (!authUser) {
+          return req.session.destroy(() => res.redirect('/login'));
+        }
+
+        const isValidPassword = await verifyPassword(currentPassword, authUser.password_hash);
+        if (!isValidPassword) {
+          return renderProfileMessage('当前密码不对。');
+        }
+
+        const isSamePassword = await verifyPassword(newPassword, authUser.password_hash);
+        if (isSamePassword) {
+          return renderProfileMessage('新密码不能和现在这个一样。', 'info');
+        }
+
+        const passwordHash = await hashPassword(newPassword);
+        await updatePasswordHash(userId, passwordHash);
+        const refreshedUser = await findUserById(userId);
+        return renderProfileMessage('密码已经更新好了。', 'success', refreshedUser);
+      }
+
+      return renderProfileMessage('不认识这个资料操作。');
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get('/admin', requireAdmin, async (req, res, next) => {
     try {
-      const [overview, users, plans, providers, promptBlocks] = await Promise.all([
+      const [overview, users, plans] = await Promise.all([
         getAdminOverview(),
         listUsersWithPlans(),
         listPlans(),
-        listProviders(),
-        listPromptBlocks(),
       ]);
 
+      renderPage(res, 'admin', {
+        title: '管理员后台',
+        overview,
+        users,
+        plans,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/plans', requireAdmin, async (req, res, next) => {
+    try {
+      const [overview, plans] = await Promise.all([
+        getAdminOverview(),
+        listPlans(),
+      ]);
+
+      renderPage(res, 'admin-plans', {
+        title: '套餐配置',
+        overview,
+        plans,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/providers', requireAdmin, async (req, res, next) => {
+    try {
+      const [overview, providers] = await Promise.all([
+        getAdminOverview(),
+        listProviders(),
+      ]);
+
+      renderPage(res, 'admin-providers', {
+        title: 'LLM 配置',
+        overview,
+        providers,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/prompts', requireAdmin, async (req, res, next) => {
+    try {
+      const promptBlocks = await listPromptBlocks();
       const promptPreview = buildPromptPreview({
         promptBlocks: promptBlocks.map((item) => ({
           key: item.block_key,
@@ -668,28 +880,102 @@ function registerWebRoutes(app) {
           sortOrder: item.sort_order,
           isEnabled: item.is_enabled,
         })),
-        character: {
-          name: '示例角色',
-          summary: '一个用于后台预览拼接效果的示例角色。',
-          personality: '冷静、克制、说话短但有温度。',
-          prompt_profile_json: '[]',
-        },
+        character: {},
       });
 
       const promptPreviewMeta = {
-        characterName: '示例角色',
-        dynamicItemsSource: '后台写死的示例角色 prompt_profile_json，用来演示最终拼接效果，不来自你刚创建的全局提示词片段。',
+        modeLabel: '纯全局片段预览',
+        description: '这里只展示当前启用的全局提示词片段拼接结果，不再注入任何示例角色字段占位。',
       };
 
-      renderPage(res, 'admin', {
-        title: '管理员后台',
-        overview,
-        users,
-        plans,
-        providers,
+      renderPage(res, 'admin-prompts', {
+        title: 'Prompt 配置',
         promptBlocks,
         promptPreview,
         promptPreviewMeta,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/logs', requireAdmin, async (req, res, next) => {
+    try {
+      const logResult = listLogEntries({
+        date: req.query.date,
+        level: req.query.level,
+        file: req.query.file,
+        errorType: req.query.errorType,
+        functionName: req.query.functionName,
+        page: parseIntegerField(req.query.page, { fieldLabel: '页码', defaultValue: 1, min: 1 }),
+        pageSize: parseIntegerField(req.query.pageSize, { fieldLabel: '分页大小', defaultValue: 50, min: 1 }),
+      });
+
+      const buildPageUrl = (targetPage) => {
+        const params = new URLSearchParams();
+        Object.entries({ ...logResult.filters, page: targetPage, pageSize: logResult.pageSize }).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && String(value).trim() !== '') {
+            params.set(key, String(value));
+          }
+        });
+        return `/admin/logs?${params.toString()}`;
+      };
+
+      renderPage(res, 'admin-logs', {
+        title: '日志查询',
+        logResult,
+        buildPageUrl,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/conversations', requireAdmin, async (req, res, next) => {
+    try {
+      const conversationResult = await listAdminConversations({
+        userId: req.query.userId,
+        characterId: req.query.characterId,
+        date: req.query.date,
+        page: parseIntegerField(req.query.page, { fieldLabel: '页码', defaultValue: 1, min: 1 }),
+        pageSize: parseIntegerField(req.query.pageSize, { fieldLabel: '分页大小', defaultValue: 25, min: 1 }),
+      });
+
+      const buildPageUrl = (targetPage) => {
+        const params = new URLSearchParams();
+        Object.entries({
+          ...conversationResult.filters,
+          page: targetPage,
+          pageSize: conversationResult.pageSize,
+        }).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && String(value).trim() !== '' && Number(value) !== 0) {
+            params.set(key, String(value));
+          }
+        });
+        return `/admin/conversations?${params.toString()}`;
+      };
+
+      renderPage(res, 'admin-conversations', {
+        title: '全局对话记录',
+        conversationResult,
+        buildPageUrl,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/conversations/:conversationId', requireAdmin, async (req, res, next) => {
+    try {
+      const conversationId = parseIdParam(req.params.conversationId, '会话 ID');
+      const detail = await getAdminConversationDetail(conversationId);
+      if (!detail) {
+        return renderValidationMessage(res, '这条对话记录不存在，或者已经被删除。', '全局对话记录');
+      }
+
+      renderPage(res, 'admin-conversation-detail', {
+        title: `对话 #${conversationId}`,
+        detail,
       });
     } catch (error) {
       next(error);
@@ -719,7 +1005,7 @@ function registerWebRoutes(app) {
         isDefault: String(req.body.isDefault || '') === '1',
         sortOrder: parseIntegerField(req.body.sortOrder, { fieldLabel: '排序值', defaultValue: 0, min: 0 }),
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/plans');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -750,7 +1036,7 @@ function registerWebRoutes(app) {
         isDefault: String(req.body.isDefault || '') === '1',
         sortOrder: parseIntegerField(req.body.sortOrder, { fieldLabel: '排序值', defaultValue: 0, min: 0 }),
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/plans');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -776,7 +1062,7 @@ function registerWebRoutes(app) {
         throw error;
       }
 
-      return res.redirect('/admin');
+      return res.redirect('/admin/plans');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -846,7 +1132,7 @@ function registerWebRoutes(app) {
         inputTokenPrice: parseNumberField(req.body.inputTokenPrice, { fieldLabel: '输入 Token 单价', defaultValue: 0, min: 0 }),
         outputTokenPrice: parseNumberField(req.body.outputTokenPrice, { fieldLabel: '输出 Token 单价', defaultValue: 0, min: 0 }),
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/providers');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -876,7 +1162,7 @@ function registerWebRoutes(app) {
         inputTokenPrice: parseNumberField(req.body.inputTokenPrice, { fieldLabel: '输入 Token 单价', defaultValue: 0, min: 0 }),
         outputTokenPrice: parseNumberField(req.body.outputTokenPrice, { fieldLabel: '输出 Token 单价', defaultValue: 0, min: 0 }),
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/providers');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -899,7 +1185,7 @@ function registerWebRoutes(app) {
         sortOrder: parseIntegerField(req.body.sortOrder, { fieldLabel: '排序值', defaultValue: 0, min: 0 }),
         isEnabled: String(req.body.isEnabled || '1') !== '0',
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/prompts');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -917,7 +1203,7 @@ function registerWebRoutes(app) {
         sortOrder: parseIntegerField(req.body.sortOrder, { fieldLabel: '排序值', defaultValue: 0, min: 0 }),
         isEnabled: String(req.body.isEnabled || '1') !== '0',
       });
-      return res.redirect('/admin');
+      return res.redirect('/admin/prompts');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -933,7 +1219,7 @@ function registerWebRoutes(app) {
         .map((item) => parseIntegerField(item, { fieldLabel: '提示词片段 ID', min: 1, allowEmpty: true }))
         .filter((item) => item > 0);
       await reorderPromptBlocks(blockIds);
-      return res.redirect('/admin');
+      return res.redirect('/admin/prompts');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -946,7 +1232,7 @@ function registerWebRoutes(app) {
     try {
       const blockId = parseIdParam(req.params.blockId, '提示词片段 ID');
       await deletePromptBlock(blockId);
-      return res.redirect('/admin');
+      return res.redirect('/admin/prompts');
     } catch (error) {
       if (error.message.includes('必须') || error.message.includes('不能小于') || error.message.includes('不能为空') || error.message.includes('超出允许范围')) {
         return renderValidationMessage(res, error.message);
@@ -1097,7 +1383,7 @@ function registerWebRoutes(app) {
         const replyMessageId = await addMessage({
           conversationId,
           senderType: 'character',
-          content: String(character.first_message || '').trim(),
+          content: applyRuntimeTemplate(String(character.first_message || '').trim(), { username: req.session.user.username, user: req.session.user.username, timeZone: 'Asia/Hong_Kong' }),
           parentMessageId: userMessageId,
           branchFromMessageId: userMessageId,
           promptKind: 'first-message',
@@ -1124,7 +1410,51 @@ function registerWebRoutes(app) {
         return;
       }
 
+      logger.debug('Rendering chat page', {
+        requestId: req.requestId,
+        userId: req.session.user.id,
+        conversationId,
+        requestedLeafId: req.query.leaf || null,
+      });
+
       await renderChatPage(req, res, conversation);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/chat/:conversationId/messages/history', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = parseIdParam(req.params.conversationId, '会话 ID');
+      const beforeId = parseIntegerField(req.query.beforeId || req.query.before, { fieldLabel: '起始消息 ID', min: 1, allowEmpty: true });
+      const limit = Math.min(parseIntegerField(req.query.limit || '10', { fieldLabel: '加载数量', min: 1 }), 30);
+      const conversation = await loadConversationForUserOrFail(req, res, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const allMessages = await listMessages(conversationId);
+      const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
+      const leafId = parseIntegerField(req.query.leaf || fallbackLeafId || '', { fieldLabel: '叶子消息 ID', min: 1, allowEmpty: true }) || fallbackLeafId;
+      const view = buildConversationView(allMessages, leafId);
+      const beforeIndex = beforeId
+        ? view.pathMessages.findIndex((message) => Number(message.id) === Number(beforeId))
+        : view.pathMessages.length;
+      const end = beforeIndex >= 0 ? beforeIndex : view.pathMessages.length;
+      const start = Math.max(0, end - limit);
+      const messages = view.pathMessages.slice(start, end);
+      const htmlParts = [];
+      for (const message of messages) {
+        htmlParts.push(await renderChatMessageHtml(req, conversation, message));
+      }
+
+      res.json({
+        ok: true,
+        html: htmlParts.join('\n'),
+        count: messages.length,
+        hasMore: start > 0,
+        nextBeforeId: messages.length ? messages[0].id : beforeId || null,
+      });
     } catch (error) {
       next(error);
     }
@@ -1198,10 +1528,11 @@ function registerWebRoutes(app) {
           personality: conversation.personality,
           prompt_profile_json: conversation.prompt_profile_json,
         },
-        messages: [...history, { sender_type: 'user', content }],
+        messages: history,
         userMessage: content,
         promptKind,
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const replyMessageId = await addMessage({
@@ -1274,7 +1605,16 @@ function registerWebRoutes(app) {
         }),
       });
 
-      ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId, content, leafId: userMessageId });
+      const messagesWithUser = await listMessages(conversationId);
+      const userPacket = await buildChatMessagePacket(req, conversation, messagesWithUser, userMessageId, userMessageId);
+      ndjson.safeWrite({
+        type: 'user-message',
+        conversationId,
+        userMessageId,
+        content,
+        leafId: userMessageId,
+        html: userPacket ? userPacket.html : '',
+      });
       ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: userMessageId, mode: 'message' });
 
       const replyContent = await streamChatReplyToNdjson({
@@ -1282,12 +1622,13 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, { sender_type: 'user', content }],
+        messages: history,
         userMessage: content,
         promptKind,
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1309,7 +1650,20 @@ function registerWebRoutes(app) {
 
       await updateConversationTitle(conversationId, buildNextConversationTitle(conversation, content));
       await invalidateConversationCache(conversationId);
-      ndjson.safeWrite({ type: 'done', conversationId, replyMessageId, leafId: replyMessageId, full: replyContent, mode: 'message' });
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, replyMessageId);
+      const parentPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, userMessageId);
+      ndjson.safeWrite({
+        type: 'done',
+        conversationId,
+        replyMessageId,
+        leafId: replyMessageId,
+        full: replyContent,
+        mode: 'message',
+        html: replyPacket ? replyPacket.html : '',
+        parentMessageId: userMessageId,
+        parentHtml: parentPacket ? parentPacket.html : '',
+      });
       ndjson.end();
       return;
     } catch (error) {
@@ -1363,13 +1717,14 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, parentUserMessage],
+        messages: history,
         userMessage: parentUserMessage.content,
         systemHint: '这是一次重新生成。请在保持角色一致的前提下，给出与先前不同但同样合理的新回复。',
         promptKind: 'regenerate',
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1392,6 +1747,8 @@ function registerWebRoutes(app) {
       });
 
       await invalidateConversationCache(conversationId);
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newReplyId, newReplyId);
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -1399,6 +1756,7 @@ function registerWebRoutes(app) {
         leafId: newReplyId,
         full: reply,
         mode: 'regenerate',
+        html: replyPacket ? replyPacket.html : '',
       });
       ndjson.end();
     } catch (error) {
@@ -1438,11 +1796,12 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, parentUserMessage],
+        messages: history,
         userMessage: parentUserMessage.content,
         systemHint: '这是一次重新生成。请在保持角色一致的前提下，给出与先前不同但同样合理的新回复。',
         promptKind: 'regenerate',
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const newReplyId = await addMessage({
@@ -1575,11 +1934,12 @@ function registerWebRoutes(app) {
           personality: conversation.personality,
           prompt_profile_json: conversation.prompt_profile_json,
         },
-        messages: [...historyBeforeUser, { sender_type: 'user', content }],
+        messages: historyBeforeUser,
         userMessage: content,
         systemHint: '这是基于用户改写后的旧输入重新开出的分支，请自然延续，不要提到你被要求重生成。',
         promptKind: 'edit',
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const replyMessageId = await addMessage({
@@ -1649,7 +2009,8 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = targetMessage.content;
-        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay' });
+        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
         reply = await streamChatReplyToNdjson({
@@ -1657,13 +2018,14 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeTarget, { sender_type: 'user', content: targetMessage.content }],
+          messages: historyBeforeTarget,
           userMessage: targetMessage.content,
           systemHint: '这是一次从旧节点开始的后续重算，请自然延续并给出新的合理走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
           signal: ndjson.abortController.signal,
           safeWrite: ndjson.safeWrite,
+          user: req.session.user,
         });
 
         if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1713,7 +2075,8 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = parentUserMessage.content;
-        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay' });
+        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
         reply = await streamChatReplyToNdjson({
@@ -1721,13 +2084,14 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeParentUser, { sender_type: 'user', content: parentUserMessage.content }],
+          messages: historyBeforeParentUser,
           userMessage: parentUserMessage.content,
           systemHint: '这是一次从旧 AI 节点开始的后续重算，请给出与旧回复不同但同样合理的新走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
           signal: ndjson.abortController.signal,
           safeWrite: ndjson.safeWrite,
+          user: req.session.user,
         });
 
         if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1751,6 +2115,12 @@ function registerWebRoutes(app) {
       }
 
       await invalidateConversationCache(conversationId);
+      const messagesWithReply = await listMessages(conversationId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafId);
+      const newLeafMessage = messagesWithReply.find((message) => Number(message.id) === Number(newLeafId));
+      const parentPacket = newLeafMessage && newLeafMessage.parent_message_id
+        ? await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafMessage.parent_message_id)
+        : null;
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -1758,6 +2128,9 @@ function registerWebRoutes(app) {
         leafId: newLeafId,
         full: reply,
         mode: 'replay',
+        html: replyPacket ? replyPacket.html : '',
+        parentMessageId: newLeafMessage ? newLeafMessage.parent_message_id : null,
+        parentHtml: parentPacket ? parentPacket.html : '',
         preview: [
           { role: '你', content: previewUserContent },
           { role: conversation.character_name, content: reply },
@@ -1815,11 +2188,12 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeTarget, { sender_type: 'user', content: targetMessage.content }],
+          messages: historyBeforeTarget,
           userMessage: targetMessage.content,
           systemHint: '这是一次从旧节点开始的后续重算，请自然延续并给出新的合理走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
+          user: req.session.user,
         });
 
         newLeafId = await addMessage({
@@ -1871,11 +2245,12 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeParentUser, { sender_type: 'user', content: parentUserMessage.content }],
+          messages: historyBeforeParentUser,
           userMessage: parentUserMessage.content,
           systemHint: '这是一次从旧 AI 节点开始的后续重算，请给出与旧回复不同但同样合理的新走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
+          user: req.session.user,
         });
 
         newLeafId = await addMessage({
@@ -1964,6 +2339,7 @@ function registerWebRoutes(app) {
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -2011,6 +2387,7 @@ function registerWebRoutes(app) {
         messages: history,
         userInput: content,
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       await renderChatPage(req, res, conversation, {

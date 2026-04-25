@@ -98,15 +98,119 @@ function buildCharacterPromptItems(character = {}) {
   ]);
 }
 
-function composeSystemPrompt({ promptBlocks = [], characterPromptItems = [], systemHint = '' }) {
+function formatRuntimeTime(date = new Date(), options = {}) {
+  const timeZone = String(options.timeZone || 'Asia/Hong_Kong').trim() || 'Asia/Hong_Kong';
+  const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    dateFormatter
+      .formatToParts(date)
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value]),
+  );
+
+  let timeZoneLabel = 'GMT+08:00';
+  try {
+    const zoneFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      timeZoneName: 'longOffset',
+    });
+    const timeZonePart = zoneFormatter.formatToParts(date).find((part) => part.type === 'timeZoneName');
+    if (timeZonePart?.value) {
+      timeZoneLabel = timeZonePart.value;
+    }
+  } catch (_) {
+    // ignore timezone label formatting failure and keep fallback value
+  }
+
+  return `${parts.year || ''}年${parts.month || ''}月${parts.day || ''}日 ${parts.weekday || ''} ${parts.hour || '00'}:${parts.minute || '00'}:${parts.second || '00'} ${timeZoneLabel}`.trim();
+}
+
+function applyRuntimeTemplate(text, runtimeContext = {}) {
+  const rawText = String(text || '');
+  if (!rawText) {
+    return '';
+  }
+
+  const username = String(runtimeContext.username || runtimeContext.user || '用户').trim() || '用户';
+  const timeValue = String(
+    runtimeContext.time
+      || formatRuntimeTime(runtimeContext.now instanceof Date ? runtimeContext.now : new Date(), {
+        timeZone: runtimeContext.timeZone,
+      }),
+  ).trim();
+
+  return rawText
+    .replace(/\{user\}/g, username)
+    .replace(/\{time\}/g, timeValue);
+}
+
+function applyRuntimeTemplateToCharacter(character = {}, runtimeContext = {}) {
+  const source = character && typeof character === 'object' ? character : {};
+  const nextCharacter = {
+    ...source,
+    name: applyRuntimeTemplate(source.name, runtimeContext),
+    summary: applyRuntimeTemplate(source.summary, runtimeContext),
+    role: applyRuntimeTemplate(source.role, runtimeContext),
+    personality: applyRuntimeTemplate(source.personality, runtimeContext),
+    traitDescription: applyRuntimeTemplate(source.traitDescription, runtimeContext),
+    currentScene: applyRuntimeTemplate(source.currentScene, runtimeContext),
+    currentBackground: applyRuntimeTemplate(source.currentBackground, runtimeContext),
+  };
+
+  const firstMessageRaw = source.first_message === undefined ? source.firstMessage : source.first_message;
+  const nextFirstMessage = applyRuntimeTemplate(firstMessageRaw, runtimeContext);
+  if (source.first_message !== undefined) {
+    nextCharacter.first_message = nextFirstMessage;
+  }
+  if (source.firstMessage !== undefined) {
+    nextCharacter.firstMessage = nextFirstMessage;
+  }
+
+  const promptProfileRaw = source.prompt_profile_json === undefined ? source.promptProfileJson : source.prompt_profile_json;
+  const parsedPromptProfile = safeParseJson(promptProfileRaw, null);
+  if (Array.isArray(parsedPromptProfile)) {
+    const normalizedPromptProfile = normalizePromptItems(parsedPromptProfile).map((item) => ({
+      ...item,
+      key: applyRuntimeTemplate(item.key, runtimeContext),
+      value: applyRuntimeTemplate(item.value, runtimeContext),
+    }));
+    const serializedPromptProfile = JSON.stringify(normalizedPromptProfile);
+    if (source.prompt_profile_json !== undefined) {
+      nextCharacter.prompt_profile_json = serializedPromptProfile;
+    }
+    if (source.promptProfileJson !== undefined) {
+      nextCharacter.promptProfileJson = serializedPromptProfile;
+    }
+  }
+
+  return nextCharacter;
+}
+
+function composeSystemPrompt({ promptBlocks = [], characterPromptItems = [], systemHint = '', runtimeContext = {} }) {
   const sections = [
     ...normalizePromptItems(promptBlocks)
       .filter((item) => item.isEnabled && String(item.value || '').trim())
-      .map((item) => formatPromptSection(item.key, item.value)),
+      .map((item) => formatPromptSection(
+        applyRuntimeTemplate(item.key, runtimeContext),
+        applyRuntimeTemplate(item.value, runtimeContext),
+      )),
     ...normalizePromptItems(characterPromptItems)
       .filter((item) => item.isEnabled && String(item.value || '').trim())
-      .map((item) => formatPromptSection(item.key, item.value)),
-    formatPromptSection('运行时要求', systemHint || ''),
+      .map((item) => formatPromptSection(
+        applyRuntimeTemplate(item.key, runtimeContext),
+        applyRuntimeTemplate(item.value, runtimeContext),
+      )),
+    formatPromptSection('运行时要求', applyRuntimeTemplate(systemHint || '', runtimeContext)),
   ].filter(Boolean);
 
   return sections.join('\n\n');
@@ -176,11 +280,12 @@ async function deletePromptBlock(blockId) {
   await query('DELETE FROM system_prompt_blocks WHERE id = ?', [blockId]);
 }
 
-function buildPromptPreview({ promptBlocks = [], character = {}, systemHint = '' }) {
+function buildPromptPreview({ promptBlocks = [], character = {}, systemHint = '', runtimeContext = {} }) {
   return composeSystemPrompt({
     promptBlocks,
     characterPromptItems: buildCharacterPromptItems(character),
     systemHint,
+    runtimeContext,
   });
 }
 
@@ -189,6 +294,9 @@ module.exports = {
   parsePromptItemsFromForm,
   formatPromptSection,
   buildCharacterPromptItems,
+  formatRuntimeTime,
+  applyRuntimeTemplate,
+  applyRuntimeTemplateToCharacter,
   composeSystemPrompt,
   buildPromptPreview,
   listPromptBlocks,

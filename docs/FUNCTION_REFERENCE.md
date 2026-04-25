@@ -1,0 +1,770 @@
+# 函数与调用说明索引
+
+> 本文档由 `scripts/update-docs-debug.js` 生成，用于满足“每个文件、每个函数都有介绍和调用说明”的维护需求。真正复杂的函数仍建议在源码附近补充 JSDoc。
+
+## `public/js/admin-page.js`
+
+后台交互：套餐字段切换、Prompt 片段排序/预览、后台列表过滤。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `apply` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `applyFilter` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `formatPromptSection` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getItems` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `moveItem` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalize` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderPreview` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `syncOrder` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `public/js/character-editor-page.js`
+
+角色编辑器动态字段：提示词条目增删、排序、预览。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `bindItem` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createItem` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `refreshOrders` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderPreview` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `public/js/chat-page.js`
+
+聊天页前端核心：流式 NDJSON 消费、富文本/Markdown 渲染、思考块折叠、加载历史、输入优化。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `appendSingleStreamingBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `appendStreamingPair` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `applyInlineMarkdown` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildFold` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildStreamingPreviewHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `collectFoldBlocks` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `consumeNdjsonStream` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createFragmentFromHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureStartMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `escapeHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `flushParagraph` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handleMainComposeSubmit` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handlePacket` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handlePageAbort` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `highlightQuotesInHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `hydrateRichContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isBlank` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isBullet` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isFencePlaceholder` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isHr` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isOrdered` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isQuoteMarkerOnly` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isQuoted` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `loadOlderMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `markdownToHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `message` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeMarkdownLines` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseHeading` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `removeLivePair` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderRichContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderStreamingPlainText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `replaceBubbleWithHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `replacePreviousLiveUserBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `sanitizeCss` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `sanitizeNodeTree` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `scheduleStreamingRender` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `setBubbleFinalState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `splitStreamingSegments` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateActiveLeafState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `public/js/i18n-runtime.js`
+
+浏览器端轻量 t() 翻译函数，供页面脚本复用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `interpolate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `t` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `public/js/register-page.js`
+
+注册页交互：国家/地区切换、验证码刷新、邮箱/手机验证码发送。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `applyCaptchaRefreshFromResponse` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getCountryType` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handleCountryChange` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `refreshCaptcha` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `sendEmailCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `sendPhoneCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `showCaptchaHint` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `syncCountryCards` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `toggleEmailBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/full-flow-e2e.js`
+
+全流程 E2E 测试脚本：创建临时用户/角色/会话，验证消息树、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `cleanupCreatedData` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `makeMockResponse` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `onDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `redirect` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `render` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `send` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `status` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `type` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/grant-admin.js`
+
+/** 手动授予管理员权限。只允许本机显式执行，不走隐式自动提权。 用法：node scripts/grant-admin.js <username> /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/health-check.js`
+
+/** 基础健康检查：配置、数据库、Redis、公开 HTTP 页面。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `checkDatabase` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `checkRedis` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `fetchStatus` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/init-db.js`
+
+/** 数据库初始化脚本。根据当前配置自动选择初始化策略： MySQL 模式（DATABASE_URL 已设置）： - 使用 DATABASE_ADMIN_URL 创建数据库（若不存在） - 创建全部业务表并补全历史缺失字段/索引（幂等，可反复执行） - 写入默认套餐与 LLM 提供商种子数据 SQLite 模式（DATABASE_URL 未设置）： - 表结构由 db.js 在首次连接时自动初始化，此脚本无需额外操作 - 数据库文件路径：<项目根>/data/local.db 使用方式： npm run db:init 或 node scripts/init-db.js /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `ensureColumn` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureIndex` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureUniqueIndex` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `maskApiKey` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/smoke-test.js`
+
+/** 生产冒烟检查：只做只读探测，不写业务数据。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `assert` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `fetchText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/test-admin-conversations.js`
+
+/** 后台全局对话记录查询冒烟测试。调用说明：`npm run admin-conversations:test`，验证服务查询、筛选和 EJS 模板渲染。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `t` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/test-admin-logs-route.js`
+
+/** 管理后台日志页模板冒烟测试。调用说明：`npm run admin-logs:test`，验证日志查询结果能正常渲染为后台 UI。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/test-log-service.js`
+
+/** 日志解析服务冒烟测试。调用说明：`npm run logs:test`，用于确认后台日志分页/筛选基础逻辑可用。 /
+
+- 本文件没有可识别的命名函数，主要通过顶层脚本、配置或模板逻辑工作。
+
+## `scripts/test-prompt-route.js`
+
+/** Prompt 路由/LLM 网关的轻量单元测试。 调用说明： - `npm run test:prompt-route` 执行。 - 通过 monkey patch Module._load 隔离外部依赖，只验证 prompt 构造与路由调用契约。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/test-think-parser.js`
+
+/** 最小回归测试：验证 think/reasoning 解析与展示规则的关键正则行为。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `assert` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `collectFoldTitles` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `combineReplyContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractReasoningText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeLooseText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `stripThinkTags` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/tmp-stream-e2e.js`
+
+/** 临时流式聊天 E2E 调试脚本。 调用说明： - 手动运行 `node scripts/tmp-stream-e2e.js`。 - 会使用 .env 中 APP_URL/DATABASE_URL，登录固定测试用户并请求流式接口。 - 这是排查聊天 NDJSON/最终落库问题的临时脚本，不应放进生产定时任务。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `consumeNdjson` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `cookieHeader` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `login` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `postForm` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `queryDb` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `request` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `startConversation` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `summarizePackets` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateCookies` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/update-docs-debug.js`
+
+/** 一次性维护脚本：为 ai-roleplay-site 生成/刷新项目梳理文档、注释索引与调试说明。 使用场景： - 大规模代码梳理时，避免手工复制每个函数/文件说明。 - 新增 JS/EJS/CSS 文件后，可重新运行本脚本同步 docs/PROJECT_MAP.md 与 docs/FUNCTION_REFERENCE.md。 调用方式： node scripts/update-docs-debug.js 注意： - 该脚本只写 Markdown 文档，不改业务代码。 - 不读取 .env，不输出任何密钥。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `extractFileDescription` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractFunctions` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `functionNote` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateDebugGuide` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateFunctionReference` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateProjectMap` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `read` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `visit` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `walk` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `write` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/config.js`
+
+环境变量解析与隐私安全配置摘要。被 server、service、脚本读取。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `getPrivacySafeSummary` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `maskSecret` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `readBool` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `readString` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/i18n.js`
+
+服务端/客户端共用国际化词典与 HTML 文本翻译工具。被 i18n 中间件和渲染层调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `buildLocaleSwitchLinks` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getClientMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getLocaleMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `interpolate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeLocale` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `pickFromAcceptLanguage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `resolveLocale` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `translate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `translateHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `translateTagAttributes` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `translateTextSegment` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/lib/db-sqlite-schema.js`
+
+SQLite 初始化 schema 与种子数据，供 db.js 首次创建本地库时调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `ensureSqliteCharactersVisibilityColumn` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `initSqliteSchema` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `maskApiKey` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/lib/db.js`
+
+数据库抽象层，MySQL 优先、SQLite 兜底，提供 query/withTransaction。所有 service 的 DB 入口。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `getDbType` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `initMySQL` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `initSQLite` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `initialize` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `query` | 执行 SQL，自动等待数据库初始化并适配 MySQL/SQLite 返回格式。 |
+| `sqliteExec` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `toSqliteDialect` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `waitReady` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `withTransaction` | 以 MySQL/SQLite 兼容形式执行事务回调。 |
+
+## `src/lib/logger.js`
+
+统一结构化日志输出，支持 LOG_LEVEL 过滤和 DEBUG 开关。所有后端模块应通过它写日志。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `debug` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `error` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `formatMeta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `info` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `log` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `shouldLog` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `warn` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/lib/redis.js`
+
+Redis 客户端与内存降级实现，供 session、验证码、缓存、限流使用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `_isExpired` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `constructor` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `get` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `initRedis` | 初始化 Redis；失败或未配置时降级到内存客户端。 |
+| `isRedisReal` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `on` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `set` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/middleware/auth.js`
+
+登录/管理员鉴权中间件，保护 dashboard/admin/chat 等页面。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `requireAdmin` | 要求管理员；非管理员记录警告并展示无权限页。 |
+| `requireAuth` | 要求登录；未登录跳转 /login。 |
+
+## `src/middleware/error-handler.js`
+
+全局错误转译与错误页渲染，避免向页面泄露堆栈。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `errorHandler` | 全局错误处理中间件；记录日志并按错误类型展示友好消息。 |
+| `mapErrorToPresentation` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderErrorWithLayout` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/middleware/i18n.js`
+
+根据 query/cookie/Accept-Language 解析语言，并向 req/res.locals 注入 t()。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `attachI18n` | 解析 locale，挂载 req.t/res.locals.t 和客户端词典。 |
+
+## `src/middleware/request-context.js`
+
+为每个请求注入 requestId/currentUser，后续日志和错误页用它串联。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `requestContext` | 为请求生成 requestId，写入 req 和 res.locals。 |
+
+## `src/routes/web-routes.js`
+
+主 Web 路由注册文件：公开页、认证、后台、角色、聊天、分支/回放/流式接口。依赖 service 层完成业务。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `buildChatMessagePacket` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildConversationCharacterPayload` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildFormState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildPageUrl` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `cleanup` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createNdjsonResponder` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `mapLlmErrorToUserMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `refreshAndRespond` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `registerLogMeta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `registerWebRoutes` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderChatMessageHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderProfileMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderRegisterError` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `safeWrite` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `streamChatReplyToNdjson` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `streamOptimizedInputToNdjson` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/server-helpers.js`
+
+路由公共辅助：页面渲染、参数解析、账号脱敏、聊天页 view model、NDJSON 输出。被 web-routes.js 调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `buildBranchConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildCharacterPromptProfileFromForm` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildChatRequestContext` | 根据当前会话/父消息/输入，计算聊天 promptKind、历史路径和分支状态。 |
+| `buildConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildLoginLogMeta` | 生成登录流程结构化日志 meta。 |
+| `buildNextConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildRegisterLogMeta` | 生成注册流程结构化日志 meta。 |
+| `getClientIp` | 从 x-forwarded-for/socket 提取客户端 IP；主要用于限流和日志。 |
+| `initNdjsonStream` | 初始化流式响应头，关闭代理缓冲。 |
+| `isAllowedInternationalEmail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isDomesticPhone` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isEmail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `loadConversationForUserOrFail` | 按当前用户加载会话；不存在时直接渲染提示页并返回 null。 |
+| `maskEmail` | 脱敏邮箱，日志中只保留少量可定位信息。 |
+| `maskPhone` | 脱敏手机号，日志中只保留前三后四。 |
+| `parseIdParam` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseIntegerField` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseNumberField` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `renderChatPage` | 加载消息树、计算当前叶子和可见消息，渲染聊天页。 |
+| `renderPage` | 统一渲染业务视图并套 layout；调用方传 res/view/params，内部负责 i18n 翻译和渲染失败兜底。 |
+| `renderRegisterPage` | 渲染注册页并注入验证码、表单状态和公开手机号认证配置。 |
+| `renderValidationMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `splitCharacterPromptProfile` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `writeNdjson` | 向响应写入一行 NDJSON，并在支持时 flush。 |
+
+## `src/server.js`
+
+Express 启动入口：等待 DB/Redis、装配全局中间件、注册路由、启动监听。调用链起点。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `bootstrap` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `write` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/admin-conversation-service.js`
+
+/** 管理后台全局对话记录查询服务。 调用说明： - `src/routes/web-routes.js` 的 `/admin/conversations` 调用 `listAdminConversations()` 渲染全局会话列表。 - `src/routes/web-routes.js` 的 `/admin/conversations/:id` 调用 `getAdminConversationDetail()` 查看单条会话完整消息。 - 支持按用户、角色卡、日期筛选；只做后台只读查询，不修改聊天数据。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `buildConversationWhere` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `formatDateTime` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getAdminConversationDetail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listAdminConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listConversationFilterOptions` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeDate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizePositiveInteger` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `trimPreview` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/admin-service.js`
+
+后台首页聚合查询：用户套餐、Provider 列表、概览统计。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `getAdminOverview` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listProviders` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listUsersWithPlans` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/ai-service.js`
+
+旧版直连 OpenAI 兼容接口服务；新路径优先使用 llm-gateway-service。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `appendContentDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `appendReasoningDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildPromptMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildRuntimeContext` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `callProvider` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `closeReasoningIfNeeded` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `combineReplyContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractMessageContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractReasoningText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateReply` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handleSseBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeTextContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `optimizeUserInput` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseStreamDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `shouldAppendUserMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `stripThinkTags` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/aliyun-sms-service.js`
+
+阿里云短信验证码发送封装。被 verification-service 调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `createClient` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `sendLoginCodeSms` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/captcha-service.js`
+
+图形验证码生成、刷新、读取与校验。依赖 Redis/内存缓存。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `createCaptcha` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateSvg` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getCaptchaImage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `invalidateCaptcha` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `randomText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `refreshCaptcha` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `verifyCaptcha` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/character-service.js`
+
+角色 CRUD 与可见性控制。被首页、dashboard、角色编辑和开聊流程调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `countCharacterConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createCharacter` | 创建角色，写入用户、基础设定、首句、提示词结构和可见性。 |
+| `deleteCharacterSafely` | 安全删除角色；已有会话时拒绝删除。 |
+| `getCharacterById` | 读取角色详情；传 userId 时限制必须归属该用户。 |
+| `listPublicCharacters` | 读取公开且 published 的角色供首页展示。 |
+| `listUserCharacters` | 读取某用户自己的角色供 dashboard 展示。 |
+| `normalizeVisibility` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `stringifyPromptProfile` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateCharacter` | 更新当前用户拥有的角色。 |
+
+## `src/services/conversation-service.js`
+
+会话/消息树核心服务：消息写入、缓存、分支、编辑、删除保护。聊天路由主要依赖它。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `addMessage` | 按 sequence_no 追加消息并失效消息树缓存。 |
+| `buildBranchDescriptor` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildConversationView` | 构造聊天页需要的路径、树、分支描述等 view model。 |
+| `buildMessageMaps` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildPathMessages` | 从消息树中取当前叶子到根的路径，作为上下文/展示主线。 |
+| `buildTreeEntries` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `cloneConversationBranch` | 把某条消息路径克隆成独立分支会话。 |
+| `countChildConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createConversation` | 创建会话，可带父会话/分支来源/模型模式/标题。 |
+| `createEditedMessageVariant` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `deleteConversationSafely` | 删除会话前检查子会话，避免孤儿分支。 |
+| `deleteMessageSafely` | 删除消息前检查子消息和派生分支，避免破坏树。 |
+| `fetchMessagesFromDatabase` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getConversationById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getConversationMessagesCacheKey` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getMessageById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `invalidateConversationCache` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listMessages` | 读取整棵消息树，优先 Redis 缓存，失败回源数据库。 |
+| `listUserConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeMessagePromptKind` | 规范化 messages.prompt_kind 写库值；兼容旧调用传入 chat，并回落到 normal，避免 MySQL ENUM 写入截断。 |
+| `safeParseJson` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `setConversationCurrentMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `shortText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `stripThinkTags` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateConversationModelMode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `walk` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/email-service.js`
+
+Resend 邮件验证码发送封装。被 verification-service 调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `sendVerificationEmail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/font-proxy-service.js`
+
+Google Fonts 代理与缓存，避免页面字体资源直接失败。被 /fonts/* 路由调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `fetchWithTimeout` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getCache` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getFontFile` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getGoogleFontCss` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isAllowedFontFileUrl` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `logFontProxyError` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `rewriteGoogleFontCss` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `setCache` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/llm-gateway-service.js`
+
+LLM 网关核心：Provider 选择、额度校验、上下文裁剪、队列、流式解析、用量记录。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `appendContentDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `appendReasoningDelta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `armIdleTimeout` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildModelModeOptions` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildOption` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildPromptMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildRuntimeContext` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildSummaryTranscript` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `callProvider` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `callProviderStream` | 调用 OpenAI-compatible chat completions stream 并解析 SSE。 |
+| `cleanup` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `closeReasoningIfNeeded` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `combineReplyContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `drainQueue` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `enqueueWithPriority` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `estimatePromptTokens` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `estimateTokens` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `executeLlmQueued` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `executeLlmRequest` | LLM 网关总编排：额度、Provider、prompt、调用、记录用量。 |
+| `extractMessageContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractReasoningText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `extractStreamDeltaParts` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `finalizeLlmJobFailure` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `finalizeLlmJobSuccess` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `generateReplyViaGateway` | 非流式生成 AI 回复，走统一 LLM 网关。 |
+| `getChatModelSelector` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getProviderModelId` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `handleSseBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeMessageRole` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeProviderError` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeTextContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `optimizeUserInputViaGateway` | 非流式优化用户输入。 |
+| `readProviderErrorBody` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `shouldAppendUserMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `streamOptimizeUserInputViaGateway` | 流式优化用户输入。 |
+| `streamReplyViaGateway` | 流式生成 AI 回复，onDelta 接收增量。 |
+| `stripThinkTags` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `summarizeDiscardedMessages` | 将被裁剪的旧消息摘要后回填上下文。 |
+| `trimMessagesForContext` | 按 Provider 上下文窗口裁剪历史消息。 |
+
+## `src/services/llm-provider-service.js`
+
+后台 Provider 管理、模型列表拉取、模型模式配置校验。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `buildModelOptions` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createProvider` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureNonNegativeNumber` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensurePositiveInteger` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `fetchProviderModels` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getActiveProvider` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listProviders` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `maskApiKey` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeBaseUrl` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `pickDefaultModel` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `resolveProviderModels` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateProvider` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `validateContextWindow` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `validateProviderModels` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/llm-usage-service.js`
+
+LLM job 与 usage log 写入。被网关成功/失败收尾逻辑调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `createLlmJob` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createUsageLog` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateLlmJob` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/log-service.js`
+
+/** 后台日志查询与按日写入服务。 调用说明： - `src/lib/logger.js` 调用 `appendDailyLog()`，把运行日志拆成 `logs/app-YYYY-MM-DD.log`、`logs/app-error-YYYY-MM-DD.log`、`logs/access-YYYY-MM-DD.log`。 - `src/routes/web-routes.js` 的 `/admin/logs` 调用 `listLogEntries()`，解析旧日志和新日志，提供日期、等级、文件、错误类型、函数名筛选与分页。 - 本服务只读写 `logs/` 目录，不碰业务数据库，也不记录敏感请求正文。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `appendDailyLog` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildEntryFields` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `collectFacet` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `compactProjectPath` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureLogDir` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getDailyLogPath` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getLocalDateKey` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `inferErrorType` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `inferFunctionName` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `inferLogFileType` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listAvailableDates` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listLogEntries` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listReadableLogFiles` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `matchesText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeLevel` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizeLogDate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseApacheDate` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseDateFromFileName` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseJsonMeta` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseLogFile` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseLogLine` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `parseStackFrame` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `readFileTail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `toDisplayTime` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/password-service.js`
+
+bcrypt 密码 hash/verify。被注册、登录、改密码使用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `hashPassword` | 生成 bcrypt hash。 |
+| `verifyPassword` | 校验明文密码与 hash。 |
+
+## `src/services/phone-auth-service.js`
+
+国内手机号一键认证占位/封装。被注册流程调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `verifyDomesticPhoneIdentity` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/plan-service.js`
+
+套餐、订阅、额度快照与额度断言。被后台和 LLM 网关调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `assertUserQuotaAvailable` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `assignDefaultPlanToUser` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildUsageSinceClause` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `createPlan` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `deletePlan` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensureNonNegativeInteger` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `ensurePositiveInteger` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findPlanById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getActiveSubscriptionForUser` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getCurrentUsageForUser` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `getUserQuotaSnapshot` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listPlans` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizePlanPayload` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updatePlan` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateUserPlan` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/prompt-engineering-service.js`
+
+全局提示词片段、角色提示词结构、运行时变量模板和最终 system prompt 拼装。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `applyRuntimeTemplate` | 替换提示词中的运行时变量，例如时间、用户名。 |
+| `applyRuntimeTemplateToCharacter` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildCharacterPromptItems` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `buildPromptPreview` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `composeSystemPrompt` | 按全局片段、角色片段、系统提示和运行时变量拼装 system prompt。 |
+| `createPromptBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `deletePromptBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `formatPromptSection` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `formatRuntimeTime` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `listPromptBlocks` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `normalizePromptItems` | 清洗提示词条目，去空值并规范 order/enabled。 |
+| `parsePromptItemsFromForm` | 从表单数组字段中解析角色/全局提示词条目。 |
+| `reorderPromptBlocks` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `safeParseJson` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `toArray` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updatePromptBlock` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/rate-limit-service.js`
+
+基于 Redis/内存 incr+expire 的轻量限流。被登录/注册/验证码调用。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `hitLimit` | 限流计数：窗口内超过 limit 返回 true。 |
+
+## `src/services/user-service.js`
+
+用户创建、登录查询、资料更新、角色更新。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `createUser` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserAuthById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserByEmail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserByLogin` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserByPhone` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `findUserByUsername` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updatePasswordHash` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateUserRole` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateUsername` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `src/services/verification-service.js`
+
+邮箱/手机验证码签发与验证编排。调用 email/sms/rate-limit/captcha。
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `generateCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `issueEmailCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `issuePhoneCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `verifyEmailCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `verifyPhoneCode` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+

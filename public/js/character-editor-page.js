@@ -6,6 +6,7 @@
  */
 
   (function () {
+    const t = window.AI_ROLEPLAY_I18N?.t || ((key) => key);
     const container = document.getElementById('prompt-items');
     const addButton = document.getElementById('add-prompt-item');
     const previewButton = document.getElementById('preview-character-prompt');
@@ -41,10 +42,10 @@
         const value = item.querySelector('textarea[name="extraPromptItemValue"]')?.value?.trim() || '';
         const enabled = item.querySelector('select[name="extraPromptItemEnabled"]')?.value !== '0';
         if (!enabled || !value) return '';
-        return `【[${key || '未命名片段'}]】{\n${value}\n}`;
+        return `【[${key || t('未命名片段')}]】{\n${value}\n}`;
       }).filter(Boolean);
 
-      previewBox.textContent = [...sections, ...extraItems].join('\n\n') || '当前没有可拼接的角色提示词。';
+      previewBox.textContent = [...sections, ...extraItems].join('\n\n') || t('当前没有可拼接的角色提示词。');
     }
 
     function bindItem(item) {
@@ -88,23 +89,23 @@
         <div class="prompt-grid">
           <label>
             key
-            <input type="text" name="extraPromptItemKey" placeholder="比如：禁忌 / 世界规则 / 特殊要求" />
+            <input type="text" name="extraPromptItemKey" placeholder="${t('比如：禁忌 / 世界规则 / 特殊要求')}" />
           </label>
           <label>
             value
-            <textarea name="extraPromptItemValue" rows="4" placeholder="写这个补充片段的内容"></textarea>
+            <textarea name="extraPromptItemValue" rows="4" placeholder="${t('写这个补充片段的内容')}"></textarea>
           </label>
           <label>
-            启用
+            ${t('启用')}
             <select name="extraPromptItemEnabled">
-              <option value="1" selected>启用</option>
-              <option value="0">停用</option>
+              <option value="1" selected>${t('启用')}</option>
+              <option value="0">${t('停用')}</option>
             </select>
           </label>
         </div>
         <div class="prompt-actions">
-          <button type="button" class="ghost-btn" data-action="remove">删除这项</button>
-          <span class="mini-note">当前顺序：<span data-order></span></span>
+          <button type="button" class="ghost-btn" data-action="remove">${t('删除这项')}</button>
+          <span class="mini-note">${t('当前顺序：')}<span data-order></span></span>
         </div>
       `;
       bindItem(wrapper);

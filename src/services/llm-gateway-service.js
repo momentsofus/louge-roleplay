@@ -7,7 +7,7 @@ const logger = require('../lib/logger');
 const { getActiveSubscriptionForUser, assertUserQuotaAvailable } = require('./plan-service');
 const { getActiveProvider, buildModelOptions } = require('./llm-provider-service');
 const { createLlmJob, updateLlmJob, createUsageLog } = require('./llm-usage-service');
-const { listPromptBlocks, buildCharacterPromptItems, composeSystemPrompt } = require('./prompt-engineering-service');
+const { listPromptBlocks, buildCharacterPromptItems, composeSystemPrompt, applyRuntimeTemplate, applyRuntimeTemplateToCharacter, formatRuntimeTime } = require('./prompt-engineering-service');
 
 const MAX_GLOBAL_CONCURRENCY = 5;
 const DEFAULT_MAX_CONTEXT_TOKENS = 81920;
@@ -118,11 +118,38 @@ function combineReplyContent(content, reasoning) {
   return normalizedContent;
 }
 
+function shouldAppendUserMessage(messages = [], userMessage = '') {
+  const normalizedUserMessage = stripThinkTags(userMessage);
+  if (!normalizedUserMessage) {
+    return false;
+  }
+
+  const lastMessage = Array.isArray(messages) && messages.length
+    ? messages[messages.length - 1]
+    : null;
+  if (!lastMessage || normalizeMessageRole(lastMessage) !== 'user') {
+    return true;
+  }
+
+  return stripThinkTags(lastMessage.content) !== normalizedUserMessage;
+}
+
 function buildSummaryTranscript(messages = []) {
   return messages
     .map((message) => `${message.sender_type === 'user' ? 'user' : 'AI'}:${stripThinkTags(message.content)}`)
     .filter(Boolean)
     .join('\n');
+}
+
+function buildRuntimeContext({ user = null, now = new Date() } = {}) {
+  const username = String(user?.username || user?.name || user?.user || '').trim() || '用户';
+  return {
+    user: username,
+    username,
+    now,
+    timeZone: 'Asia/Hong_Kong',
+    time: formatRuntimeTime(now, { timeZone: 'Asia/Hong_Kong' }),
+  };
 }
 
 function getProviderModelId(provider, modelMode = 'standard') {
@@ -215,8 +242,9 @@ async function summarizeDiscardedMessages(provider, discardedMessages = []) {
   return String(result.content || '').trim();
 }
 
-async function buildPromptMessages({ provider, character, messages, userMessage, systemHint = '' }) {
+async function buildPromptMessages({ provider, character, messages, userMessage, systemHint = '', runtimeContext = {} }) {
   const promptBlocks = await listPromptBlocks({ enabledOnly: true });
+  const runtimeCharacter = applyRuntimeTemplateToCharacter(character, runtimeContext);
   const systemPrompt = composeSystemPrompt({
     promptBlocks: promptBlocks.map((item) => ({
       key: item.block_key,
@@ -224,20 +252,26 @@ async function buildPromptMessages({ provider, character, messages, userMessage,
       sortOrder: item.sort_order,
       isEnabled: item.is_enabled,
     })),
-    characterPromptItems: buildCharacterPromptItems(character),
+    characterPromptItems: buildCharacterPromptItems(runtimeCharacter),
     systemHint,
+    runtimeContext,
   });
+
+  const historyPromptMessages = messages
+    .map((message) => ({
+      role: normalizeMessageRole(message),
+      content: stripThinkTags(message.content),
+    }))
+    .filter((message) => message.content);
+  const normalizedUserMessage = stripThinkTags(userMessage);
 
   const initialMessages = [
     {
       role: 'system',
       content: systemPrompt,
     },
-    ...messages.map((message) => ({
-      role: normalizeMessageRole(message),
-      content: stripThinkTags(message.content),
-    })),
-    ...(userMessage ? [{ role: 'user', content: stripThinkTags(userMessage) }] : []),
+    ...historyPromptMessages,
+    ...(shouldAppendUserMessage(messages, userMessage) ? [{ role: 'user', content: normalizedUserMessage }] : []),
   ];
 
   const trimmed = trimMessagesForContext(initialMessages, provider);
@@ -281,6 +315,12 @@ function enqueueWithPriority(task, priority) {
       }
       return a.queuedAt - b.queuedAt;
     });
+    logger.debug('LLM job queued', {
+      priority,
+      pendingQueueLength: pendingQueue.length,
+      activeCount,
+      maxGlobalConcurrency: MAX_GLOBAL_CONCURRENCY,
+    });
     drainQueue();
   });
 }
@@ -289,6 +329,12 @@ function drainQueue() {
   while (activeCount < MAX_GLOBAL_CONCURRENCY && pendingQueue.length > 0) {
     const nextJob = pendingQueue.shift();
     activeCount += 1;
+    logger.debug('LLM job dequeued', {
+      priority: nextJob.priority,
+      waitMs: Date.now() - nextJob.queuedAt,
+      pendingQueueLength: pendingQueue.length,
+      activeCount,
+    });
 
     Promise.resolve()
       .then(() => nextJob.task())
@@ -296,6 +342,10 @@ function drainQueue() {
       .catch((error) => nextJob.reject(error))
       .finally(() => {
         activeCount -= 1;
+        logger.debug('LLM job slot released', {
+          pendingQueueLength: pendingQueue.length,
+          activeCount,
+        });
         drainQueue();
       });
   }
@@ -379,6 +429,16 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
   const controller = new AbortController();
   const externalSignal = hooks.signal;
   let cleanedUp = false;
+  let timeout = null;
+
+  const armIdleTimeout = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      if (!controller.signal.aborted) {
+        controller.abort(new Error('PROVIDER_REQUEST_TIMEOUT'));
+      }
+    }, timeoutMs);
+  };
 
   const cleanup = () => {
     if (cleanedUp) {
@@ -407,11 +467,7 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
     }
   }
 
-  const timeout = setTimeout(() => {
-    if (!controller.signal.aborted) {
-      controller.abort(new Error('PROVIDER_REQUEST_TIMEOUT'));
-    }
-  }, timeoutMs);
+  armIdleTimeout();
 
   logger.info('LLM provider request start', {
     providerId: provider.id,
@@ -447,6 +503,8 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
     cleanup();
     throw normalizeProviderError(error, timeoutMs);
   }
+
+  armIdleTimeout();
 
   logger.info('LLM provider response received', {
     providerId: provider.id,
@@ -592,6 +650,7 @@ async function callProviderStream(provider, promptMessages, maxOutputTokens, mod
         break;
       }
 
+      armIdleTimeout();
       buffer += decoder.decode(value, { stream: true });
       const blocks = buffer.split(/\n\n+/);
       buffer = blocks.pop() || '';
@@ -637,7 +696,7 @@ async function callProvider(provider, promptMessages, maxOutputTokens, modelMode
 }
 
 
-async function executeLlmRequest({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard' }) {
+async function executeLlmRequest({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard', user = null }) {
   const subscription = await getActiveSubscriptionForUser(userId);
   if (!subscription) {
     throw new Error('User plan is not configured');
@@ -670,7 +729,8 @@ async function executeLlmRequest({ requestId, userId, conversationId = null, cha
     }
   })());
 
-  const promptBuild = await buildPromptMessages({ provider, character, messages, userMessage, systemHint });
+  const runtimeContext = buildRuntimeContext({ user });
+  const promptBuild = await buildPromptMessages({ provider, character, messages, userMessage, systemHint, runtimeContext });
   const promptMessages = promptBuild.promptMessages;
   const estimatedTokens = estimatePromptTokens(promptMessages) + Number(subscription.max_output_tokens || 0);
   await assertUserQuotaAvailable(userId, estimatedTokens);
@@ -813,22 +873,22 @@ async function executeLlmQueued(requestMeta, runner) {
   }, Number(subscription.priority_weight || 0));
 }
 
-async function generateReplyViaGateway({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard', signal = null }) {
+async function generateReplyViaGateway({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard', signal = null, user = null }) {
   const result = await executeLlmQueued(
-    { requestId, userId, conversationId, character, messages, userMessage, systemHint, promptKind, modelMode },
+    { requestId, userId, conversationId, character, messages, userMessage, systemHint, promptKind, modelMode, user },
     ({ provider, promptMessages, subscription }) => callProvider(provider, promptMessages, subscription.max_output_tokens || 0, modelMode, { signal }),
   );
   return result.content;
 }
 
-async function streamReplyViaGateway({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard', onDelta = null, signal = null }) {
+async function streamReplyViaGateway({ requestId, userId, conversationId = null, character, messages, userMessage, systemHint = '', promptKind = 'chat', modelMode = 'standard', onDelta = null, signal = null, user = null }) {
   return executeLlmQueued(
-    { requestId, userId, conversationId, character, messages, userMessage, systemHint, promptKind, modelMode },
+    { requestId, userId, conversationId, character, messages, userMessage, systemHint, promptKind, modelMode, user },
     ({ provider, promptMessages, subscription }) => callProviderStream(provider, promptMessages, subscription.max_output_tokens || 0, modelMode, { onDelta, signal }),
   );
 }
 
-async function streamOptimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', onDelta = null, signal = null }) {
+async function streamOptimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', onDelta = null, signal = null, user = null }) {
   return executeLlmQueued(
     {
       requestId,
@@ -840,12 +900,13 @@ async function streamOptimizeUserInputViaGateway({ requestId, userId, conversati
       systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
       promptKind: 'optimize',
       modelMode,
+      user,
     },
     ({ provider, promptMessages, subscription }) => callProviderStream(provider, promptMessages, subscription.max_output_tokens || 0, modelMode, { onDelta, signal }),
   );
 }
 
-async function optimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', signal = null }) {
+async function optimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', signal = null, user = null }) {
   const result = await executeLlmQueued(
     {
       requestId,
@@ -857,6 +918,7 @@ async function optimizeUserInputViaGateway({ requestId, userId, conversationId =
       systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
       promptKind: 'optimize',
       modelMode,
+      user,
     },
     ({ provider, promptMessages, subscription }) => callProvider(provider, promptMessages, subscription.max_output_tokens || 0, modelMode, { signal }),
   );

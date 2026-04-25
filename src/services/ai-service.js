@@ -5,6 +5,7 @@
 
 const config = require('../config');
 const logger = require('../lib/logger');
+const { applyRuntimeTemplateToCharacter, formatRuntimeTime } = require('./prompt-engineering-service');
 
 const THINK_TAG_PATTERN = /<\s*(think|thinking)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
 const STREAM_DONE_SENTINEL = '[DONE]';
@@ -97,24 +98,59 @@ function combineReplyContent(content, reasoning) {
   return normalizedContent;
 }
 
-function buildPromptMessages({ character, messages, userMessage, systemHint = '' }) {
+function shouldAppendUserMessage(messages = [], userMessage = '') {
+  const normalizedUserMessage = stripThinkTags(userMessage);
+  if (!normalizedUserMessage) {
+    return false;
+  }
+
+  const lastMessage = Array.isArray(messages) && messages.length
+    ? messages[messages.length - 1]
+    : null;
+  if (!lastMessage || (lastMessage.sender_type === 'user' ? 'user' : 'assistant') !== 'user') {
+    return true;
+  }
+
+  return stripThinkTags(lastMessage.content) !== normalizedUserMessage;
+}
+
+function buildRuntimeContext({ user = null, now = new Date() } = {}) {
+  const username = String(user?.username || user?.name || user?.user || '').trim() || '用户';
+  return {
+    user: username,
+    username,
+    now,
+    timeZone: 'Asia/Hong_Kong',
+    time: formatRuntimeTime(now, { timeZone: 'Asia/Hong_Kong' }),
+  };
+}
+
+function buildPromptMessages({ character, messages, userMessage, systemHint = '', user = null }) {
+  const runtimeContext = buildRuntimeContext({ user });
+  const runtimeCharacter = applyRuntimeTemplateToCharacter(character, runtimeContext);
+
+  const historyPromptMessages = messages.slice(-24)
+    .map((message) => ({
+      role: message.sender_type === 'user' ? 'user' : 'assistant',
+      content: stripThinkTags(message.content),
+    }))
+    .filter((message) => message.content);
+  const normalizedUserMessage = stripThinkTags(userMessage);
+
   return [
     {
       role: 'system',
       content: [
-        `你现在正在进行角色扮演。角色名：${character.name}`,
-        `角色简介：${character.summary || ''}`,
-        `角色性格：${character.personality || ''}`,
+        `你现在正在进行角色扮演。角色名：${runtimeCharacter.name}`,
+        `角色简介：${runtimeCharacter.summary || ''}`,
+        `角色性格：${runtimeCharacter.personality || ''}`,
         '请始终以该角色身份自然回复，避免脱离角色。',
         systemHint || '',
       ].filter(Boolean).join('\n'),
     },
-    ...messages.slice(-24).map((message) => ({
-      role: message.sender_type === 'user' ? 'user' : 'assistant',
-      content: stripThinkTags(message.content),
-    })),
-    ...(userMessage
-      ? [{ role: 'user', content: stripThinkTags(userMessage) }]
+    ...historyPromptMessages,
+    ...(shouldAppendUserMessage(messages, userMessage)
+      ? [{ role: 'user', content: normalizedUserMessage }]
       : []),
   ];
 }
@@ -304,16 +340,18 @@ async function callProvider(promptMessages) {
   return String(fullContent || '').trim() || '……';
 }
 
-async function generateReply({ character, messages, userMessage, systemHint = '' }) {
+async function generateReply({ character, messages, userMessage, systemHint = '', user = null }) {
   if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
-    return `${character.name} 看着你，轻声说：我听见你说“${String(userMessage || '').slice(0, 120)}”。现在还没接上正式 AI 接口，所以我先陪你把网站流程跑通。`;
+    const runtimeContext = buildRuntimeContext({ user });
+    const runtimeCharacter = applyRuntimeTemplateToCharacter(character, runtimeContext);
+    return `${runtimeCharacter.name} 看着你，轻声说：我听见你说“${String(userMessage || '').slice(0, 120)}”。现在还没接上正式 AI 接口，所以我先陪你把网站流程跑通。`;
   }
 
-  const promptMessages = buildPromptMessages({ character, messages, userMessage, systemHint });
+  const promptMessages = buildPromptMessages({ character, messages, userMessage, systemHint, user });
   return callProvider(promptMessages);
 }
 
-async function optimizeUserInput({ character, messages, userInput }) {
+async function optimizeUserInput({ character, messages, userInput, user = null }) {
   if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
     return `请帮我把下面这段输入润色得更清楚、更自然，同时保留原意和情绪：\n\n${String(userInput || '').trim()}`;
   }
@@ -323,6 +361,7 @@ async function optimizeUserInput({ character, messages, userInput }) {
     messages,
     systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
     userMessage: `原始输入：\n${String(userInput || '').trim()}`,
+    user,
   });
   return callProvider(promptMessages);
 }

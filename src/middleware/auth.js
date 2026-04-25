@@ -5,6 +5,7 @@
 
 const logger = require('../lib/logger');
 const config = require('../config');
+const { translate } = require('../i18n');
 
 function requireAuth(req, res, next) {
   if (!req.session || !req.session.user) {
@@ -24,22 +25,27 @@ function requireAdmin(req, res, next) {
       role: req.session.user.role,
       path: req.path,
     });
+    const t = req.t || ((key, vars) => translate(res.locals.locale || 'zh-CN', key, vars));
     const errorParams = {
-      title: '权限不足',
-      message: '这里只有管理员能进。',
+      title: t('权限不足'),
+      message: t('这里只有管理员能进。'),
       errorCode: 'FORBIDDEN',
       requestId: req.requestId,
     };
     return res.render('error', errorParams, (viewErr, html) => {
       if (viewErr) {
-        return res.status(403).type('text').send('权限不足');
+        return res.status(403).type('text').send(t('权限不足'));
       }
       res.status(403).render('layout', {
-        title: '权限不足',
+        title: t('权限不足'),
         body: html,
         currentUser: res.locals.currentUser,
         appName: config.appName,
         appUrl: config.appUrl,
+        locale: res.locals.locale,
+        t,
+        clientI18nMessages: res.locals.clientI18nMessages || {},
+        localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
       });
     });
   }

@@ -1,3 +1,6 @@
+<!-- @file src/views/register.ejs
+     @description 注册页模板。调用说明：GET /register 渲染，register-page.js 处理验证码刷新和验证码发送。
+-->
 <link rel="stylesheet" href="/public/styles/site-pages.css" />
 <div class="register-shell">
   <section class="register-hero">
@@ -76,11 +79,11 @@
             <div class="captcha-row">
               <input id="captchaText" name="captchaText" maxlength="10" placeholder="输入图形验证码" autocomplete="off" />
               <div class="captcha-box">
-                <img id="captchaImage" src="<%= captcha.imageUrl %>" alt="图形验证码" />
+                <img id="captchaImage" src="<%= captcha.imageUrl %>" alt="<%= t('图形验证码') %>" />
               </div>
-              <button class="btn-soft" type="button" onclick="refreshCaptcha('已刷新图形验证码，请输入新的验证码。')">刷新验证码</button>
+              <button class="btn-soft" type="button" onclick="refreshCaptcha(window.AI_ROLEPLAY_I18N.t('已刷新图形验证码，请输入新的验证码。'))">刷新验证码</button>
             </div>
-            <div class="subtle-note" id="captchaHint">发送验证码后，图形验证码会自动刷新，你需要输入新的验证码。</div>
+            <div class="subtle-note" id="captchaHint">图形验证码只用于发送短信/邮箱验证码；发送成功后会自动刷新，下一次发送验证码时再填写新的图形验证码。</div>
           </div>
 
           <div class="field-group">
@@ -98,7 +101,7 @@
           <input type="checkbox" id="showEmailToggle" <%= form.showEmailToggle ? 'checked' : '' %> onchange="toggleEmailBlock()" />
           <span>显示邮箱注册项</span>
         </label>
-        <div class="subtle-note">国内用户可选填邮箱；国外用户会直接显示邮箱区。</div>
+        <div class="subtle-note">国内用户可选填邮箱；国外用户会直接显示邮箱区。若填写邮箱，也需要先发送并输入邮箱验证码。</div>
       </div>
 
       <div id="emailBlock" class="section-block" style="display:<%= (form.countryType === 'international' || form.showEmailToggle) ? 'block' : 'none' %>;">
