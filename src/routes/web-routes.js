@@ -30,6 +30,7 @@ const {
   parsePromptItemsFromForm,
   normalizePromptItems,
   buildPromptPreview,
+  applyRuntimeTemplate,
 } = require('../services/prompt-engineering-service');
 const {
   createConversation,
@@ -184,6 +185,7 @@ async function streamChatReplyToNdjson({
   modelMode = 'standard',
   signal,
   safeWrite,
+  user = null,
 }) {
   let lineBuffer = '';
   const streamed = await streamReplyViaGateway({
@@ -197,6 +199,7 @@ async function streamChatReplyToNdjson({
     promptKind,
     modelMode,
     signal,
+    user,
     onDelta: async (deltaText, fullContent) => {
       safeWrite({ type: 'delta', delta: deltaText, full: fullContent });
       lineBuffer += deltaText;
@@ -238,6 +241,7 @@ async function streamOptimizedInputToNdjson({
   modelMode = 'standard',
   signal,
   safeWrite,
+  user = null,
 }) {
   let lineBuffer = '';
   const streamed = await streamOptimizeUserInputViaGateway({
@@ -249,6 +253,7 @@ async function streamOptimizedInputToNdjson({
     userInput,
     modelMode,
     signal,
+    user,
     onDelta: async (deltaText, fullContent) => {
       safeWrite({ type: 'delta', delta: deltaText, full: fullContent });
       lineBuffer += deltaText;
@@ -1349,7 +1354,7 @@ function registerWebRoutes(app) {
         const replyMessageId = await addMessage({
           conversationId,
           senderType: 'character',
-          content: String(character.first_message || '').trim(),
+          content: applyRuntimeTemplate(String(character.first_message || '').trim(), { username: req.session.user.username, user: req.session.user.username, timeZone: 'Asia/Hong_Kong' }),
           parentMessageId: userMessageId,
           branchFromMessageId: userMessageId,
           promptKind: 'first-message',
@@ -1450,10 +1455,11 @@ function registerWebRoutes(app) {
           personality: conversation.personality,
           prompt_profile_json: conversation.prompt_profile_json,
         },
-        messages: [...history, { sender_type: 'user', content }],
+        messages: history,
         userMessage: content,
         promptKind,
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const replyMessageId = await addMessage({
@@ -1534,12 +1540,13 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, { sender_type: 'user', content }],
+        messages: history,
         userMessage: content,
         promptKind,
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1615,13 +1622,14 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, parentUserMessage],
+        messages: history,
         userMessage: parentUserMessage.content,
         systemHint: '这是一次重新生成。请在保持角色一致的前提下，给出与先前不同但同样合理的新回复。',
         promptKind: 'regenerate',
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1690,11 +1698,12 @@ function registerWebRoutes(app) {
         userId: req.session.user.id,
         conversationId,
         character: buildConversationCharacterPayload(conversation),
-        messages: [...history, parentUserMessage],
+        messages: history,
         userMessage: parentUserMessage.content,
         systemHint: '这是一次重新生成。请在保持角色一致的前提下，给出与先前不同但同样合理的新回复。',
         promptKind: 'regenerate',
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const newReplyId = await addMessage({
@@ -1827,11 +1836,12 @@ function registerWebRoutes(app) {
           personality: conversation.personality,
           prompt_profile_json: conversation.prompt_profile_json,
         },
-        messages: [...historyBeforeUser, { sender_type: 'user', content }],
+        messages: historyBeforeUser,
         userMessage: content,
         systemHint: '这是基于用户改写后的旧输入重新开出的分支，请自然延续，不要提到你被要求重生成。',
         promptKind: 'edit',
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       const replyMessageId = await addMessage({
@@ -1909,13 +1919,14 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeTarget, { sender_type: 'user', content: targetMessage.content }],
+          messages: historyBeforeTarget,
           userMessage: targetMessage.content,
           systemHint: '这是一次从旧节点开始的后续重算，请自然延续并给出新的合理走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
           signal: ndjson.abortController.signal,
           safeWrite: ndjson.safeWrite,
+          user: req.session.user,
         });
 
         if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -1973,13 +1984,14 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeParentUser, { sender_type: 'user', content: parentUserMessage.content }],
+          messages: historyBeforeParentUser,
           userMessage: parentUserMessage.content,
           systemHint: '这是一次从旧 AI 节点开始的后续重算，请给出与旧回复不同但同样合理的新走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
           signal: ndjson.abortController.signal,
           safeWrite: ndjson.safeWrite,
+          user: req.session.user,
         });
 
         if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -2067,11 +2079,12 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeTarget, { sender_type: 'user', content: targetMessage.content }],
+          messages: historyBeforeTarget,
           userMessage: targetMessage.content,
           systemHint: '这是一次从旧节点开始的后续重算，请自然延续并给出新的合理走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
+          user: req.session.user,
         });
 
         newLeafId = await addMessage({
@@ -2123,11 +2136,12 @@ function registerWebRoutes(app) {
           userId: req.session.user.id,
           conversationId,
           character: buildConversationCharacterPayload(conversation),
-          messages: [...historyBeforeParentUser, { sender_type: 'user', content: parentUserMessage.content }],
+          messages: historyBeforeParentUser,
           userMessage: parentUserMessage.content,
           systemHint: '这是一次从旧 AI 节点开始的后续重算，请给出与旧回复不同但同样合理的新走向。',
           promptKind: 'replay',
           modelMode: conversation.selected_model_mode || 'standard',
+          user: req.session.user,
         });
 
         newLeafId = await addMessage({
@@ -2216,6 +2230,7 @@ function registerWebRoutes(app) {
         modelMode: conversation.selected_model_mode || 'standard',
         signal: ndjson.abortController.signal,
         safeWrite: ndjson.safeWrite,
+        user: req.session.user,
       });
 
       if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
@@ -2263,6 +2278,7 @@ function registerWebRoutes(app) {
         messages: history,
         userInput: content,
         modelMode: conversation.selected_model_mode || 'standard',
+        user: req.session.user,
       });
 
       await renderChatPage(req, res, conversation, {
