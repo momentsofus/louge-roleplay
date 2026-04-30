@@ -366,6 +366,7 @@ async function main() {
       parent_conversation_id   BIGINT NULL,
       branched_from_message_id BIGINT NULL,
       current_message_id       BIGINT NULL,
+      selected_model_mode      ENUM('standard','jailbreak','force_jailbreak') NOT NULL DEFAULT 'standard',
       title                    VARCHAR(200) NULL,
       status                   ENUM('active','archived','deleted') DEFAULT 'active',
       deleted_at               DATETIME NULL,

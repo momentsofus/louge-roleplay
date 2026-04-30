@@ -133,14 +133,11 @@ async function buildChatRequestContext(req, conversation, rawContent, parentMess
     fallbackLeafId = latestMessage?.id || null;
   }
   const history = await fetchPathMessages(conversation.id, parentMessageId || fallbackLeafId || null);
-  const isBranchReply = parentMessageId && Number(parentMessageId) !== Number(conversation.current_message_id || 0);
-
   return {
     isFirstTurn,
     content,
     history,
-    isBranchReply,
-    promptKind: isFirstTurn ? 'conversation-start' : (isBranchReply ? 'branch' : 'chat'),
+    promptKind: isFirstTurn ? 'conversation-start' : 'chat',
     messageCount,
   };
 }
@@ -334,7 +331,7 @@ function isDomesticPhone(value) {
 
 function buildConversationTitle(characterName, content = '') {
   const tail = String(content || '').trim().replace(/\s+/g, ' ').slice(0, 28);
-  return tail ? `${characterName} · ${tail}` : `${characterName} · 新分支`;
+  return tail ? `${characterName} · ${tail}` : `${characterName} · 新对话`;
 }
 
 function buildNextConversationTitle(conversation, userContent) {
@@ -347,7 +344,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
   const requestedLeafId = Number(options.leafId || req.query.leaf || fallbackLeafId || 0) || null;
   const activeLeafId = requestedLeafId || fallbackLeafId || null;
 
-  if (activeLeafId && Number(conversation.current_message_id || 0) !== Number(activeLeafId)) {
+  if (options.persistLeaf && activeLeafId && Number(conversation.current_message_id || 0) !== Number(activeLeafId)) {
     await setConversationCurrentMessage(conversation.id, activeLeafId);
     conversation.current_message_id = activeLeafId;
   }
@@ -355,8 +352,9 @@ async function renderChatPage(req, res, conversation, options = {}) {
   const view = activeLeafId
     ? await buildConversationPathView(conversation.id, activeLeafId, { messageCount: options.messageCount })
     : { pathMessages: [], activeLeafId: null, messageCount: options.messageCount === undefined ? await getConversationMessageCount(conversation.id) : Number(options.messageCount || 0) };
-  const initialVisibleCount = Number(options.initialVisibleCount || 3);
-  view.visiblePathMessages = view.pathMessages.slice(-initialVisibleCount);
+  const initialVisibleCount = Math.max(3, Number(options.initialVisibleCount || 3));
+  const keepFromIndex = Math.max(0, view.pathMessages.length - initialVisibleCount - 1);
+  view.visiblePathMessages = view.pathMessages.slice(keepFromIndex);
   view.hasOlderMessages = view.pathMessages.length > view.visiblePathMessages.length;
   view.oldestVisibleMessageId = view.visiblePathMessages.length ? view.visiblePathMessages[0].id : null;
   const chatModelSelector = await getChatModelSelector();
@@ -367,7 +365,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
     view,
     draftContent: options.draftContent || String(req.query.draft || ''),
     optimizedContent: options.optimizedContent || '',
-    regeneratedPreview: options.regeneratedPreview || null,
+    newContinuationPreview: options.newContinuationPreview || null,
     chatModelSelector,
     errorMessage: options.errorMessage || null,
   });

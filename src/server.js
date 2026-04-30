@@ -105,9 +105,9 @@ async function bootstrap() {
       appVersion: config.appVersion,
       debugFeatures: [
         'requestId logging',
-        'conversation tree cache',
-        'branch cloning',
-        'assistant variants',
+        'linear chat loading',
+        'linear chat UX',
+        'assistant rewrites',
       ],
     });
   });

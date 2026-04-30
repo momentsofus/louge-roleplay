@@ -4,10 +4,10 @@
  * 会话与消息持久化服务。
  *
  * 目标：
- * 1. 支持树状消息结构（parent_message_id）。
- * 2. 支持重生成、编辑分支、任意节点继续对话。
- * 3. 支持从任意节点克隆出新会话分支。
- * 4. 聊天页优先读取当前路径；整棵消息列表只保留给独立分支克隆/诊断脚本。
+ * 1. 使用 parent_message_id 保存消息之间的衔接关系。
+ * 2. 支持重新生成、编辑后重发、从较早位置重写后续。
+ * 3. 支持把某个位置之前的内容复制成独立对话。
+ * 4. 聊天页优先读取当前显示链；完整消息列表只保留给独立对话复制/诊断脚本。
  */
 
 const { query } = require('../lib/db');
@@ -230,12 +230,13 @@ async function addMessage(options) {
       edited_from_message_id,
       prompt_kind,
       metadata_json
-    ) VALUES (?, ?, ?, ?, 'success', NOW(), ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
     [
       options.conversationId,
       options.senderType,
       options.content,
       nextSequence,
+      options.status || 'success',
       options.parentMessageId || null,
       options.branchFromMessageId || null,
       options.editedFromMessageId || null,
@@ -250,6 +251,7 @@ async function addMessage(options) {
     conversationId: options.conversationId,
     messageId: result.insertId,
     senderType: options.senderType,
+    status: options.status || 'success',
     parentMessageId: options.parentMessageId || null,
     promptKind: options.promptKind || 'normal',
     sequenceNo: nextSequence,
@@ -418,11 +420,13 @@ async function fetchPathMessages(conversationId, leafMessageId) {
 function decoratePathMessages(pathMessages) {
   return pathMessages.map((message, index, messages) => {
     const parentMessage = index > 0 ? messages[index - 1] : null;
+    const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
     return {
       ...message,
       depth: index,
       visibleContent: stripThinkTags(message.content),
       parentUserPreviewContent: parentMessage && parentMessage.sender_type === 'user' ? parentMessage.content : '',
+      hasVisibleContinuation: Boolean(nextMessage),
       siblingVariants: [],
       nextChoices: [],
       siblingCount: 0,
@@ -452,6 +456,7 @@ async function cloneConversationBranch(options) {
   const newConversationId = await createConversation(options.userId, options.characterId, {
     parentConversationId: options.sourceConversationId,
     branchedFromMessageId: options.sourceLeafMessageId,
+    selectedModelMode: options.selectedModelMode || 'standard',
     title: options.title,
   });
 
@@ -466,7 +471,7 @@ async function cloneConversationBranch(options) {
       parentMessageId: sourceMessage.parent_message_id ? idMap.get(Number(sourceMessage.parent_message_id)) || null : null,
       branchFromMessageId: sourceMessage.id,
       editedFromMessageId: sourceMessage.edited_from_message_id || null,
-      promptKind: sourceMessage.prompt_kind === 'normal' ? 'branch' : sourceMessage.prompt_kind,
+      promptKind: sourceMessage.prompt_kind || 'normal',
       metadataJson: JSON.stringify({
         clonedFromConversationId: Number(options.sourceConversationId),
         clonedFromMessageId: Number(sourceMessage.id),

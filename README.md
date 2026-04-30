@@ -2,7 +2,7 @@
 
 一个 Express + EJS 的多用户 AI 角色对话网站。站点名为“楼阁”，默认监听 `0.0.0.0:3217`，预定域名为 `https://aicafe.momentsofus.cn`。
 
-它不是纯 demo：项目已经包含注册登录、角色创建、树状对话、分支/重算/编辑、流式生成、LLM Provider 管理、套餐额度、验证码和基础后台。
+它不是纯 demo：项目已经包含注册登录、角色创建、线性聊天、重新生成/修改重发、流式生成、LLM Provider 管理、套餐额度、验证码和基础后台。
 
 ## 当前能力
 
@@ -11,11 +11,11 @@
 - 角色创建、编辑、公开/私有可见性、删除保护
 - 首页公开角色列表、用户工作台
 - 会话创建与历史消息持久化
-- 树状对话：
-  - 任意节点继续对话
-  - 任意节点新建独立分支会话
-  - AI 回复重新生成（同父节点候选）
-  - 用户消息 / AI 消息编辑为新分支变体
+- 线性聊天：
+  - 继续对话
+  - AI 回复重新生成
+  - 用户消息修改并重发
+  - AI 回复修改
   - 输入优化、一键采用并发送
   - 默认聊天页只展示最新 3 条，可向上加载历史
 - 流式 NDJSON 生成与前端富文本渲染
@@ -96,7 +96,7 @@ journalctl -u ai-roleplay-site.service -f
 | 路径 | 职责 |
 |---|---|
 | `src/server.js` | Express 启动壳：DB/Redis 初始化、中间件、路由、404、错误处理 |
-| `src/routes/web-routes.js` | 主路由注册：公开页、认证、后台、角色、聊天、分支/回放/流式接口 |
+| `src/routes/web-routes.js` | 主路由注册：公开页、认证、后台、角色、聊天、重写/编辑/流式接口 |
 | `src/server-helpers.js` | 页面渲染、参数解析、日志脱敏、聊天页 view model、NDJSON 辅助 |
 | `src/services/` | 业务服务层：用户、角色、会话、LLM、套餐、验证码等 |
 | `src/lib/` | DB、Redis、logger 基础设施 |
@@ -142,17 +142,17 @@ public/js/chat-page.js
   -> renderRichContent()
 ```
 
-### 当前对话路径
+### 当前对话显示链
 
 ```text
 conversation-service.addMessage()
-  -> messages.parent_message_id / branch_from_message_id / edited_from_message_id
+  -> messages.parent_message_id / current_message_id
   -> invalidateConversationCache()
   -> buildConversationPathView() / fetchPathMessages()
   -> chat.ejs / chat-message.ejs
 ```
 
-聊天页只加载当前上下文路径，不再为分支导航读取整棵消息树。
+聊天页只加载当前显示链，不再读取完整消息列表做导航。
 
 ## 数据库与缓存
 
@@ -262,7 +262,7 @@ npm run docs:debug
 - 管理页全部通过 `requireAdmin` 保护
 - 普通用户页面通过 `requireAuth` 保护
 - 私有角色只应由创建者访问
-- 角色/消息/会话删除都有安全检查，避免破坏已有会话树
+- 角色/消息/会话删除都有安全检查，避免破坏已有内容关联
 - 页面错误不展示内部堆栈，后端日志保留 requestId 和错误信息
 
 ## 版本控制
@@ -295,14 +295,14 @@ git commit -m "feat: xxx"
 | Markdown 不解析 | `renderRichContent()`、`52-rich-content.css` 是否加载 |
 | 登录失败 | `Login failed` 日志和 requestId |
 | 注册验证码失败 | `Register validation failed`、验证码 Redis/内存状态 |
-| 当前路径错乱 | `messages.parent_message_id`、`current_message_id`、`fetchPathMessages()` / `buildConversationPathView()` |
+| 当前显示链错乱 | `messages.parent_message_id`、`current_message_id`、`fetchPathMessages()` / `buildConversationPathView()` |
 | 数据库连不上 | `[db] MySQL 连接失败`、`DATABASE_URL`、SQLite 降级日志 |
 | Redis 连不上 | `[redis] Redis 连接失败`、`REDIS_URL`、内存模式 warning |
 
 ## 说明
 
 - 若未配置 AI 接口/Provider，聊天会失败或返回兜底信息，具体取决于当前配置。
-- 当前路径、重算和编辑能力依赖最新数据库结构，部署前请执行 `npm run db:init`。
+- 当前显示链、重写和编辑能力依赖最新数据库结构，部署前请执行 `npm run db:init`。
 - 文档生成脚本不会读取 `.env`，不会输出密钥。
 
 ## 版本管理

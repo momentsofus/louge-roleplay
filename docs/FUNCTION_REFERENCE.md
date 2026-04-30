@@ -37,8 +37,11 @@
 | `appendSingleStreamingBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `appendStreamingPair` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `applyInlineMarkdown` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `beginStreamingAutoFollow` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `buildFold` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `buildStreamingPreviewHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `closeMessageMenus` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `closeSiblingMessageMenus` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `collectFoldBlocks` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `consumeNdjsonStream` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `createBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
@@ -55,15 +58,21 @@
 | `isBullet` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `isFencePlaceholder` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `isHr` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `isNearPageBottom` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `isOrdered` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `isQuoteMarkerOnly` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `isQuoted` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `loadOlderMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `markdownToHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `markdownToPartialHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `maybeFollowStreamingBubble` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `message` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `normalizeMarkdownLines` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `parseHeading` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `releaseStreamingAutoFollow` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `reloadToMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `removeLivePair` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `removeStaleLinearTail` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `renderRichContent` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `renderStreamingPlainText` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `replaceBubbleWithHtml` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
@@ -72,8 +81,10 @@
 | `sanitizeNodeTree` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `scheduleStreamingRender` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `setBubbleFinalState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `showToast` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `splitStreamingSegments` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `updateActiveLeafState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateCurrentMessageState` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+| `updateHiddenParentInputs` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 
 ## `public/js/i18n-runtime.js`
 
@@ -102,7 +113,7 @@
 
 ## `scripts/full-flow-e2e.js`
 
-全流程 E2E 测试脚本：创建临时用户/角色/会话，验证当前路径、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。
+全流程 E2E 测试脚本：创建临时用户/角色/会话，验证当前显示链、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。
 
 | 函数 | 介绍与调用说明 |
 |---|---|
@@ -171,6 +182,14 @@
 ## `scripts/test-admin-logs-route.js`
 
 /** 管理后台日志页模板冒烟测试。调用说明：`npm run admin-logs:test`，验证日志查询结果能正常渲染为后台 UI。 /
+
+| 函数 | 介绍与调用说明 |
+|---|---|
+| `main` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
+
+## `scripts/test-conversation-service.js`
+
+/** Conversation service regression tests for linear chat refactor behavior. /
 
 | 函数 | 介绍与调用说明 |
 |---|---|
@@ -370,7 +389,7 @@ Redis 客户端与内存降级实现，供 session、验证码、缓存、限流
 
 ## `src/routes/web-routes.js`
 
-主 Web 路由注册文件：公开页、认证、后台、角色、聊天、重算/编辑/流式接口。依赖 service 层完成业务。
+主 Web 路由注册文件：公开页、认证、后台、角色、线性聊天、重写/编辑/流式接口。依赖 service 层完成业务。
 
 | 函数 | 介绍与调用说明 |
 |---|---|
@@ -398,7 +417,7 @@ Redis 客户端与内存降级实现，供 session、验证码、缓存、限流
 | 函数 | 介绍与调用说明 |
 |---|---|
 | `buildCharacterPromptProfileFromForm` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `buildChatRequestContext` | 根据当前会话/父消息/输入，计算聊天 promptKind、历史路径和分支状态。 |
+| `buildChatRequestContext` | 根据当前会话/父消息/输入，计算聊天 promptKind 和历史上下文。 |
 | `buildConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `buildLoginLogMeta` | 生成登录流程结构化日志 meta。 |
 | `buildNextConversationTitle` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
@@ -414,7 +433,7 @@ Redis 客户端与内存降级实现，供 session、验证码、缓存、限流
 | `parseIdParam` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `parseIntegerField` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `parseNumberField` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `renderChatPage` | 加载当前消息路径、计算当前结尾和可见消息，渲染聊天页。 |
+| `renderChatPage` | 加载当前显示链、计算可见消息，渲染线性聊天页。 |
 | `renderPage` | 统一渲染业务视图并套 layout；调用方传 res/view/params，内部负责 i18n 翻译和渲染失败兜底。 |
 | `renderRegisterPage` | 渲染注册页并注入验证码、表单状态和公开手机号认证配置。 |
 | `renderValidationMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
@@ -524,21 +543,21 @@ Express 启动入口：等待 DB/Redis、装配全局中间件、注册路由、
 
 ## `src/services/conversation-service.js`
 
-会话/消息核心服务：消息写入、当前路径读取、编辑、重算、独立分支克隆和删除保护。聊天路由主要依赖它。
+会话/消息核心服务：消息写入、当前显示链读取、编辑、重写、独立对话克隆和删除保护。聊天路由主要依赖它。
 
 | 函数 | 介绍与调用说明 |
 |---|---|
 | `addMessage` | 按 sequence_no 追加消息并失效会话消息缓存。 |
-| `buildConversationPathView` | 按当前消息构造聊天页轻量路径 view model，不加载整棵消息树。 |
+| `buildConversationPathView` | 按当前消息构造聊天页轻量显示链 view model，不加载完整消息列表。 |
 | `buildMessageMaps` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `buildPathMessages` | 从已加载消息列表中取当前消息到根的路径，主要给脚本/克隆逻辑复用。 |
-| `cloneConversationBranch` | 把某条消息路径克隆成独立分支会话。 |
+| `buildPathMessages` | 从已加载消息列表中取当前显示链，主要给脚本/克隆逻辑复用。 |
+| `cloneConversationBranch` | 把某条消息之前的内容复制成独立对话。 |
 | `countChildConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `createConversation` | 创建会话，可带父会话/分支来源/模型模式/标题。 |
+| `createConversation` | 创建会话，可带父会话、来源消息、模型模式和标题。 |
 | `createEditedMessageVariant` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `decoratePathMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `deleteConversationSafely` | 删除会话前检查子会话，避免孤儿分支。 |
-| `deleteMessageSafely` | 删除消息前检查子消息和派生分支，避免破坏树。 |
+| `deleteConversationSafely` | 删除会话前检查后续关联，避免留下孤立内容。 |
+| `deleteMessageSafely` | 删除消息前检查后续消息和派生对话，避免破坏已有内容。 |
 | `fetchMessagesFromDatabase` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `fetchPathMessages` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `getConversationById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
@@ -547,7 +566,7 @@ Express 启动入口：等待 DB/Redis、装配全局中间件、注册路由、
 | `getLatestMessage` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `getMessageById` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `invalidateConversationCache` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
-| `listMessages` | 读取整棵消息列表，保留给克隆独立分支和诊断脚本使用；聊天页不再调用。 |
+| `listMessages` | 读取完整消息列表，保留给克隆独立对话和诊断脚本使用；聊天页不再调用。 |
 | `listUserConversations` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `normalizeMessageForView` | 内部辅助函数；调用方见所在文件导出或同文件路由/事件处理逻辑。 |
 | `normalizeMessagePromptKind` | 规范化 messages.prompt_kind 写库值；兼容旧调用传入 chat，并回落到 normal，避免 MySQL ENUM 写入截断。 |
