@@ -102,6 +102,7 @@ async function bootstrap() {
     logger.info('Application started successfully', {
       port: config.port,
       appName: config.appName,
+      appVersion: config.appVersion,
       debugFeatures: [
         'requestId logging',
         'conversation tree cache',

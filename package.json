@@ -16,7 +16,11 @@
     "logs:test": "node scripts/test-log-service.js",
     "admin-logs:test": "node scripts/test-admin-logs-route.js",
     "admin-conversations:test": "node scripts/test-admin-conversations.js",
-    "full-flow:test": "node scripts/full-flow-e2e.js"
+    "full-flow:test": "node scripts/full-flow-e2e.js",
+    "version:check": "node scripts/version-check.js",
+    "version:bump:patch": "npm version patch --no-git-tag-version",
+    "version:bump:minor": "npm version minor --no-git-tag-version",
+    "version:bump:major": "npm version major --no-git-tag-version"
   },
   "dependencies": {
     "@alicloud/dypnsapi20170525": "^2.0.0",

@@ -400,6 +400,7 @@ function registerWebRoutes(app) {
     const checks = {
       ok: true,
       app: config.appName,
+      version: config.appVersion,
       time: new Date().toISOString(),
       dbType: getDbType(),
       redisMode: isRedisReal() ? 'redis' : 'memory',

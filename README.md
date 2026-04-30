@@ -303,3 +303,18 @@ git commit -m "feat: xxx"
 - 若未配置 AI 接口/Provider，聊天会失败或返回兜底信息，具体取决于当前配置。
 - 对话树能力依赖最新数据库结构，部署前请执行 `npm run db:init`。
 - 文档生成脚本不会读取 `.env`，不会输出密钥。
+
+## 版本管理
+
+当前版本号记录在 `package.json`。正式发布时同步更新 `CHANGELOG.md`，并用 `vX.Y.Z` Git tag 标记可回退基线。
+
+常用命令：
+
+```bash
+npm run version:check
+npm run version:bump:patch
+npm run version:bump:minor
+npm run version:bump:major
+```
+
+完整规范见 `docs/VERSIONING.md`。
