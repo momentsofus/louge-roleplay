@@ -53,8 +53,6 @@
   word-break: break-word;
 }
 
-.variant-strip,
-.next-strip,
 .message-tools,
 .draft-box,
 .compose-details-body,
@@ -65,12 +63,6 @@
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.03);
-}
-
-.variant-strip h4,
-.next-strip h4 {
-  margin: 0 0 10px;
-  color: var(--text-soft);
 }
 
 .chip-list,
@@ -148,62 +140,6 @@
   accent-color: var(--brand);
 }
 
-.tree-list {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.tree-node,
-.branch-item {
-  position: relative;
-  display: grid;
-  gap: 8px;
-  padding: 13px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.tree-node {
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.tree-node.trail {
-  border-color: rgba(96, 165, 250, 0.22);
-}
-
-.tree-node.active,
-.branch-item.active {
-  border-color: rgba(155, 124, 255, 0.36);
-  background: rgba(155, 124, 255, 0.11);
-}
-
-.tree-line {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--brand-hover);
-  box-shadow: 0 0 0 4px rgba(155, 124, 255, 0.12);
-}
-
-.tree-id,
-.tree-kind,
-.branch-meta {
-  color: var(--text-tertiary);
-  font-size: 12px;
-}
-
-.tree-content,
-.branch-preview {
-  min-width: 0;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .sidebar-card.compact {
   padding: 18px;
 }
@@ -221,10 +157,6 @@
 }
 
 @media (max-width: 640px) {
-  .tree-node {
-    grid-template-columns: 1fr;
-  }
-
   .chat-head-actions {
     justify-content: flex-start;
   }

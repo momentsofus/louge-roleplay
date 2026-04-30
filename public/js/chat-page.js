@@ -27,10 +27,6 @@
         input.value = normalizedLeafId;
       });
       form.dataset.messageCount = String(Math.max(Number(form.dataset.messageCount || '0'), 1));
-      const activeLeafMeta = document.querySelector('[data-active-leaf-label]');
-      if (activeLeafMeta) {
-        activeLeafMeta.textContent = t('当前叶子 #{id}', { id: normalizedLeafId });
-      }
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('leaf', normalizedLeafId);
       window.history.replaceState({}, '', nextUrl.toString());

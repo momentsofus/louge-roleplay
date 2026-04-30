@@ -41,13 +41,13 @@ const {
   updateConversationModelMode,
   getConversationById,
   listUserConversations,
-  listMessages,
   getMessageById,
+  getLatestMessage,
   addMessage,
   setConversationCurrentMessage,
   createEditedMessageVariant,
-  buildPathMessages,
-  buildConversationView,
+  fetchPathMessages,
+  buildConversationPathView,
   cloneConversationBranch,
   deleteMessageSafely,
   deleteConversationSafely,
@@ -86,7 +86,6 @@ const {
   isAllowedInternationalEmail,
   isDomesticPhone,
   buildConversationTitle,
-  buildBranchConversationTitle,
   buildNextConversationTitle,
   renderChatPage,
   loadConversationForUserOrFail,
@@ -132,8 +131,8 @@ function renderChatMessageHtml(req, conversation, message) {
   });
 }
 
-async function buildChatMessagePacket(req, conversation, allMessages, activeLeafId, messageId) {
-  const view = buildConversationView(allMessages, activeLeafId || messageId);
+async function buildChatMessagePacket(req, conversation, activeLeafId, messageId) {
+  const view = await buildConversationPathView(conversation.id, activeLeafId || messageId);
   const message = view.pathMessages.find((item) => Number(item.id) === Number(messageId));
   if (!message) {
     return null;
@@ -1486,10 +1485,10 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
-      const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
+      const latestMessage = conversation.current_message_id ? null : await getLatestMessage(conversationId);
+      const fallbackLeafId = conversation.current_message_id || latestMessage?.id || null;
       const leafId = parseIntegerField(req.query.leaf || fallbackLeafId || '', { fieldLabel: '叶子消息 ID', min: 1, allowEmpty: true }) || fallbackLeafId;
-      const view = buildConversationView(allMessages, leafId);
+      const view = await buildConversationPathView(conversationId, leafId);
       const beforeIndex = beforeId
         ? view.pathMessages.findIndex((message) => Number(message.id) === Number(beforeId))
         : view.pathMessages.length;
@@ -1543,8 +1542,7 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
-      const chatRequest = buildChatRequestContext(req, conversation, allMessages, rawContent, parentMessageId);
+      const chatRequest = await buildChatRequestContext(req, conversation, rawContent, parentMessageId);
       const { isFirstTurn, content, history, isBranchReply, promptKind } = chatRequest;
 
       if (!content) {
@@ -1627,8 +1625,7 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
-      const chatRequest = buildChatRequestContext(req, conversation, allMessages, rawContent, parentMessageId);
+      const chatRequest = await buildChatRequestContext(req, conversation, rawContent, parentMessageId);
       const { isFirstTurn, content, history, isBranchReply, promptKind } = chatRequest;
 
       if (!content) {
@@ -1652,8 +1649,7 @@ function registerWebRoutes(app) {
         }),
       });
 
-      const messagesWithUser = await listMessages(conversationId);
-      const userPacket = await buildChatMessagePacket(req, conversation, messagesWithUser, userMessageId, userMessageId);
+      const userPacket = await buildChatMessagePacket(req, conversation, userMessageId, userMessageId);
       ndjson.safeWrite({
         type: 'user-message',
         conversationId,
@@ -1697,9 +1693,8 @@ function registerWebRoutes(app) {
 
       await updateConversationTitle(conversationId, buildNextConversationTitle(conversation, content));
       await invalidateConversationCache(conversationId);
-      const messagesWithReply = await listMessages(conversationId);
-      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, replyMessageId);
-      const parentPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, replyMessageId, userMessageId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, replyMessageId, replyMessageId);
+      const parentPacket = await buildChatMessagePacket(req, conversation, replyMessageId, userMessageId);
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -1739,7 +1734,6 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
       const parentUserMessage = targetMessage.parent_message_id
         ? await getMessageById(conversationId, targetMessage.parent_message_id)
         : null;
@@ -1750,7 +1744,7 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const history = buildPathMessages(allMessages, parentUserMessage.id).slice(0, -1);
+      const history = (await fetchPathMessages(conversationId, parentUserMessage.id)).slice(0, -1);
       ndjson.safeWrite({
         type: 'assistant-start',
         conversationId,
@@ -1794,8 +1788,7 @@ function registerWebRoutes(app) {
       });
 
       await invalidateConversationCache(conversationId);
-      const messagesWithReply = await listMessages(conversationId);
-      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newReplyId, newReplyId);
+      const replyPacket = await buildChatMessagePacket(req, conversation, newReplyId, newReplyId);
       ndjson.safeWrite({
         type: 'done',
         conversationId,
@@ -1828,7 +1821,6 @@ function registerWebRoutes(app) {
         return renderPage(res, 'message', { title: '提示', message: '只能重新生成 AI 回复。' });
       }
 
-      const allMessages = await listMessages(conversationId);
       const parentUserMessage = targetMessage.parent_message_id
         ? await getMessageById(conversationId, targetMessage.parent_message_id)
         : null;
@@ -1837,7 +1829,7 @@ function registerWebRoutes(app) {
         return renderPage(res, 'message', { title: '提示', message: '找不到对应的用户输入。' });
       }
 
-      const history = buildPathMessages(allMessages, parentUserMessage.id).slice(0, -1);
+      const history = (await fetchPathMessages(conversationId, parentUserMessage.id)).slice(0, -1);
       const reply = await generateReplyViaGateway({
         requestId: req.requestId,
         userId: req.session.user.id,
@@ -1951,9 +1943,8 @@ function registerWebRoutes(app) {
         return renderPage(res, 'message', { title: '提示', message: '这里只支持修改用户输入。' });
       }
 
-      const allMessages = await listMessages(conversationId);
       const historyBeforeUser = targetMessage.parent_message_id
-        ? buildPathMessages(allMessages, targetMessage.parent_message_id)
+        ? await fetchPathMessages(conversationId, targetMessage.parent_message_id)
         : [];
 
       const newUserMessageId = await addMessage({
@@ -2032,8 +2023,7 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
-      const historyBeforeTarget = buildPathMessages(allMessages, targetMessage.parent_message_id);
+      const historyBeforeTarget = await fetchPathMessages(conversationId, targetMessage.parent_message_id);
       let newLeafId = null;
       let previewUserContent = '';
       let reply = '';
@@ -2056,7 +2046,7 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = targetMessage.content;
-        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        const userPacket = await buildChatMessagePacket(req, conversation, newUserMessageId, newUserMessageId);
         ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
@@ -2102,7 +2092,7 @@ function registerWebRoutes(app) {
         }
 
         const historyBeforeParentUser = parentUserMessage.parent_message_id
-          ? buildPathMessages(allMessages, parentUserMessage.parent_message_id)
+          ? await fetchPathMessages(conversationId, parentUserMessage.parent_message_id)
           : [];
 
         const newUserMessageId = await addMessage({
@@ -2122,7 +2112,7 @@ function registerWebRoutes(app) {
         });
 
         previewUserContent = parentUserMessage.content;
-        const userPacket = await buildChatMessagePacket(req, conversation, await listMessages(conversationId), newUserMessageId, newUserMessageId);
+        const userPacket = await buildChatMessagePacket(req, conversation, newUserMessageId, newUserMessageId);
         ndjson.safeWrite({ type: 'user-message', conversationId, userMessageId: newUserMessageId, content: previewUserContent, leafId: newUserMessageId, mode: 'replay', html: userPacket ? userPacket.html : '' });
         ndjson.safeWrite({ type: 'assistant-start', conversationId, parentMessageId: newUserMessageId, sourceMessageId: messageId, mode: 'replay' });
 
@@ -2162,11 +2152,10 @@ function registerWebRoutes(app) {
       }
 
       await invalidateConversationCache(conversationId);
-      const messagesWithReply = await listMessages(conversationId);
-      const replyPacket = await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafId);
-      const newLeafMessage = messagesWithReply.find((message) => Number(message.id) === Number(newLeafId));
+      const replyPacket = await buildChatMessagePacket(req, conversation, newLeafId, newLeafId);
+      const newLeafMessage = await getMessageById(conversationId, newLeafId);
       const parentPacket = newLeafMessage && newLeafMessage.parent_message_id
-        ? await buildChatMessagePacket(req, conversation, messagesWithReply, newLeafId, newLeafMessage.parent_message_id)
+        ? await buildChatMessagePacket(req, conversation, newLeafId, newLeafMessage.parent_message_id)
         : null;
       ndjson.safeWrite({
         type: 'done',
@@ -2209,8 +2198,7 @@ function registerWebRoutes(app) {
         return renderPage(res, 'message', { title: '提示', message: '根节点不适合做后续重算。' });
       }
 
-      const allMessages = await listMessages(conversationId);
-      const historyBeforeTarget = buildPathMessages(allMessages, targetMessage.parent_message_id);
+      const historyBeforeTarget = await fetchPathMessages(conversationId, targetMessage.parent_message_id);
       let newLeafId = null;
       let regeneratedPreview = [];
 
@@ -2269,7 +2257,7 @@ function registerWebRoutes(app) {
         }
 
         const historyBeforeParentUser = parentUserMessage.parent_message_id
-          ? buildPathMessages(allMessages, parentUserMessage.parent_message_id)
+          ? await fetchPathMessages(conversationId, parentUserMessage.parent_message_id)
           : [];
 
         const newUserMessageId = await addMessage({
@@ -2367,12 +2355,13 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversationId);
-      const history = buildPathMessages(allMessages, parentMessageId || conversation.current_message_id || null);
+      const latestMessage = parentMessageId || conversation.current_message_id ? null : await getLatestMessage(conversationId);
+      const contextLeafId = parentMessageId || conversation.current_message_id || latestMessage?.id || null;
+      const history = await fetchPathMessages(conversationId, contextLeafId);
       ndjson.safeWrite({
         type: 'assistant-start',
         conversationId,
-        parentMessageId: parentMessageId || conversation.current_message_id || null,
+        parentMessageId: contextLeafId,
         mode: 'optimize-input',
       });
 
@@ -2396,7 +2385,7 @@ function registerWebRoutes(app) {
       ndjson.safeWrite({
         type: 'done',
         conversationId,
-        leafId: parentMessageId || conversation.current_message_id || null,
+        leafId: contextLeafId,
         full: optimizedContent,
         mode: 'optimize-input',
         draftContent: content,
@@ -2424,8 +2413,9 @@ function registerWebRoutes(app) {
         return renderPage(res, 'message', { title: '提示', message: '内容不能为空。' });
       }
 
-      const allMessages = await listMessages(conversationId);
-      const history = buildPathMessages(allMessages, parentMessageId || conversation.current_message_id || null);
+      const latestMessage = parentMessageId || conversation.current_message_id ? null : await getLatestMessage(conversationId);
+      const contextLeafId = parentMessageId || conversation.current_message_id || latestMessage?.id || null;
+      const history = await fetchPathMessages(conversationId, contextLeafId);
       const optimizedContent = await optimizeUserInputViaGateway({
         requestId: req.requestId,
         userId: req.session.user.id,
@@ -2438,7 +2428,7 @@ function registerWebRoutes(app) {
       });
 
       await renderChatPage(req, res, conversation, {
-        leafId: parentMessageId || conversation.current_message_id || null,
+        leafId: contextLeafId,
         draftContent: content,
         optimizedContent,
       });
@@ -2456,16 +2446,12 @@ function registerWebRoutes(app) {
         return;
       }
 
-      const allMessages = await listMessages(conversation.id);
       const targetMessage = await getMessageById(conversationId, messageId);
       if (!targetMessage) {
         return renderPage(res, 'message', { title: '提示', message: '分支起点不存在。' });
       }
-      const view = buildConversationView(allMessages, messageId);
 
-      const branchTitle = view.currentBranch
-        ? buildBranchConversationTitle(conversation, view.currentBranch.label, view.currentBranch.summary)
-        : buildConversationTitle(conversation.character_name, targetMessage.content);
+      const branchTitle = buildConversationTitle(conversation.character_name, targetMessage.content);
       const branchResult = await cloneConversationBranch({
         userId: req.session.user.id,
         characterId: conversation.character_id,

@@ -25,11 +25,7 @@
       <% } %>
       <div class="chat-meta">
         <span class="meta-pill"><%= t('对话 #{id}', { id: conversation.id }) %></span>
-        <span class="meta-pill" data-active-leaf-label><%= t('当前叶子 #{id}', { id: view.activeLeafId || '—' }) %></span>
         <span class="meta-pill"><%= t('消息 {count} 条', { count: view.messageCount }) %></span>
-        <% if (view.currentBranch && view.currentBranch.label) { %>
-          <span class="meta-pill"><%= view.currentBranch.label %></span>
-        <% } %>
         <% if (conversation.parent_conversation_id) { %>
           <span class="meta-pill"><%= t('分支自对话 #{id}', { id: conversation.parent_conversation_id }) %></span>
         <% } %>
@@ -37,8 +33,8 @@
     </section>
 
     <section class="panel">
-      <h2 class="panel-title">当前分支</h2>
-      <p class="section-subtitle">先把这一条线顺着读完。分支、重算、改写都收在每条消息下面，不抢正文。</p>
+      <h2 class="panel-title">当前对话</h2>
+      <p class="section-subtitle">默认只取当前这条上下文路径，页面不再加载整棵分支树，打开会更轻。</p>
       <% if (view.hasOlderMessages) { %>
         <div class="history-loader" data-history-loader>
           <button class="inline-btn" type="button" data-load-older-messages data-endpoint="/chat/<%= conversation.id %>/messages/history" data-before-id="<%= view.oldestVisibleMessageId || '' %>"><%= t('加载之前的对话') %></button>
@@ -53,7 +49,7 @@
     </section>
 
     <section class="compose-card">
-      <h2>继续写这一支</h2>
+      <h2>继续对话</h2>
       <p class="section-subtitle">高频动作只留发送，模型切换和输入优化收起来，别把页面挤成控制台。</p>
       <% if (chatModelSelector && chatModelSelector.options && chatModelSelector.options.length) { %>
         <details class="compose-details">
@@ -80,7 +76,7 @@
 
       <form method="POST" action="/chat/<%= conversation.id %>/message" id="chat-compose-form" data-conversation-id="<%= conversation.id %>" data-character-name="<%= conversation.character_name %>" data-stream-endpoint="/chat/<%= conversation.id %>/message/stream" data-optimize-stream-endpoint="/chat/<%= conversation.id %>/optimize-input/stream" data-message-count="<%= view.messageCount %>">
         <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-        <label for="content">从当前节点往下写</label>
+        <label for="content">继续对话</label>
         <textarea id="content" name="content" maxlength="4000" placeholder="<%= t(view.messageCount === 0 ? '第一次可以直接点发送开始对话；也可以先输入你想说的话。' : '把你现在想说的话发出去。') %>"><%= draftContent || '' %></textarea>
         <button class="submit-btn" type="submit"><%= t(view.messageCount === 0 ? '开始 / 发送' : '发送消息') %></button>
       </form>
@@ -133,45 +129,8 @@
   </div>
   <aside class="chat-side">
     <section class="sidebar-card compact">
-      <h2>分支导航</h2>
-      <p class="mini-note">右边只保留导航用途：先看当前路径，再决定要不要切树、切叶子。</p>
-    </section>
-
-    <section class="sidebar-card">
-      <h2>对话树</h2>
-      <p class="mini-note">高亮的是你当前这条线，树节点支持两行摘要，切换时不用盯着一排编号猜内容。</p>
-      <div class="tree-list">
-        <% view.treeEntries.forEach(node => { %>
-          <div class="tree-node <%= node.isActive ? 'active' : '' %> <%= node.isOnActiveTrail ? 'trail' : '' %>" style="margin-left: <%= node.depth * 16 %>px;">
-            <span class="tree-line"></span>
-            <span class="tree-id">#<%= node.id %></span>
-            <span class="tree-kind"><%= node.senderType === 'user' ? t('你') : 'AI' %></span>
-            <span class="tree-content"><%= node.shortContent || t('（空）') %></span>
-            <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-              <input type="hidden" name="leaf" value="<%= node.id %>" />
-              <button class="inline-btn <%= node.isActive ? 'primary' : '' %>" type="submit"><%= t(node.isActive ? '当前' : '切换') %></button>
-            </form>
-          </div>
-        <% }) %>
-      </div>
-    </section>
-
-    <section class="sidebar-card">
-      <h2>叶子分支</h2>
-      <p class="mini-note">这里只保留“切到哪一支”的信息，避免把主阅读区打散。</p>
-      <% view.branches.forEach(branch => { %>
-        <div class="branch-item <%= branch.isActive ? 'active' : '' %>">
-          <div class="branch-meta"><%= t('叶子 #{leafId} · 深度 {depth} · {promptKind}', { leafId: branch.leafId, depth: branch.depth, promptKind: branch.promptKind }) %></div>
-          <div class="branch-preview"><strong><%= branch.label %></strong></div>
-          <div class="mini-note"><%= branch.summary %></div>
-          <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-            <input type="hidden" name="leaf" value="<%= branch.leafId %>" />
-            <button class="inline-btn <%= branch.isActive ? 'primary' : '' %>" type="submit">
-              <%= t(branch.isActive ? '当前分支' : '切换到这支') %>
-            </button>
-          </form>
-        </div>
-      <% }) %>
+      <h2>轻量模式</h2>
+      <p class="mini-note">已移除分支导航和整棵对话树加载。聊天页只渲染当前上下文路径，需要继续时直接发送即可。</p>
     </section>
 
     <details class="sidebar-details">
@@ -179,11 +138,8 @@
       <div class="sidebar-details-body mini-note">
         <div>1. 第一次进入空白对话时，可以直接点发送，系统会自动用“[开始一次新的对话]”起头一次。</div>
         <div>2. 重新生成：给同一条用户输入再生一个 AI 候选。</div>
-        <div>3. 保存为新 AI 分支：手动改写 AI 回复，但不覆盖旧版本。</div>
-        <div>4. 修改用户输入并重开分支：从旧用户节点重新长出一条新线。</div>
-        <div>5. 从这里重算后续：保持前文不变，从当前节点重开新的后续走向。</div>
-        <div>6. 新建独立分支对话：把当前节点之前的主线复制成一个新会话。</div>
-        <div>7. 优化输入：先润色，再一键采用并发送。</div>
+        <div>3. 改写/重算会保留旧记录，但页面不再提供复杂分支树导航。</div>
+        <div>4. 优化输入：先润色，再一键采用并发送。</div>
       </div>
     </details>
   </aside>

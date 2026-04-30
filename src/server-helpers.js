@@ -15,10 +15,11 @@ const { translate, translateHtml } = require('./i18n');
 const { parsePromptItemsFromForm, normalizePromptItems } = require('./services/prompt-engineering-service');
 const {
   getConversationById,
-  listMessages,
+  getLatestMessage,
+  getConversationMessageCount,
   setConversationCurrentMessage,
-  buildPathMessages,
-  buildConversationView,
+  buildConversationPathView,
+  fetchPathMessages,
 } = require('./services/conversation-service');
 const { getChatModelSelector } = require('./services/llm-gateway-service');
 
@@ -120,11 +121,18 @@ function writeNdjson(res, payload) {
   }
 }
 
-function buildChatRequestContext(req, conversation, allMessages, rawContent, parentMessageId) {
-  const isFirstTurn = allMessages.length === 0;
+async function buildChatRequestContext(req, conversation, rawContent, parentMessageId, options = {}) {
+  const messageCount = options.messageCount === undefined
+    ? await getConversationMessageCount(conversation.id)
+    : Number(options.messageCount || 0);
+  const isFirstTurn = messageCount === 0;
   const content = String(rawContent || '').trim() || (isFirstTurn ? '[开始一次新的对话]' : '');
-  const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
-  const history = buildPathMessages(allMessages, parentMessageId || fallbackLeafId || null);
+  let fallbackLeafId = conversation.current_message_id || options.fallbackLeafId || null;
+  if (!fallbackLeafId && !isFirstTurn) {
+    const latestMessage = await getLatestMessage(conversation.id);
+    fallbackLeafId = latestMessage?.id || null;
+  }
+  const history = await fetchPathMessages(conversation.id, parentMessageId || fallbackLeafId || null);
   const isBranchReply = parentMessageId && Number(parentMessageId) !== Number(conversation.current_message_id || 0);
 
   return {
@@ -133,6 +141,7 @@ function buildChatRequestContext(req, conversation, allMessages, rawContent, par
     history,
     isBranchReply,
     promptKind: isFirstTurn ? 'conversation-start' : (isBranchReply ? 'branch' : 'chat'),
+    messageCount,
   };
 }
 
@@ -328,22 +337,13 @@ function buildConversationTitle(characterName, content = '') {
   return tail ? `${characterName} · ${tail}` : `${characterName} · 新分支`;
 }
 
-function buildBranchConversationTitle(conversation, branchLabel, branchSummary) {
-  const compact = [branchLabel, branchSummary]
-    .filter(Boolean)
-    .join(' · ')
-    .replace(/\s+/g, ' ')
-    .slice(0, 42);
-  return compact ? `${conversation.character_name} · ${compact}` : `${conversation.character_name} · 分支对话`;
-}
-
 function buildNextConversationTitle(conversation, userContent) {
   return buildConversationTitle(conversation.character_name, userContent || conversation.character_summary || '');
 }
 
 async function renderChatPage(req, res, conversation, options = {}) {
-  const allMessages = await listMessages(conversation.id);
-  const fallbackLeafId = conversation.current_message_id || (allMessages.length ? allMessages[allMessages.length - 1].id : null);
+  const latestMessage = conversation.current_message_id ? null : await getLatestMessage(conversation.id);
+  const fallbackLeafId = conversation.current_message_id || latestMessage?.id || null;
   const requestedLeafId = Number(options.leafId || req.query.leaf || fallbackLeafId || 0) || null;
   const activeLeafId = requestedLeafId || fallbackLeafId || null;
 
@@ -352,7 +352,9 @@ async function renderChatPage(req, res, conversation, options = {}) {
     conversation.current_message_id = activeLeafId;
   }
 
-  const view = buildConversationView(allMessages, activeLeafId);
+  const view = activeLeafId
+    ? await buildConversationPathView(conversation.id, activeLeafId, { messageCount: options.messageCount })
+    : { pathMessages: [], activeLeafId: null, messageCount: options.messageCount === undefined ? await getConversationMessageCount(conversation.id) : Number(options.messageCount || 0) };
   const initialVisibleCount = Number(options.initialVisibleCount || 3);
   view.visiblePathMessages = view.pathMessages.slice(-initialVisibleCount);
   view.hasOlderMessages = view.pathMessages.length > view.visiblePathMessages.length;
@@ -403,7 +405,6 @@ module.exports = {
   isAllowedInternationalEmail,
   isDomesticPhone,
   buildConversationTitle,
-  buildBranchConversationTitle,
   buildNextConversationTitle,
   renderChatPage,
   loadConversationForUserOrFail,

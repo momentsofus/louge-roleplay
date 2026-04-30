@@ -11,51 +11,8 @@
 
   <div class="bubble-rich" data-message-content><div class="bubble-text"><%= message.content %></div></div>
 
-  <% if (message.siblingCount > 1) { %>
-    <div class="variant-strip">
-      <h4>同一节点下的候选版本</h4>
-      <div class="chip-list">
-        <% message.siblingVariants.forEach(variant => { %>
-          <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-            <input type="hidden" name="leaf" value="<%= variant.id %>" />
-            <button class="chip <%= variant.is_active ? 'active' : '' %>" type="submit">
-              <span>#<%= variant.id %></span>
-              <span><%= variant.prompt_kind %></span>
-            </button>
-          </form>
-        <% }) %>
-      </div>
-    </div>
-  <% } %>
-
-  <% if (message.childCount > 0) { %>
-    <div class="next-strip">
-      <h4>从这里可以走向</h4>
-      <div class="chip-list">
-        <% message.nextChoices.forEach(choice => { %>
-          <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-            <input type="hidden" name="leaf" value="<%= choice.id %>" />
-            <button class="chip <%= choice.is_active ? 'active' : '' %>" type="submit">
-              <span><%= choice.sender_type === 'user' ? '你' : 'AI' %></span>
-              <span>#<%= choice.id %></span>
-            </button>
-          </form>
-        <% }) %>
-      </div>
-    </div>
-  <% } %>
-
   <div class="message-tools">
     <div class="bubble-actions bubble-actions--stacked">
-      <form class="inline-form" method="GET" action="/chat/<%= conversation.id %>">
-        <input type="hidden" name="leaf" value="<%= message.id %>" />
-        <button class="inline-btn" type="submit">切到这里</button>
-      </form>
-
-      <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/branch/<%= message.id %>">
-        <button class="inline-btn dark" type="submit">新建独立分支对话</button>
-      </form>
-
       <form method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay" class="inline-form" data-stream-endpoint="/chat/<%= conversation.id %>/messages/<%= message.id %>/replay/stream" data-stream-mode="replay" data-stream-role-label="<%= conversation.character_name %>" data-stream-kind-label="重算中…" data-stream-sender-class="character" data-stream-preview-content="<%= (message.sender_type === 'user' ? message.content : ((message.parent_preview_user_content || message.parentUserPreviewContent || '') || '')) %>">
         <button class="inline-btn" type="submit">从这里重算后续</button>
       </form>
@@ -77,22 +34,22 @@
         <div class="tool-details-body">
           <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit">
             <textarea name="content" maxlength="8000" required><%= message.visibleContent %></textarea>
-            <button class="inline-btn primary" type="submit">保存为新 AI 分支</button>
+            <button class="inline-btn primary" type="submit">保存为新版本</button>
           </form>
-          <div class="mini-note">这里只放可见正文，不带 think 思考内容；保存后会作为新的 AI 变体分支。</div>
+          <div class="mini-note">这里只放可见正文，不带 think 思考内容；保存后会作为新的候选版本。</div>
         </div>
       </details>
     <% } %>
 
     <% if (message.sender_type === 'user') { %>
       <details class="tool-details">
-        <summary>修改这句用户输入并重开分支</summary>
+        <summary>修改这句用户输入并重算</summary>
         <div class="tool-details-body">
           <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
             <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
-            <button class="inline-btn primary" type="submit">修改这句并从这里重开分支</button>
+            <button class="inline-btn primary" type="submit">修改这句并重新生成</button>
           </form>
-          <div class="mini-note">会复制这条用户消息为一个新分支节点，并从它重新生成后续 AI，不会覆盖旧线。</div>
+          <div class="mini-note">会保留旧记录并生成一条新后续，但不再展示复杂分支导航。</div>
         </div>
       </details>
     <% } %>

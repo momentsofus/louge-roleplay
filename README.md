@@ -24,7 +24,7 @@
 - LLM Provider 后台配置、模型模式、上下文窗口、超时、价格
 - 后台全局对话记录查看：支持按用户、角色卡、日期筛选，并可进入单条会话查看完整消息链
 - 套餐、订阅、请求额度 / token 额度、用量记录
-- Redis Session、验证码/限流/消息树缓存；未配置 Redis 时可内存降级
+- Redis Session、验证码/限流/会话消息缓存；未配置 Redis 时可内存降级
 - MySQL 优先，连接失败或未配置时 SQLite 本地降级
 - Google Fonts 代理与缓存兜底
 - 结构化日志、requestId、DEBUG 文档和项目地图
@@ -142,16 +142,17 @@ public/js/chat-page.js
   -> renderRichContent()
 ```
 
-### 消息树
+### 当前对话路径
 
 ```text
 conversation-service.addMessage()
   -> messages.parent_message_id / branch_from_message_id / edited_from_message_id
   -> invalidateConversationCache()
-  -> listMessages()
-  -> buildConversationView()
+  -> buildConversationPathView() / fetchPathMessages()
   -> chat.ejs / chat-message.ejs
 ```
+
+聊天页只加载当前上下文路径，不再为分支导航读取整棵消息树。
 
 ## 数据库与缓存
 
@@ -179,7 +180,7 @@ npm run db:init
 `src/lib/redis.js` 会在未配置 Redis 或连接失败时使用内存替代。开发可以接受；生产建议配置真实 Redis，否则：
 
 - 重启后登录态丢失
-- 验证码/限流/消息树缓存丢失
+- 验证码/限流/会话消息缓存丢失
 - 多进程之间状态不同步
 
 ## 日志与 DEBUG
@@ -294,14 +295,14 @@ git commit -m "feat: xxx"
 | Markdown 不解析 | `renderRichContent()`、`52-rich-content.css` 是否加载 |
 | 登录失败 | `Login failed` 日志和 requestId |
 | 注册验证码失败 | `Register validation failed`、验证码 Redis/内存状态 |
-| 消息树错乱 | `messages.parent_message_id`、`current_message_id`、`buildConversationView()` |
+| 当前路径错乱 | `messages.parent_message_id`、`current_message_id`、`fetchPathMessages()` / `buildConversationPathView()` |
 | 数据库连不上 | `[db] MySQL 连接失败`、`DATABASE_URL`、SQLite 降级日志 |
 | Redis 连不上 | `[redis] Redis 连接失败`、`REDIS_URL`、内存模式 warning |
 
 ## 说明
 
 - 若未配置 AI 接口/Provider，聊天会失败或返回兜底信息，具体取决于当前配置。
-- 对话树能力依赖最新数据库结构，部署前请执行 `npm run db:init`。
+- 当前路径、重算和编辑能力依赖最新数据库结构，部署前请执行 `npm run db:init`。
 - 文档生成脚本不会读取 `.env`，不会输出密钥。
 
 ## 版本管理
