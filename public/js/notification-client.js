@@ -244,6 +244,13 @@
     items: notifications,
   };
 
+  document.addEventListener('click', (event) => {
+    const trigger = event.target && event.target.closest ? event.target.closest('[data-open-support]') : null;
+    if (!trigger) return;
+    event.preventDefault();
+    showSupport({ reason: trigger.getAttribute('data-support-reason') || 'manual' });
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', showInitialNotifications, { once: true });
   } else {
