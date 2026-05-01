@@ -1,6 +1,15 @@
 <!-- @file src/views/admin.ejs
      @description 管理员总览页面模板。调用说明：GET /admin 渲染，展示用户/套餐/Provider 概览入口。
 -->
+<%
+  const adminUsers = Array.isArray(users) ? users : [];
+  const activeUsers = adminUsers.filter((u) => String(u.status || '') === 'active').length;
+  const adminCount = adminUsers.filter((u) => String(u.role || '') === 'admin').length;
+  const planBoundCount = adminUsers.filter((u) => Boolean(u.plan_name || u.plan_code)).length;
+  const inactiveUsers = Math.max(adminUsers.length - activeUsers, 0);
+  const roleLabel = (role) => role === 'admin' ? '管理员' : '普通用户';
+  const statusLabel = (status) => status === 'active' ? '正常' : (status || '未知');
+%>
 <div class="admin-shell">
   <section class="hero-card admin-hero">
     <div class="admin-hero-copy">
@@ -65,15 +74,15 @@
     </div>
   </section>
 
-  <section class="section-card admin-section">
-    <div class="section-heading">
+  <section class="section-card admin-section admin-users-section">
+    <div class="section-heading admin-users-heading">
       <div>
-        <p class="section-kicker">Users</p>
+        <p class="section-kicker">Users & Access</p>
         <h2>用户与权限</h2>
-        <p class="muted-text">总后台只保留用户管理。角色和套餐切换还在，找人我也给你留了搜索。</p>
+        <p class="muted-text">把原来横向表格改成用户卡片：身份、联系方式、套餐和可操作项都收在同一张卡里，手机上也不会挤坏。</p>
       </div>
       <div class="section-actions section-actions--stack">
-        <label class="search-field">
+        <label class="search-field search-field--large">
           <span>筛选用户</span>
           <input type="search" placeholder="用户名 / 昵称 / 邮箱 / 手机 / 套餐" data-admin-filter data-filter-target="users-list" />
         </label>
@@ -91,59 +100,104 @@
       <a class="quick-link" href="/admin/conversations">对话记录</a>
     </div>
 
-    <div class="table-wrap admin-table-shell">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>用户</th>
-            <th>联系</th>
-            <th>当前套餐</th>
-            <th>角色切换</th>
-            <th>套餐切换</th>
-          </tr>
-        </thead>
-        <tbody id="users-list">
-          <% users.forEach(u => { %>
-            <%
-              const usernameForFilter = [u.public_id || '', u.username, u.nickname || '', u.email || '', u.phone || '', u.plan_name || '', u.plan_code || '', u.role || '', u.status || ''].join(' ');
-            %>
-            <tr data-filter-item data-filter-text="<%= usernameForFilter %>">
-              <td>
-                <strong><%= u.username %></strong>
-                <div class="muted-text">
-                  ID：<%= u.public_id || '—' %>
-                  · <%= u.nickname || '—' %>
-                  · 状态：<%= u.status %>
-                  · 地区：<%= u.country_type || 'domestic' %>
+    <div class="admin-users-summary" aria-label="用户权限概览">
+      <div class="admin-users-summary-card">
+        <span>管理员</span>
+        <strong><%= adminCount %></strong>
+        <small>拥有后台访问权限</small>
+      </div>
+      <div class="admin-users-summary-card">
+        <span>正常用户</span>
+        <strong><%= activeUsers %></strong>
+        <small>状态为 active</small>
+      </div>
+      <div class="admin-users-summary-card">
+        <span>已绑定套餐</span>
+        <strong><%= planBoundCount %></strong>
+        <small>当前有有效套餐关系</small>
+      </div>
+      <div class="admin-users-summary-card">
+        <span>非正常状态</span>
+        <strong><%= inactiveUsers %></strong>
+        <small>需要人工关注</small>
+      </div>
+    </div>
+
+    <div class="permission-layout">
+      <aside class="permission-guide-card">
+        <p class="section-kicker">Guardrails</p>
+        <h3>权限调整前确认</h3>
+        <ul>
+          <li>授予管理员会开放后台入口，请确认账号归属。</li>
+          <li>切换套餐会立即影响模型可见范围、倍率和额度。</li>
+          <li>联系方式为空时，优先用用户名或公开 ID 识别用户。</li>
+        </ul>
+      </aside>
+
+      <div class="user-card-list" id="users-list">
+        <% if (!adminUsers.length) { %>
+          <div class="empty-state">
+            <strong>还没有用户</strong>
+            <span>等第一个用户注册后，这里会出现权限卡片。</span>
+          </div>
+        <% } %>
+
+        <% adminUsers.forEach(u => { %>
+          <%
+            const usernameForFilter = [u.public_id || '', u.username, u.nickname || '', u.email || '', u.phone || '', u.plan_name || '', u.plan_code || '', u.role || '', u.status || '', u.country_type || ''].join(' ');
+            const isAdmin = u.role === 'admin';
+            const isActive = u.status === 'active';
+          %>
+          <article class="user-permission-card" data-filter-item data-filter-text="<%= usernameForFilter %>">
+            <header class="user-card-header">
+              <div class="user-avatar" aria-hidden="true"><%= String(u.nickname || u.username || '?').trim().slice(0, 1).toUpperCase() %></div>
+              <div class="user-card-title">
+                <div class="toolbar-row toolbar-row--tight">
+                  <h3><%= u.nickname || u.username %></h3>
+                  <span class="pill <%= isAdmin ? 'pill--brand' : '' %>"><%= roleLabel(u.role) %></span>
+                  <span class="pill <%= isActive ? 'pill--success' : 'pill--level-warn' %>"><%= statusLabel(u.status) %></span>
                 </div>
-              </td>
-              <td class="muted-text">
-                邮箱：<%= u.email || '—' %><br />
-                手机：<%= u.phone || '—' %>
-              </td>
-              <td>
+                <p class="muted-text">
+                  @<%= u.username %>
+                  <% if (u.public_id) { %> · ID：<%= u.public_id %><% } %>
+                  · <%= u.country_type || 'domestic' %>
+                </p>
+              </div>
+            </header>
+
+            <div class="user-card-grid">
+              <section class="user-info-panel">
+                <span class="user-info-label">联系信息</span>
+                <strong><%= u.email || '未绑定邮箱' %></strong>
+                <small>手机：<%= u.phone || '未绑定' %></small>
+              </section>
+              <section class="user-info-panel">
+                <span class="user-info-label">当前套餐</span>
                 <% if (u.plan_name) { %>
-                  <strong><%= u.plan_name %></strong>
-                  <div class="muted-text">
-                    <%= u.billing_mode %>
-                    · 优先级 <%= u.priority_weight %>
-                    · 并发 <%= u.concurrency_limit %>
-                  </div>
+                  <strong><%= u.plan_name %> <span class="muted-text">(<%= u.plan_code %>)</span></strong>
+                  <small><%= u.billing_mode %> · <%= '优先级' %> <%= u.priority_weight %> · <%= '并发' %> <%= u.concurrency_limit %></small>
                 <% } else { %>
-                  <span class="muted-text">未绑定</span>
+                  <strong>未绑定套餐</strong>
+                  <small>该用户可能无法正常使用付费模型。</small>
                 <% } %>
-              </td>
-              <td>
-                <form method="post" action="/admin/users/<%= u.id %>/role">
+              </section>
+            </div>
+
+            <div class="user-card-actions">
+              <form class="compact-admin-form" method="post" action="/admin/users/<%= u.id %>/role">
+                <label>
+                  <span>用户角色</span>
                   <select name="role">
                     <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>普通用户</option>
                     <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>管理员</option>
                   </select>
-                  <button type="submit">保存角色</button>
-                </form>
-              </td>
-              <td>
-                <form method="post" action="/admin/users/<%= u.id %>/plan">
+                </label>
+                <button type="submit">保存角色</button>
+              </form>
+
+              <form class="compact-admin-form" method="post" action="/admin/users/<%= u.id %>/plan">
+                <label>
+                  <span>用户套餐</span>
                   <select name="planId">
                     <% plans.forEach(plan => { %>
                       <option value="<%= plan.id %>" <%= plan.code === u.plan_code ? 'selected' : '' %>>
@@ -151,13 +205,17 @@
                       </option>
                     <% }) %>
                   </select>
-                  <button type="submit">切换套餐</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+                </label>
+                <button type="submit">切换套餐</button>
+              </form>
+            </div>
+          </article>
+        <% }) %>
+        <div class="empty-state admin-filter-empty">
+          <strong>没有匹配的用户</strong>
+          <span>换个用户名、邮箱、手机或套餐关键词试试。</span>
+        </div>
+      </div>
     </div>
   </section>
 </div>
