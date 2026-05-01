@@ -12,6 +12,7 @@ const EN_MESSAGES = {
   "登录": "Sign in",
   "注册": "Sign up",
   "中文": "中文",
+  "繁體": "繁體",
   "English": "English",
   "语言": "Language",
   "页面不存在": "Page Not Found",

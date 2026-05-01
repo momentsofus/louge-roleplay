@@ -182,11 +182,16 @@
         <% plans.forEach(plan => { %>
           <details class="admin-item admin-item--plan" data-filter-item data-filter-text="<%= [plan.name, plan.code, plan.description || '', plan.billing_mode, plan.quota_period, plan.status, ...(plan.planModels || []).map(item => `${item.label} ${item.modelId}`)].join(' ') %>">
             <summary class="admin-item-summary">
-              <div class="admin-item-main">
-                <strong><%= plan.name %></strong>
-                <span class="pill"><%= plan.code %></span>
-                <% if (plan.is_default) { %><span class="pill pill--brand">默认</span><% } %>
-                <span class="pill <%= plan.status === 'active' ? 'pill--success' : '' %>"><%= plan.status %></span>
+              <div class="admin-item-title-block">
+                <div class="admin-item-main">
+                  <strong><%= plan.name %></strong>
+                  <span class="pill"><%= plan.code %></span>
+                  <% if (plan.is_default) { %><span class="pill pill--brand">默认</span><% } %>
+                  <span class="pill <%= plan.status === 'active' ? 'pill--success' : '' %>"><%= plan.status %></span>
+                </div>
+                <% if (plan.description) { %>
+                  <p class="mini-note admin-item-description"><%= plan.description %></p>
+                <% } %>
               </div>
               <div class="admin-item-meta">
                 <span class="meta-chip">计费 <strong><%= plan.billing_mode %></strong></span>

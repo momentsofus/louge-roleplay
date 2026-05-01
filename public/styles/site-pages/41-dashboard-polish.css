@@ -51,6 +51,22 @@
   justify-content: flex-end;
 }
 
+.subscription-plan-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.subscription-plan-heading h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.subscription-plan-description {
+  margin-top: 0;
+  line-height: 1.65;
+}
+
 .feature-list {
   margin: 0;
   padding: 0;

@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { ZH_MESSAGES } = require('../src/i18n/messages.zh-CN');
+const { ZH_TW_MESSAGES } = require('../src/i18n/messages.zh-TW');
 const { EN_MESSAGES } = require('../src/i18n/messages.en');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -153,24 +154,31 @@ function printList(title, items, details) {
 
 function main() {
   const zhKeys = new Set(Object.keys(ZH_MESSAGES));
+  const zhTwKeys = new Set(Object.keys(ZH_TW_MESSAGES));
   const enKeys = new Set(Object.keys(EN_MESSAGES));
   const { keys: usedKeys, locations } = collectTKeys();
   const literals = collectChineseLiterals();
 
   const missingEnForZh = [...zhKeys].filter((key) => !enKeys.has(key)).sort();
   const missingZhForEn = [...enKeys].filter((key) => !zhKeys.has(key)).sort();
+  const missingZhTwForZh = [...zhKeys].filter((key) => !zhTwKeys.has(key)).sort();
+  const extraZhTwKeys = [...zhTwKeys].filter((key) => !zhKeys.has(key)).sort();
   const missingUsedEn = [...usedKeys].filter((key) => !enKeys.has(key)).sort();
   const missingUsedZh = [...usedKeys].filter((key) => !zhKeys.has(key)).sort();
+  const missingUsedZhTw = [...usedKeys].filter((key) => !zhTwKeys.has(key)).sort();
   const untranslatedLiterals = [...literals.keys()].filter((text) => !enKeys.has(text)).sort((a, b) => a.localeCompare(b, 'zh-CN'));
 
-  console.log(`i18n summary: zh=${zhKeys.size}, en=${enKeys.size}, usedTKeys=${usedKeys.size}, chineseLiterals=${literals.size}`);
+  console.log(`i18n summary: zh=${zhKeys.size}, zh-TW=${zhTwKeys.size}, en=${enKeys.size}, usedTKeys=${usedKeys.size}, chineseLiterals=${literals.size}`);
   printList('Missing English entries for zh-CN dictionary keys', missingEnForZh);
   printList('Missing zh-CN entries for English dictionary keys', missingZhForEn);
+  printList('Missing zh-TW entries for zh-CN dictionary keys', missingZhTwForZh);
+  printList('zh-TW entries not present in zh-CN dictionary keys', extraZhTwKeys);
   printList('Used t(...) keys missing English entries', missingUsedEn, locations);
   printList('Used t(...) keys missing zh-CN entries', missingUsedZh, locations);
+  printList('Used t(...) keys missing zh-TW entries', missingUsedZhTw, locations);
   printList('Chinese literals/text not covered by English dictionary', untranslatedLiterals, literals);
 
-  const failed = missingEnForZh.length || missingUsedEn.length || untranslatedLiterals.length;
+  const failed = missingEnForZh.length || missingZhTwForZh.length || extraZhTwKeys.length || missingUsedEn.length || missingUsedZhTw.length || untranslatedLiterals.length;
   if (failed) {
     process.exitCode = 1;
     return;

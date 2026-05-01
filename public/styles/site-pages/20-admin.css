@@ -255,12 +255,23 @@
     gap: 14px;
   }
 
+  .admin-item-title-block {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
   .admin-item-main {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
     min-width: 0;
+  }
+
+  .admin-item-description {
+    margin: 0;
+    max-width: 720px;
   }
 
   .admin-item-main strong {

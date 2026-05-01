@@ -86,6 +86,7 @@
       <% } %>
       <span class="nav-locale-switch">
         <span><%= t('语言') %>:</span>
+        <a href="<%= localeSwitchLinks['zh-TW'] %>" class="<%= locale === 'zh-TW' ? 'active' : '' %>"><%= t('繁體') %></a>
         <a href="<%= localeSwitchLinks['zh-CN'] %>" class="<%= locale === 'zh-CN' ? 'active' : '' %>"><%= t('中文') %></a>
         <a href="<%= localeSwitchLinks.en %>" class="<%= locale === 'en' ? 'active' : '' %>"><%= t('English') %></a>
       </span>

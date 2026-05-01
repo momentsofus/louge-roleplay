@@ -47,7 +47,7 @@ function requireAdmin(req, res, next) {
         csrfToken: res.locals.csrfToken || '',
         cspNonce: res.locals.cspNonce || '',
         clientI18nMessages: res.locals.clientI18nMessages || {},
-        localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
+        localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
       });
     });
   }
