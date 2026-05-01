@@ -10,6 +10,7 @@ function registerPublicRoutes(app, ctx) {
     getCaptchaImage,
     listPublicCharacters,
     listFeaturedPublicCharacters,
+    getPublicCharacterDetail,
     toggleCharacterLike,
     addCharacterComment,
     listCharacterComments,
@@ -95,21 +96,41 @@ function registerPublicRoutes(app, ctx) {
         ? String(req.query.sort || '').trim()
         : 'heat';
       const result = await listPublicCharacters({ page, pageSize, keyword, sort });
-      const commentsByCharacter = {};
-      await Promise.all(result.characters.map(async (character) => {
-        commentsByCharacter[character.id] = await listCharacterComments(character.id, 3);
-      }));
       renderPage(res, 'public-characters', {
         title: '公开角色',
         characters: result.characters,
         pagination: result.pagination,
         filters: result.filters,
-        commentsByCharacter,
         meta: {
           url: `/characters/public${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`,
           description: keyword
             ? `在楼阁搜索「${keyword}」相关的公开角色，按热度、点赞、评论或使用量筛选。`
             : '浏览楼阁公开角色，按综合热度、点赞、评论或使用量筛选，找到适合开聊的人设。',
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/characters/public/:characterId', async (req, res, next) => {
+    try {
+      const characterId = parseIdParam(req.params.characterId, '角色 ID');
+      const [character, comments] = await Promise.all([
+        getPublicCharacterDetail(characterId),
+        listCharacterComments(characterId, 50),
+      ]);
+      if (!character) {
+        return renderPage(res, 'message', { title: '提示', message: '角色不存在或暂时不可公开查看。' });
+      }
+
+      renderPage(res, 'public-character-detail', {
+        title: character.name,
+        character,
+        comments,
+        meta: {
+          url: `/characters/public/${character.id}`,
+          description: character.summary || `在楼阁查看公开角色「${character.name}」，阅读评论并开始对话。`,
         },
       });
     } catch (error) {

@@ -1,0 +1,77 @@
+<%# 公开角色详情页：只渲染安全字段（角色名、简介、评论）。 %>
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
+
+<%
+  const safeComments = Array.isArray(comments) ? comments : [];
+%>
+
+<div class="public-character-detail-shell">
+  <section class="public-character-detail-hero">
+    <div class="public-character-detail-main">
+      <a class="quick-link public-character-back" href="/characters/public"><%= t('返回公开角色') %></a>
+      <div class="public-character-detail-title-row">
+        <% if (character.avatar_image_path) { %>
+          <div class="character-avatar character-avatar--image" aria-hidden="true"><img src="<%= character.avatar_image_path %>" alt="" /></div>
+        <% } else { %>
+          <div class="character-avatar" aria-hidden="true"><%= character.name.charAt(0) %></div>
+        <% } %>
+        <div>
+          <p class="section-kicker">Character Detail</p>
+          <h1><%= character.name %></h1>
+        </div>
+      </div>
+      <p class="public-character-detail-summary"><%= character.summary || t('这个角色还没有写简介。') %></p>
+      <p class="public-character-safe-note"><%= t('公开详情页只展示角色名、简介和评论；完整设定会保留在角色卡内部，不在公共区域泄露。') %></p>
+    </div>
+
+    <aside class="public-character-detail-side">
+      <div class="public-character-actions public-character-actions--detail">
+        <% if (currentUser) { %>
+          <form method="POST" action="/conversations/start/<%= character.id %>">
+            <button class="btn-brand" type="submit"><%= t('开始聊天') %></button>
+          </form>
+          <form method="POST" action="/characters/public/<%= character.id %>/like">
+            <button class="inline-btn" type="submit"><%= t('点赞') %></button>
+          </form>
+        <% } else { %>
+          <a class="quick-link" href="/login"><%= t('登录后开始聊天') %></a>
+        <% } %>
+      </div>
+    </aside>
+  </section>
+
+  <section class="panel public-comments public-comments--detail">
+    <div class="section-heading public-comments-detail-heading">
+      <div>
+        <p class="section-kicker">Comments</p>
+        <h2><%= t('最新评论') %></h2>
+        <p class="muted-text"><%= t('评论迁移到详情页展示，列表页保持轻量浏览。') %></p>
+      </div>
+    </div>
+
+    <% if (currentUser) { %>
+      <form method="POST" action="/characters/public/<%= character.id %>/comments" class="public-comment-form public-comment-form--detail">
+        <input name="commentBody" maxlength="500" placeholder="<%= t('写一句评论，最多 500 字') %>" />
+        <button class="btn-soft" type="submit"><%= t('评论') %></button>
+      </form>
+    <% } else { %>
+      <div class="public-comment-login-tip">
+        <span><%= t('登录后可以发表评论。') %></span>
+        <a class="quick-link" href="/login"><%= t('登录') %></a>
+      </div>
+    <% } %>
+
+    <div class="public-comment-list public-comment-list--detail">
+      <% if (safeComments.length === 0) { %>
+        <p class="public-comment-empty"><%= t('还没有评论，来写第一句吧。') %></p>
+      <% } else { %>
+        <% safeComments.forEach(comment => { %>
+          <article class="public-comment-item public-comment-item--detail">
+            <strong><%= comment.username %></strong>
+            <span><%= comment.body %></span>
+          </article>
+        <% }) %>
+      <% } %>
+    </div>
+  </section>
+</div>

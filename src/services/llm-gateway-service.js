@@ -365,39 +365,55 @@ async function streamReplyViaGateway({ requestId, userId, conversationId = null,
   );
 }
 
+function buildOptimizeSystemPrompt(userInput) {
+  return [
+    '你是“用户输入润色器”，不是聊天角色，也不是回复生成器。',
+    '任务：只把用户即将发送给角色的话润色得更清楚、更自然。',
+    '硬性规则：',
+    '1. 只能输出润色后的用户输入本身；不要解释、不要加标题、不要加引号。',
+    '2. 必须保持第一人称/第二人称关系、原意、情绪、语气和信息量。',
+    '3. 不要代替角色回复，不要写 AI/助手/角色会说的话。',
+    '4. 不要续写剧情，不要增加新的动作、事实、承诺或设定。',
+    '5. 如果原文是在问问题，仍然输出问题；如果原文是在表达感受，仍然输出用户的表达。',
+    `原始用户输入：\n${String(userInput || '').trim()}`,
+  ].join('\n');
+}
+
 async function streamOptimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', onDelta = null, signal = null, user = null }) {
+  const optimizePrompt = buildOptimizeSystemPrompt(userInput);
   return executeLlmQueued(
     {
       requestId,
       userId,
       conversationId,
-      character,
-      messages,
-      userMessage: `原始输入：\n${String(userInput || '').trim()}`,
-      systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
+      character: { name: '用户输入润色器', summary: '', personality: '', first_message: '', prompt_profile_json: null },
+      messages: [],
+      userMessage: optimizePrompt,
+      systemHint: '严格按用户输入润色器规则执行。输出只能是润色后的用户输入，绝不能输出角色回复或 AI 回复。',
       promptKind: 'optimize',
       modelMode,
       user,
     },
-    ({ provider, promptMessages, subscription }) => callProviderStream(provider, promptMessages, subscription.max_output_tokens || 0, resolveCallModelMode(provider, modelMode), { onDelta, signal }),
+    ({ provider, promptMessages, subscription }) => callProviderStream(provider, promptMessages, Math.min(Number(subscription.max_output_tokens || 0) || 800, 800), resolveCallModelMode(provider, modelMode), { onDelta, signal }),
   );
 }
 
 async function optimizeUserInputViaGateway({ requestId, userId, conversationId = null, character, messages, userInput, modelMode = 'standard', signal = null, user = null }) {
+  const optimizePrompt = buildOptimizeSystemPrompt(userInput);
   const result = await executeLlmQueued(
     {
       requestId,
       userId,
       conversationId,
-      character,
-      messages,
-      userMessage: `原始输入：\n${String(userInput || '').trim()}`,
-      systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
+      character: { name: '用户输入润色器', summary: '', personality: '', first_message: '', prompt_profile_json: null },
+      messages: [],
+      userMessage: optimizePrompt,
+      systemHint: '严格按用户输入润色器规则执行。输出只能是润色后的用户输入，绝不能输出角色回复或 AI 回复。',
       promptKind: 'optimize',
       modelMode,
       user,
     },
-    ({ provider, promptMessages, subscription }) => callProvider(provider, promptMessages, subscription.max_output_tokens || 0, resolveCallModelMode(provider, modelMode), { signal }),
+    ({ provider, promptMessages, subscription }) => callProvider(provider, promptMessages, Math.min(Number(subscription.max_output_tokens || 0) || 800, 800), resolveCallModelMode(provider, modelMode), { signal }),
   );
   return result.content;
 }

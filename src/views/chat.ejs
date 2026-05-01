@@ -7,9 +7,13 @@
     <%= errorMessage %>
   </div>
 <% } %>
-<div class="chat-shell chat-shell--linear">
+<% const safeChatBackground = typeof escapeHtml === 'function' ? escapeHtml(conversation.background_image_path || '') : String(conversation.background_image_path || '').replace(/'/g, '%27'); %>
+<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path) { %>style="--chat-bg-image: url('<%- safeChatBackground %>');"<% } %>>
   <div class="chat-main">
     <section class="chat-head chat-head--clean">
+      <% if (conversation.avatar_image_path) { %>
+        <div class="chat-head-avatar chat-head-avatar--image"><img src="<%= conversation.avatar_image_path %>" alt="<%= conversation.character_name %>" /></div>
+      <% } %>
       <div>
         <p class="eyebrow"><%= t('正在和') %></p>
         <h1><%= conversation.character_name %></h1>
@@ -109,6 +113,9 @@
 
   <aside class="chat-side chat-side--assistant">
     <section class="sidebar-card character-card">
+      <% if (conversation.avatar_image_path) { %>
+        <div class="sidebar-character-avatar"><img src="<%= conversation.avatar_image_path %>" alt="<%= conversation.character_name %>" /></div>
+      <% } %>
       <p class="eyebrow"><%= t('角色') %></p>
       <h2><%= conversation.character_name %></h2>
       <p><%= conversation.character_summary %></p>

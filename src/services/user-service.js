@@ -228,6 +228,14 @@ async function updateUserRole(userId, role) {
   await query('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?', [role, userId]);
 }
 
+async function updateUserStatus(userId, status) {
+  const normalizedStatus = String(status || '').trim();
+  if (!['active', 'blocked'].includes(normalizedStatus)) {
+    throw new Error('User status is not supported');
+  }
+  await query('UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?', [normalizedStatus, userId]);
+}
+
 module.exports = {
   createUser,
   findUserByPublicId,
@@ -238,6 +246,7 @@ module.exports = {
   findUserById,
   findUserAuthById,
   updateUserRole,
+  updateUserStatus,
   updateUsername,
   updatePasswordHash,
   updateUserEmail,

@@ -100,10 +100,10 @@ async function updateConversationModelMode(conversationId, selectedModelMode) {
 
 async function getConversationById(id, userId) {
   const rows = await query(
-    `SELECT c.*, ch.name AS character_name, ch.summary AS character_summary, ch.personality, ch.first_message, ch.prompt_profile_json
+    `SELECT c.*, ch.name AS character_name, ch.summary AS character_summary, ch.personality, ch.first_message, ch.prompt_profile_json, ch.avatar_image_path, ch.background_image_path
      FROM conversations c
      JOIN characters ch ON ch.id = c.character_id
-     WHERE c.id = ? AND c.user_id = ? AND c.status <> 'deleted'
+     WHERE c.id = ? AND c.user_id = ? AND c.status <> 'deleted' AND ch.status <> 'blocked'
      LIMIT 1`,
     [id, userId],
   );
@@ -119,10 +119,11 @@ async function listUserConversations(userId) {
        c.current_message_id,
        c.parent_conversation_id,
        c.branched_from_message_id,
-       ch.name AS character_name
+       ch.name AS character_name,
+       ch.avatar_image_path
      FROM conversations c
      JOIN characters ch ON ch.id = c.character_id
-     WHERE c.user_id = ? AND c.status <> 'deleted'
+     WHERE c.user_id = ? AND c.status <> 'deleted' AND ch.status <> 'blocked'
      ORDER BY c.updated_at DESC, c.id DESC`,
     [userId],
   );

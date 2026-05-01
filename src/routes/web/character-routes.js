@@ -6,10 +6,15 @@
 function registerCharacterRoutes(app, ctx) {
   const {
     requireAuth,
+    ensureCharacterImageColumns,
     createCharacter,
     updateCharacter,
     getCharacterById,
     deleteCharacterSafely,
+    uploadCharacterImages,
+    getUploadedCharacterImagePaths,
+    cleanupUploadedCharacterFiles,
+    deleteStoredImageIfOwned,
     markCharacterUsed,
     applyRuntimeTemplate,
     createConversation,
@@ -25,7 +30,7 @@ function registerCharacterRoutes(app, ctx) {
     renderPage(res, 'character-new', {
       title: '创建角色',
       mode: 'create',
-      form: { visibility: 'public' },
+      form: { visibility: 'public', avatarImagePath: '', backgroundImagePath: '' },
       extraPromptItems: [],
     });
   });
@@ -53,6 +58,8 @@ function registerCharacterRoutes(app, ctx) {
           currentBackground: structured.currentBackground,
           firstMessage: character.first_message,
           visibility: character.visibility === 'private' ? 'private' : 'public',
+          avatarImagePath: character.avatar_image_path || '',
+          backgroundImagePath: character.background_image_path || '',
         },
         extraPromptItems: extraItems,
       });
@@ -61,8 +68,10 @@ function registerCharacterRoutes(app, ctx) {
     }
   });
 
-  app.post('/characters/new', requireAuth, async (req, res, next) => {
+  app.post('/characters/new', requireAuth, uploadCharacterImages, async (req, res, next) => {
     try {
+      await ensureCharacterImageColumns();
+      const uploadedPaths = getUploadedCharacterImagePaths(req.files);
       const promptProfileItems = buildCharacterPromptProfileFromForm(req.body);
       const payload = {
         name: String(req.body.name || '').trim(),
@@ -71,23 +80,31 @@ function registerCharacterRoutes(app, ctx) {
         firstMessage: String(req.body.firstMessage || '').trim(),
         promptProfileJson: JSON.stringify(promptProfileItems),
         visibility: String(req.body.visibility || 'public').trim() === 'private' ? 'private' : 'public',
+        avatarImagePath: uploadedPaths.avatarImagePath,
+        backgroundImagePath: uploadedPaths.backgroundImagePath,
       };
 
       await createCharacter(req.session.user.id, payload);
       return res.redirect('/dashboard');
     } catch (error) {
+      cleanupUploadedCharacterFiles(req.files);
       next(error);
     }
   });
 
-  app.post('/characters/:characterId/edit', requireAuth, async (req, res, next) => {
+  app.post('/characters/:characterId/edit', requireAuth, uploadCharacterImages, async (req, res, next) => {
     try {
       const characterId = parseIdParam(req.params.characterId, '角色 ID');
+      await ensureCharacterImageColumns();
       const character = await getCharacterById(characterId, req.session.user.id);
       if (!character) {
+        cleanupUploadedCharacterFiles(req.files);
         return renderPage(res, 'message', { title: '提示', message: '角色不存在或无权编辑。' });
       }
 
+      const uploadedPaths = getUploadedCharacterImagePaths(req.files);
+      const avatarImagePath = uploadedPaths.avatarImagePath || character.avatar_image_path || null;
+      const backgroundImagePath = uploadedPaths.backgroundImagePath || character.background_image_path || null;
       const promptProfileItems = buildCharacterPromptProfileFromForm(req.body);
       const payload = {
         name: String(req.body.name || '').trim(),
@@ -96,11 +113,20 @@ function registerCharacterRoutes(app, ctx) {
         firstMessage: String(req.body.firstMessage || '').trim(),
         promptProfileJson: JSON.stringify(promptProfileItems),
         visibility: String(req.body.visibility || 'public').trim() === 'private' ? 'private' : 'public',
+        avatarImagePath,
+        backgroundImagePath,
       };
 
       await updateCharacter(characterId, req.session.user.id, payload);
+      if (uploadedPaths.avatarImagePath && character.avatar_image_path) {
+        deleteStoredImageIfOwned(character.avatar_image_path);
+      }
+      if (uploadedPaths.backgroundImagePath && character.background_image_path) {
+        deleteStoredImageIfOwned(character.background_image_path);
+      }
       return res.redirect('/dashboard');
     } catch (error) {
+      cleanupUploadedCharacterFiles(req.files);
       next(error);
     }
   });

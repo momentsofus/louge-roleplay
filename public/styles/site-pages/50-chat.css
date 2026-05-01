@@ -4,6 +4,18 @@
     grid-template-columns: minmax(0, 1fr) 320px;
     gap: 18px;
     animation: fadeIn var(--duration-slow) var(--ease-out) both;
+    position: relative;
+  }
+
+  .chat-shell--with-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(8, 11, 20, 0.72), rgba(8, 11, 20, 0.82)),
+      var(--chat-bg-image) center / cover no-repeat;
   }
 
   .chat-main {

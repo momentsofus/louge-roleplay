@@ -42,6 +42,16 @@ function registerAuthSessionRoutes(app, ctx) {
         return renderPage(res, 'message', { title: '提示', message: '账号或密码错误。' });
       }
 
+      if (String(user.status || 'active') !== 'active') {
+        logger.warn('Login blocked for disabled user', {
+          ...buildLoginLogMeta(req, { login }),
+          userId: user.id,
+          status: user.status,
+          reason: 'USER_BLOCKED',
+        });
+        return renderPage(res, 'message', { title: '提示', message: '这个账号已被禁用，请联系管理员。' });
+      }
+
       const isValidPassword = await verifyPassword(password, user.password_hash);
       if (!isValidPassword) {
         logger.warn('Login failed', {
@@ -56,7 +66,7 @@ function registerAuthSessionRoutes(app, ctx) {
         ...buildLoginLogMeta(req, { login }),
         userId: user.id,
       });
-      req.session.user = { id: user.id, publicId: user.public_id || null, username: user.username, role: user.role || 'user' };
+      req.session.user = { id: user.id, publicId: user.public_id || null, username: user.username, role: user.role || 'user', status: user.status || 'active' };
       return res.redirect('/dashboard');
     } catch (error) {
       logger.error('Login request failed', {

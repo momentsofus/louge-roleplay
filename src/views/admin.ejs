@@ -73,6 +73,11 @@
         <strong>日志查询</strong>
         <p>按日期、等级、文件、错误类型和函数名筛查运行日志。</p>
       </a>
+      <a class="admin-hub-card" href="/admin/characters">
+        <span class="pill pill--brand">Cards</span>
+        <strong><%= t('角色卡管理') %></strong>
+        <p><%= t('全局查看角色卡，禁用、恢复、删除并追踪关联对话。') %></p>
+      </a>
       <a class="admin-hub-card" href="/admin/conversations">
         <span class="pill pill--brand">Chats</span>
         <strong>对话记录</strong>
@@ -96,16 +101,7 @@
       </div>
     </div>
 
-    <div class="admin-subnav">
-      <a class="quick-link is-active" href="/admin">用户与总览</a>
-      <a class="quick-link" href="/admin/providers">LLM 配置</a>
-      <a class="quick-link" href="/admin/models">预设模型</a>
-      <a class="quick-link" href="/admin/plans">套餐配置</a>
-      <a class="quick-link" href="/admin/prompts">Prompt 配置</a>
-      <a class="quick-link" href="/admin/notifications">通知中心</a>
-      <a class="quick-link" href="/admin/logs">日志查询</a>
-      <a class="quick-link" href="/admin/conversations">对话记录</a>
-    </div>
+    <%- include('partials/admin-subnav', { activeAdminNav: 'dashboard' }) %>
 
     <div class="admin-users-summary" aria-label="用户权限概览">
       <div class="admin-users-summary-card">
@@ -138,6 +134,7 @@
           <li>授予管理员会开放后台入口，请确认账号归属。</li>
           <li>切换套餐会立即影响模型可见范围、倍率和额度。</li>
           <li>联系方式为空时，优先用用户名或公开 ID 识别用户。</li>
+          <li><%= t('禁用会阻止账号继续登录；删除会级联移除该用户角色、会话、订阅和用量日志。') %></li>
         </ul>
       </aside>
 
@@ -179,6 +176,11 @@
                 <small>手机：<%= u.phone || '未绑定' %></small>
               </section>
               <section class="user-info-panel">
+                <span class="user-info-label"><%= t('注册时间') %></span>
+                <strong><%= u.created_at || '—' %></strong>
+                <small><%= t('用户 ID') %>：<%= u.id %></small>
+              </section>
+              <section class="user-info-panel">
                 <span class="user-info-label">当前套餐</span>
                 <% if (u.plan_name) { %>
                   <strong><%= u.plan_name %> <span class="muted-text">(<%= u.plan_code %>)</span></strong>
@@ -214,6 +216,22 @@
                   </select>
                 </label>
                 <button type="submit">切换套餐</button>
+              </form>
+
+              <form class="compact-admin-form" method="post" action="/admin/users/<%= u.id %>/status">
+                <label>
+                  <span><%= t('账号状态') %></span>
+                  <select name="status">
+                    <option value="active" <%= u.status === 'active' ? 'selected' : '' %>><%= t('正常') %></option>
+                    <option value="blocked" <%= u.status === 'blocked' ? 'selected' : '' %>><%= t('禁用') %></option>
+                  </select>
+                </label>
+                <button type="submit"><%= t(isActive ? '禁用/保存状态' : '启用/保存状态') %></button>
+              </form>
+
+              <form class="compact-admin-form compact-admin-form--danger" method="post" action="/admin/users/<%= u.id %>/delete" data-confirm-message="<%= t('确定删除这个用户？该用户的角色、会话、订阅和用量日志会一并删除，且不可恢复。') %>">
+                <span class="danger-copy"><%= t('危险操作') %></span>
+                <button class="danger-button" type="submit"><%= t('删除用户') %></button>
               </form>
             </div>
           </article>

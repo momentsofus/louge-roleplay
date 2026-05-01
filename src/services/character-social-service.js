@@ -69,7 +69,7 @@ async function addCharacterComment(characterId, userId, body) {
 }
 
 async function listCharacterComments(characterId, limit = 3) {
-  const safeLimit = Math.min(10, Math.max(1, Number.parseInt(limit || 3, 10)));
+  const safeLimit = Math.min(100, Math.max(1, Number.parseInt(limit || 3, 10)));
   return query(
     `SELECT cc.id, cc.body, cc.created_at, u.username
      FROM character_comments cc

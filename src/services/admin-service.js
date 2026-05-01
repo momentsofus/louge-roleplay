@@ -3,7 +3,7 @@
  * @description 管理后台所需的用户、套餐、LLM 配置与使用统计。
  */
 
-const { query } = require('../lib/db');
+const { query, withTransaction } = require('../lib/db');
 
 function formatDateTimeForDb(date) {
   const pad = (value) => String(value).padStart(2, '0');
@@ -27,6 +27,65 @@ async function listUsersWithPlans() {
        ON p.id = us.plan_id
      ORDER BY u.id ASC`,
   );
+}
+
+async function getUserBusinessDataCounts(userId) {
+  const [characterRows, conversationRows, messageRows, subscriptionRows, usageRows] = await Promise.all([
+    query('SELECT COUNT(*) AS count FROM characters WHERE user_id = ?', [userId]),
+    query('SELECT COUNT(*) AS count FROM conversations WHERE user_id = ?', [userId]),
+    query(
+      `SELECT COUNT(*) AS count
+       FROM messages m
+       JOIN conversations c ON c.id = m.conversation_id
+       WHERE c.user_id = ?`,
+      [userId],
+    ),
+    query('SELECT COUNT(*) AS count FROM user_subscriptions WHERE user_id = ?', [userId]),
+    query('SELECT COUNT(*) AS count FROM llm_usage_logs WHERE user_id = ?', [userId]),
+  ]);
+
+  return {
+    characters: Number(characterRows[0]?.count || 0),
+    conversations: Number(conversationRows[0]?.count || 0),
+    messages: Number(messageRows[0]?.count || 0),
+    subscriptions: Number(subscriptionRows[0]?.count || 0),
+    usageLogs: Number(usageRows[0]?.count || 0),
+  };
+}
+
+function hasUserBusinessData(counts) {
+  return Object.values(counts || {}).some((value) => Number(value || 0) > 0);
+}
+
+async function safelyDeleteUserById(userId) {
+  return withTransaction(async (conn) => {
+    const [characterRows] = await conn.execute('SELECT COUNT(*) AS count FROM characters WHERE user_id = ?', [userId]);
+    const [conversationRows] = await conn.execute('SELECT COUNT(*) AS count FROM conversations WHERE user_id = ?', [userId]);
+    const [messageRows] = await conn.execute(
+      `SELECT COUNT(*) AS count
+       FROM messages m
+       JOIN conversations c ON c.id = m.conversation_id
+       WHERE c.user_id = ?`,
+      [userId],
+    );
+    const [subscriptionRows] = await conn.execute('SELECT COUNT(*) AS count FROM user_subscriptions WHERE user_id = ?', [userId]);
+    const [usageRows] = await conn.execute('SELECT COUNT(*) AS count FROM llm_usage_logs WHERE user_id = ?', [userId]);
+    const counts = {
+      characters: Number(characterRows[0]?.count || 0),
+      conversations: Number(conversationRows[0]?.count || 0),
+      messages: Number(messageRows[0]?.count || 0),
+      subscriptions: Number(subscriptionRows[0]?.count || 0),
+      usageLogs: Number(usageRows[0]?.count || 0),
+    };
+
+    if (hasUserBusinessData(counts)) {
+      await conn.execute('UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?', ['blocked', userId]);
+      return { deleted: false, blocked: true, counts };
+    }
+
+    const [result] = await conn.execute('DELETE FROM users WHERE id = ?', [userId]);
+    return { deleted: Number(result?.affectedRows || 0) > 0, blocked: false, counts };
+  });
 }
 
 async function listProviders() {
@@ -69,6 +128,8 @@ async function getAdminOverview({ runtimeQueueState = null } = {}) {
 
 module.exports = {
   listUsersWithPlans,
+  getUserBusinessDataCounts,
+  safelyDeleteUserById,
   listProviders,
   getAdminOverview,
 };

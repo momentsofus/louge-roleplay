@@ -10,6 +10,7 @@ const { registerAdminProviderRoutes } = require('./admin/provider-routes');
 const { registerAdminNotificationRoutes } = require('./admin/notification-routes');
 const { registerAdminPromptRoutes } = require('./admin/prompt-routes');
 const { registerAdminLogRoutes } = require('./admin/log-routes');
+const { registerAdminCharacterRoutes } = require('./admin/character-routes');
 const { registerAdminConversationRoutes } = require('./admin/conversation-routes');
 const { registerAdminUserRoutes } = require('./admin/user-routes');
 
@@ -21,6 +22,7 @@ function registerAdminRoutes(app, ctx) {
   registerAdminNotificationRoutes(app, ctx);
   registerAdminPromptRoutes(app, ctx);
   registerAdminLogRoutes(app, ctx);
+  registerAdminCharacterRoutes(app, ctx);
   registerAdminConversationRoutes(app, ctx);
   registerAdminUserRoutes(app, ctx);
 }
