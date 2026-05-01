@@ -6,18 +6,33 @@
 const logger = require('../lib/logger');
 const config = require('../config');
 const { translate } = require('../i18n');
+const { findUserById } = require('../services/user-service');
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   if (!req.session || !req.session.user) {
     return res.redirect('/login');
   }
+  const user = await findUserById(req.session.user.id);
+  if (!user || String(user.status || 'active') !== 'active') {
+    req.session.destroy(() => res.redirect('/login'));
+    return undefined;
+  }
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active' };
+  res.locals.currentUser = req.session.user;
   return next();
 }
 
-function requireAdmin(req, res, next) {
+async function requireAdmin(req, res, next) {
   if (!req.session || !req.session.user) {
     return res.redirect('/login');
   }
+  const user = await findUserById(req.session.user.id);
+  if (!user || String(user.status || 'active') !== 'active') {
+    req.session.destroy(() => res.redirect('/login'));
+    return undefined;
+  }
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active' };
+  res.locals.currentUser = req.session.user;
   if (req.session.user.role !== 'admin') {
     logger.warn('Forbidden admin access attempt', {
       requestId: req.requestId,
@@ -47,7 +62,7 @@ function requireAdmin(req, res, next) {
         csrfToken: res.locals.csrfToken || '',
         cspNonce: res.locals.cspNonce || '',
         clientI18nMessages: res.locals.clientI18nMessages || {},
-        localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
+        localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
       });
     });
   }

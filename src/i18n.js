@@ -5,9 +5,10 @@
  */
 
 const DEFAULT_LOCALE = 'zh-CN';
-const SUPPORTED_LOCALES = ['zh-CN', 'en'];
+const SUPPORTED_LOCALES = ['zh-TW', 'zh-CN', 'en'];
 
 const { ZH_MESSAGES } = require('./i18n/messages.zh-CN');
+const { ZH_TW_MESSAGES } = require('./i18n/messages.zh-TW');
 const { EN_MESSAGES } = require('./i18n/messages.en');
 
 function normalizeLocale(input, options = {}) {
@@ -16,6 +17,7 @@ function normalizeLocale(input, options = {}) {
   const raw = rawInput.toLowerCase().replace(/_/g, '-');
   if (!raw) return fallback;
   if (raw === 'zh' || raw === 'zh-cn' || raw === 'zh-hans' || raw.startsWith('zh-cn-') || raw.startsWith('zh-hans-')) return 'zh-CN';
+  if (raw === 'zh-tw' || raw === 'zh-hk' || raw === 'zh-mo' || raw === 'zh-hant' || raw.startsWith('zh-tw-') || raw.startsWith('zh-hk-') || raw.startsWith('zh-mo-') || raw.startsWith('zh-hant-')) return 'zh-TW';
   if (raw === 'en' || raw.startsWith('en-')) return 'en';
   return SUPPORTED_LOCALES.includes(rawInput) ? rawInput : fallback;
 }
@@ -61,6 +63,13 @@ const LOCALE_HTML_PATTERNS = {
     [/剩余 Token：\s*(\d+)/g, '剩余文字额度：$1'],
     [/并发\s*(\d+)/g, '同时处理 $1'],
   ],
+  'zh-TW': [
+    [/由\s*([^\n<]+?)\s*创建/g, '由 $1 創作'],
+    [/请求失败：HTTP\s*(\d+)/g, '請求失敗：$1'],
+    [/Provider ID #(\d+)\s*· 类型\s*([^·\n<]+)\s*· 最近更新\s*([^\n<]+)/g, '引擎 #$1 · 類型 $2 · 最近更新 $3'],
+    [/剩余 Token：\s*(\d+)/g, '剩餘文字額度：$1'],
+    [/并发\s*(\d+)/g, '同時處理 $1'],
+  ],
   en: [
     [/由\s*([^\n<]+?)\s*创建/g, 'Created by $1'],
     [/欢迎回来，\s*([^\n<]+?)\s*$/gm, 'Welcome back, $1'],
@@ -87,6 +96,7 @@ const LOCALE_HTML_PATTERNS = {
 function getLocaleMessages(locale) {
   const normalizedLocale = normalizeLocale(locale);
   if (normalizedLocale === 'zh-CN') return ZH_MESSAGES;
+  if (normalizedLocale === 'zh-TW') return ZH_TW_MESSAGES;
   if (normalizedLocale === 'en') return EN_MESSAGES;
   return {};
 }

@@ -351,19 +351,32 @@ async function generateReply({ character, messages, userMessage, systemHint = ''
   return callProvider(promptMessages);
 }
 
+function buildOptimizePromptMessages(userInput) {
+  return [
+    {
+      role: 'system',
+      content: [
+        '你是“用户输入润色器”，不是聊天角色，也不是回复生成器。',
+        '只把用户即将发送给角色的话润色得更清楚、更自然。',
+        '只能输出润色后的用户输入本身；不要解释、不要加标题、不要加引号。',
+        '必须保持第一人称/第二人称关系、原意、情绪、语气和信息量。',
+        '不要代替角色回复，不要写 AI/助手/角色会说的话。',
+        '不要续写剧情，不要增加新的动作、事实、承诺或设定。',
+      ].join('\n'),
+    },
+    {
+      role: 'user',
+      content: `原始用户输入：\n${String(userInput || '').trim()}`,
+    },
+  ];
+}
+
 async function optimizeUserInput({ character, messages, userInput, user = null }) {
   if (!config.openaiBaseUrl || !config.openaiApiKey || !config.openaiModel) {
-    return `请帮我把下面这段输入润色得更清楚、更自然，同时保留原意和情绪：\n\n${String(userInput || '').trim()}`;
+    return String(userInput || '').trim();
   }
 
-  const promptMessages = buildPromptMessages({
-    character,
-    messages,
-    systemHint: '你要帮用户优化输入内容。输出只给优化后的用户输入，不要解释，不要加引号。',
-    userMessage: `原始输入：\n${String(userInput || '').trim()}`,
-    user,
-  });
-  return callProvider(promptMessages);
+  return callProvider(buildOptimizePromptMessages(userInput));
 }
 
 module.exports = {

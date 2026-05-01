@@ -595,11 +595,16 @@ async function main() {
       status              ENUM('draft','published','blocked') DEFAULT 'published',
       created_at          DATETIME NOT NULL,
       updated_at          DATETIME NOT NULL,
+      avatar_image_path   VARCHAR(500) NULL,
+      background_image_path VARCHAR(500) NULL,
       CONSTRAINT fk_characters_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   await ensureColumn('characters', 'prompt_profile_json', 'prompt_profile_json JSON NULL');
+  await ensureColumn('characters', 'avatar_image_path', 'avatar_image_path VARCHAR(500) NULL');
+  await ensureColumn('characters', 'background_image_path', 'background_image_path VARCHAR(500) NULL');
   await ensureColumn('characters', 'visibility', "visibility ENUM('public','private','unlisted') DEFAULT 'public'");
+  await ensureColumn('characters', 'status', "status ENUM('draft','published','blocked') NOT NULL DEFAULT 'published'");
 
   await connection.query(`
     ALTER TABLE \`characters\`
@@ -607,7 +612,13 @@ async function main() {
       ENUM('public','private','unlisted')
       NOT NULL DEFAULT 'public'
   `);
-  console.log('[init-db]   ~ characters.visibility ENUM 已确认完整');
+  await connection.query(`
+    ALTER TABLE \`characters\`
+    MODIFY COLUMN \`status\`
+      ENUM('draft','published','blocked')
+      NOT NULL DEFAULT 'published'
+  `);
+  console.log('[init-db]   ~ characters.visibility/status ENUM 已确认完整');
 
   // ── 角色公开互动表 ─────────────────────────────────────────────────────────────
   console.log('[init-db] 初始化 character_likes / comments / usage 表...');

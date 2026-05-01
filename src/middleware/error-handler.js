@@ -32,7 +32,7 @@ async function renderErrorWithLayout(res, statusCode, title, message, errorCode)
       cspNonce: res.locals.cspNonce || '',
       clientI18nMessages: res.locals.clientI18nMessages || {},
       clientNotifications,
-      localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
+      localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
     });
   });
 }
@@ -42,6 +42,18 @@ function mapErrorToPresentation(error) {
 
   if (message === 'CSRF_TOKEN_INVALID') {
     return { statusCode: 403, title: '请求已过期', message: '这个操作的安全校验没有通过，请刷新页面后再试。', errorCode: 'CSRF_TOKEN_INVALID' };
+  }
+
+  if (message === 'IMAGE_TYPE_NOT_SUPPORTED') {
+    return { statusCode: 400, title: '图片格式不支持', message: '请上传 jpg、png、webp 或 gif 格式的图片。', errorCode: 'IMAGE_TYPE_NOT_SUPPORTED' };
+  }
+
+  if (message === 'IMAGE_FILE_TOO_LARGE' || error?.code === 'LIMIT_FILE_SIZE') {
+    return { statusCode: 400, title: '图片太大', message: '单张图片不能超过 3MB，请压缩后再上传。', errorCode: 'IMAGE_FILE_TOO_LARGE' };
+  }
+
+  if (error?.code === 'LIMIT_FILE_COUNT' || error?.code === 'LIMIT_UNEXPECTED_FILE') {
+    return { statusCode: 400, title: '上传字段不正确', message: '一次只能上传角色头像和对话背景各一张图片。', errorCode: error.code };
   }
 
   if (message === 'REQUEST_QUOTA_EXCEEDED') {

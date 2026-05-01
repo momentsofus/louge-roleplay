@@ -4,6 +4,7 @@
  */
 
 const { query, getDbType } = require('../lib/db');
+const { normalizeStoredImagePath } = require('./upload-service');
 
 function getPublicCharacterSortSql(sort) {
   const dbType = getDbType();
@@ -47,7 +48,7 @@ function getPublicCharacterStatsJoinSql() {
 }
 
 function getPublicCharacterSelectFields() {
-  return `c.id, c.name, c.summary, c.visibility, c.created_at, c.updated_at, u.username,
+  return `c.id, c.name, c.summary, c.visibility, c.created_at, c.updated_at, c.avatar_image_path, u.username,
             COALESCE(like_stats.like_count, 0) AS like_count,
             COALESCE(comment_stats.comment_count, 0) AS comment_count,
             COALESCE(usage_stats.usage_count, 0) AS usage_count,
@@ -77,8 +78,8 @@ async function createCharacter(userId, payload) {
   const visibility = normalizeVisibility(payload.visibility);
   const result = await query(
     `INSERT INTO characters (
-      user_id, name, summary, personality, first_message, prompt_profile_json, visibility, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'published', NOW(), NOW())`,
+      user_id, name, summary, personality, first_message, prompt_profile_json, visibility, avatar_image_path, background_image_path, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', NOW(), NOW())`,
     [
       userId,
       payload.name,
@@ -87,6 +88,8 @@ async function createCharacter(userId, payload) {
       payload.firstMessage,
       stringifyPromptProfile(payload.promptProfileJson || '[]'),
       visibility,
+      normalizeStoredImagePath(payload.avatarImagePath),
+      normalizeStoredImagePath(payload.backgroundImagePath),
     ],
   );
   return result.insertId;
@@ -102,6 +105,8 @@ async function updateCharacter(characterId, userId, payload) {
          first_message = ?,
          prompt_profile_json = ?,
          visibility = ?,
+         avatar_image_path = ?,
+         background_image_path = ?,
          updated_at = NOW()
      WHERE id = ? AND user_id = ?`,
     [
@@ -111,6 +116,8 @@ async function updateCharacter(characterId, userId, payload) {
       payload.firstMessage,
       stringifyPromptProfile(payload.promptProfileJson || '[]'),
       visibility,
+      normalizeStoredImagePath(payload.avatarImagePath),
+      normalizeStoredImagePath(payload.backgroundImagePath),
       characterId,
       userId,
     ],
@@ -184,17 +191,32 @@ async function listFeaturedPublicCharacters(limit = 6) {
   );
 }
 
+async function getPublicCharacterDetail(characterId) {
+  const rows = await query(
+    `SELECT c.id, c.name, c.summary, c.avatar_image_path
+     FROM characters c
+     WHERE c.id = ? AND c.visibility = 'public' AND c.status = 'published'
+     LIMIT 1`,
+    [characterId],
+  );
+  return rows[0] || null;
+}
+
 async function listUserCharacters(userId) {
   return query(
-    `SELECT id, name, summary, personality, first_message, prompt_profile_json, visibility, created_at
-     FROM characters WHERE user_id = ? ORDER BY id DESC`,
+    `SELECT id, name, summary, personality, first_message, prompt_profile_json, visibility, status, avatar_image_path, background_image_path, created_at
+     FROM characters WHERE user_id = ? AND status <> 'blocked' ORDER BY id DESC`,
     [userId],
   );
 }
 
-async function getCharacterById(id, userId = null) {
+async function getCharacterById(id, userId = null, options = {}) {
   const params = [id];
   let whereClause = 'WHERE c.id = ?';
+
+  if (!options.includeBlocked) {
+    whereClause += " AND c.status <> 'blocked'";
+  }
 
   if (userId !== null && userId !== undefined) {
     whereClause += ' AND c.user_id = ?';
@@ -229,13 +251,32 @@ async function deleteCharacterSafely(characterId, userId) {
   }
 
   await query('DELETE FROM characters WHERE id = ? AND user_id = ?', [characterId, userId]);
+  deleteStoredImageIfOwned(character.avatar_image_path);
+  deleteStoredImageIfOwned(character.background_image_path);
+}
+
+async function ensureCharacterImageColumns() {
+  if (getDbType() === 'mysql') {
+    await query('ALTER TABLE `characters` ADD COLUMN IF NOT EXISTS `avatar_image_path` VARCHAR(500) NULL');
+    await query('ALTER TABLE `characters` ADD COLUMN IF NOT EXISTS `background_image_path` VARCHAR(500) NULL');
+    return;
+  }
+
+  await query('ALTER TABLE characters ADD COLUMN avatar_image_path TEXT NULL').catch((error) => {
+    if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
+  });
+  await query('ALTER TABLE characters ADD COLUMN background_image_path TEXT NULL').catch((error) => {
+    if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
+  });
 }
 
 module.exports = {
+  ensureCharacterImageColumns,
   createCharacter,
   updateCharacter,
   listPublicCharacters,
   listFeaturedPublicCharacters,
+  getPublicCharacterDetail,
   listUserCharacters,
   getCharacterById,
   countCharacterConversations,

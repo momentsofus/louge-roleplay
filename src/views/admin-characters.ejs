@@ -1,0 +1,166 @@
+<!-- @file src/views/admin-characters.ejs
+     @description 管理后台全局角色卡列表。调用说明：GET /admin/characters 渲染，支持按用户、状态、可见性与关键词筛选；管理员可禁用、恢复发布、删除角色卡，并跳转查看该角色卡的全部对话。
+-->
+<div class="admin-shell">
+  <section class="hero-card admin-hero">
+    <div class="admin-hero-copy">
+      <p class="section-kicker">Characters</p>
+      <h1><%= t('角色卡管理') %></h1>
+      <p class="muted-text"><%= t('全站角色卡集中在这里。管理员可以禁用违规角色、恢复发布、查看该角色全部对话，必要时连同关联对话一起删除。') %></p>
+    </div>
+
+    <div class="metrics metrics--compact">
+      <div class="metric"><strong><%= characterResult.total %></strong><span><%= t('匹配角色卡') %></span></div>
+      <div class="metric"><strong><%= characterResult.page %> / <%= characterResult.totalPages %></strong><span><%= t('当前页') %></span></div>
+      <div class="metric"><strong><%= characterResult.characters.reduce((sum, item) => sum + Number(item.conversation_count || 0), 0) %></strong><span><%= t('本页关联对话') %></span></div>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <%- include('partials/admin-subnav', { activeAdminNav: 'characters' }) %>
+
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Filters</p>
+        <h2><%= t('筛选条件') %></h2>
+        <p class="muted-text"><%= t('可以按创建者、状态、可见性和关键词筛选。') %></p>
+      </div>
+    </div>
+
+    <form class="admin-log-filter" method="get" action="/admin/characters">
+      <label>
+        <%= t('关键词') %>
+        <input type="search" name="keyword" value="<%= characterResult.filters.keyword || '' %>" placeholder="<%= t('角色名 / 简介 / 用户') %>" />
+      </label>
+      <label>
+        <%= t('创建者') %>
+        <select name="userId">
+          <option value=""><%= t('全部用户') %></option>
+          <% characterResult.filterOptions.users.forEach(user => { %>
+            <option value="<%= user.id %>" <%= Number(characterResult.filters.userId) === Number(user.id) ? 'selected' : '' %>>
+              <%= user.label %>（<%= user.count %>）
+            </option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('状态') %>
+        <select name="status">
+          <% [
+            ['all', t('全部状态')],
+            ['published', t('已发布')],
+            ['blocked', t('已禁用')],
+            ['draft', t('草稿')]
+          ].forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= characterResult.filters.status === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('可见性') %>
+        <select name="visibility">
+          <% [
+            ['all', t('全部可见性')],
+            ['public', t('公开')],
+            ['private', t('私有')],
+            ['unlisted', 'unlisted']
+          ].forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= characterResult.filters.visibility === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('每页') %>
+        <select name="pageSize">
+          <% [10, 25, 50, 100].forEach(size => { %>
+            <option value="<%= size %>" <%= Number(characterResult.pageSize) === size ? 'selected' : '' %>><%= size %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="toolbar-row toolbar-row--admin admin-log-filter-actions">
+        <button type="submit"><%= t('查询角色卡') %></button>
+        <a class="quick-link" href="/admin/characters"><%= t('清空筛选') %></a>
+      </div>
+    </form>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="toolbar-row toolbar-row--between">
+      <div>
+        <p class="section-kicker">Result</p>
+        <h2><%= t('角色卡列表') %></h2>
+      </div>
+      <div class="admin-pagination">
+        <% if (characterResult.page > 1) { %>
+          <a class="quick-link" href="<%= buildPageUrl(characterResult.page - 1) %>"><%= t('上一页') %></a>
+        <% } %>
+        <span class="meta-chip"><strong><%= characterResult.page %></strong> / <%= characterResult.totalPages %></span>
+        <% if (characterResult.page < characterResult.totalPages) { %>
+          <a class="quick-link" href="<%= buildPageUrl(characterResult.page + 1) %>"><%= t('下一页') %></a>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (!characterResult.characters.length) { %>
+      <div class="empty-state">
+        <strong><%= t('没查到角色卡') %></strong>
+        <span class="muted-text"><%= t('换个用户、状态或关键词试试。') %></span>
+      </div>
+    <% } %>
+
+    <div class="admin-log-list">
+      <% characterResult.characters.forEach(character => { %>
+        <% const ownerLabel = character.nickname ? `${character.username}（${character.nickname}）` : character.username; %>
+        <article class="admin-item admin-character-card">
+          <div class="admin-conversation-summary">
+            <div class="admin-item-main">
+              <span class="pill pill--brand">#<%= character.id %></span>
+              <strong><%= character.name %></strong>
+              <span class="pill <%= character.status === 'blocked' ? 'pill--level-warn' : '' %>"><%= character.status %></span>
+              <span class="pill"><%= character.visibility || 'public' %></span>
+            </div>
+            <div class="admin-item-meta">
+              <span class="meta-chip"><%= t('对话 {count}', { count: character.conversation_count }) %></span>
+              <span class="meta-chip"><%= t('更新 {updatedAt}', { updatedAt: character.display_updated_at }) %></span>
+              <a class="quick-link" href="/admin/characters/<%= character.id %>"><%= t('查看详情') %></a>
+              <a class="quick-link" href="/admin/conversations?characterId=<%= character.id %>"><%= t('查看全部对话') %></a>
+            </div>
+          </div>
+
+          <div class="admin-log-meta-grid">
+            <span><strong><%= t('创建者') %></strong><%= ownerLabel %></span>
+            <span><strong><%= t('创建时间') %></strong><%= character.display_created_at %></span>
+            <span><strong><%= t('最近对话') %></strong><%= character.display_latest_conversation_at %></span>
+            <span><strong><%= t('点赞') %></strong><%= character.like_count %></span>
+            <span><strong><%= t('评论') %></strong><%= character.comment_count %></span>
+            <span><strong><%= t('使用') %></strong><%= character.usage_count %></span>
+          </div>
+
+          <p class="admin-conversation-preview"><%= character.summary_preview || t('这个角色还没有写简介。') %></p>
+
+          <div class="toolbar-row toolbar-row--admin">
+            <form class="compact-admin-form compact-admin-form--inline" method="POST" action="/admin/characters/<%= character.id %>/status">
+              <input type="hidden" name="keyword" value="<%= characterResult.filters.keyword || '' %>" />
+              <input type="hidden" name="userId" value="<%= characterResult.filters.userId || '' %>" />
+              <input type="hidden" name="status" value="<%= character.status === 'blocked' ? 'published' : 'blocked' %>" />
+              <input type="hidden" name="visibility" value="<%= characterResult.filters.visibility || '' %>" />
+              <input type="hidden" name="page" value="<%= characterResult.page %>" />
+              <input type="hidden" name="pageSize" value="<%= characterResult.pageSize %>" />
+              <button type="submit"><%= t(character.status === 'blocked' ? '恢复发布' : '禁用角色卡') %></button>
+            </form>
+
+            <form class="compact-admin-form compact-admin-form--danger compact-admin-form--inline" method="POST" action="/admin/characters/<%= character.id %>/delete" data-confirm-message="<%= t('确认删除这个角色卡吗？关联对话、消息、点赞、评论和使用记录会一并删除，且不可恢复。') %>">
+              <input type="hidden" name="keyword" value="<%= characterResult.filters.keyword || '' %>" />
+              <input type="hidden" name="userId" value="<%= characterResult.filters.userId || '' %>" />
+              <input type="hidden" name="status" value="<%= characterResult.filters.status || '' %>" />
+              <input type="hidden" name="visibility" value="<%= characterResult.filters.visibility || '' %>" />
+              <input type="hidden" name="page" value="<%= characterResult.page %>" />
+              <input type="hidden" name="pageSize" value="<%= characterResult.pageSize %>" />
+              <button class="danger-button" type="submit"><%= t('删除角色卡') %></button>
+            </form>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</div>

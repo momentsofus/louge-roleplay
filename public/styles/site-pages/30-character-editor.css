@@ -38,6 +38,42 @@
     min-height: 180px;
   }
 
+  .media-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .upload-field input[type="file"] {
+    padding: 11px;
+    cursor: pointer;
+  }
+
+  .upload-preview {
+    margin: 8px 0 10px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .upload-preview--avatar {
+    width: 108px;
+    height: 108px;
+    border-radius: 28px;
+  }
+
+  .upload-preview--background {
+    aspect-ratio: 16 / 9;
+  }
+
+  .upload-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
   .hint-card {
     background: rgba(96, 165, 250, 0.06);
     border: 1px solid rgba(96, 165, 250, 0.12);
@@ -147,6 +183,7 @@
     }
 
     .prompt-grid,
+    .media-upload-grid,
     .toggle-grid {
       grid-template-columns: 1fr;
     }

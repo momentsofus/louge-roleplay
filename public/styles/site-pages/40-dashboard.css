@@ -226,6 +226,11 @@
   overflow-wrap: anywhere;
 }
 
+.stat-card-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.85fr);

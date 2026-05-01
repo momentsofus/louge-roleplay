@@ -1,0 +1,193 @@
+<!-- @file src/views/admin-character-detail.ejs
+     @description 管理后台角色卡详情页。调用说明：GET /admin/characters/:characterId 渲染完整角色设定、图片、统计、最近对话和评论。
+-->
+<%
+  const character = detail.character;
+  const ownerLabel = character.nickname ? `${character.username}（${character.nickname}）` : character.username;
+  const promptItems = Array.isArray(character.prompt_profile_items) ? character.prompt_profile_items : [];
+%>
+<div class="admin-shell">
+  <section class="hero-card admin-hero admin-character-detail-hero">
+    <div class="admin-hero-copy">
+      <p class="section-kicker">Character Detail</p>
+      <h1><%= character.name %></h1>
+      <p class="muted-text"><%= character.summary || t('这个角色还没有写简介。') %></p>
+      <div class="toolbar-row toolbar-row--admin">
+        <a class="quick-link" href="/admin/characters"><%= t('返回角色卡列表') %></a>
+        <a class="quick-link" href="/admin/conversations?characterId=<%= character.id %>"><%= t('查看全部对话') %></a>
+        <% if (character.visibility === 'public' && character.status === 'published') { %>
+          <a class="quick-link" href="/characters/public/<%= character.id %>" target="_blank" rel="noopener"><%= t('打开公开页') %></a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="metrics metrics--compact">
+      <div class="metric"><strong><%= character.conversation_count %></strong><span><%= t('关联对话') %></span></div>
+      <div class="metric"><strong><%= character.message_count %></strong><span><%= t('消息总数') %></span></div>
+      <div class="metric"><strong><%= character.like_count %></strong><span><%= t('点赞') %></span></div>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <%- include('partials/admin-subnav', { activeAdminNav: 'characters' }) %>
+
+    <div class="admin-log-meta-grid">
+      <span><strong><%= t('角色卡 ID') %></strong>#<%= character.id %></span>
+      <span><strong><%= t('创建者') %></strong><%= ownerLabel %> · ID <%= character.user_id %></span>
+      <span><strong><%= t('状态') %></strong><%= character.status %></span>
+      <span><strong><%= t('可见性') %></strong><%= character.visibility || 'public' %></span>
+      <span><strong><%= t('创建时间') %></strong><%= character.display_created_at %></span>
+      <span><strong><%= t('更新时间') %></strong><%= character.display_updated_at %></span>
+      <span><strong><%= t('最近对话') %></strong><%= character.display_latest_conversation_at %></span>
+      <span><strong><%= t('评论 / 使用') %></strong><%= character.comment_count %> / <%= character.usage_count %></span>
+    </div>
+
+    <div class="toolbar-row toolbar-row--admin">
+      <form class="compact-admin-form compact-admin-form--inline" method="POST" action="/admin/characters/<%= character.id %>/status">
+        <input type="hidden" name="status" value="<%= character.status === 'blocked' ? 'published' : 'blocked' %>" />
+        <button type="submit"><%= t(character.status === 'blocked' ? '恢复发布' : '禁用角色卡') %></button>
+      </form>
+      <form class="compact-admin-form compact-admin-form--danger compact-admin-form--inline" method="POST" action="/admin/characters/<%= character.id %>/delete" data-confirm-message="<%= t('确认删除这个角色卡吗？关联对话、消息、点赞、评论和使用记录会一并删除，且不可恢复。') %>">
+        <button class="danger-button" type="submit"><%= t('删除角色卡') %></button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Media</p>
+        <h2><%= t('图片与基础展示') %></h2>
+        <p class="muted-text"><%= t('这里展示后台可见的完整角色卡媒体资源路径，便于排查图片与公开展示状态。') %></p>
+      </div>
+    </div>
+
+    <div class="admin-character-media-grid">
+      <article class="admin-character-media-card">
+        <strong><%= t('角色头像') %></strong>
+        <% if (character.avatar_image_path) { %>
+          <img src="<%= character.avatar_image_path %>" alt="<%= character.name %>" />
+          <code><%= character.avatar_image_path %></code>
+        <% } else { %>
+          <p class="muted-text"><%= t('未上传头像。') %></p>
+        <% } %>
+      </article>
+      <article class="admin-character-media-card">
+        <strong><%= t('对话背景') %></strong>
+        <% if (character.background_image_path) { %>
+          <img src="<%= character.background_image_path %>" alt="" />
+          <code><%= character.background_image_path %></code>
+        <% } else { %>
+          <p class="muted-text"><%= t('未上传背景图。') %></p>
+        <% } %>
+      </article>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Prompt Card</p>
+        <h2><%= t('完整角色设定') %></h2>
+        <p class="muted-text"><%= t('管理后台可查看完整内部设定；公开角色详情页仍只展示安全字段。') %></p>
+      </div>
+    </div>
+
+    <div class="admin-character-detail-grid">
+      <article class="admin-character-detail-block">
+        <strong><%= t('简介') %></strong>
+        <pre><%= character.summary || '—' %></pre>
+      </article>
+      <article class="admin-character-detail-block">
+        <strong><%= t('性格 / 角色设定') %></strong>
+        <pre><%= character.personality || '—' %></pre>
+      </article>
+      <article class="admin-character-detail-block">
+        <strong><%= t('开场白') %></strong>
+        <pre><%= character.first_message || '—' %></pre>
+      </article>
+      <article class="admin-character-detail-block">
+        <strong>Prompt Profile JSON</strong>
+        <% if (promptItems.length) { %>
+          <div class="admin-character-prompt-list">
+            <% promptItems.forEach(item => { %>
+              <div class="admin-character-prompt-item">
+                <div class="toolbar-row toolbar-row--between toolbar-row--tight">
+                  <strong><%= item.key || t('未命名片段') %></strong>
+                  <span class="pill <%= item.isEnabled ? 'pill--level-info' : 'pill--level-raw' %>"><%= item.isEnabled ? t('启用') : t('停用') %></span>
+                </div>
+                <pre><%= item.value || '—' %></pre>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <pre><%= character.prompt_profile_json || '—' %></pre>
+        <% } %>
+      </article>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Conversations</p>
+        <h2><%= t('最近对话') %></h2>
+      </div>
+      <a class="quick-link" href="/admin/conversations?characterId=<%= character.id %>"><%= t('查看全部对话') %></a>
+    </div>
+
+    <div class="admin-log-list">
+      <% if (!detail.recentConversations.length) { %>
+        <div class="empty-state"><strong><%= t('还没有关联对话') %></strong></div>
+      <% } %>
+      <% detail.recentConversations.forEach(conversation => { %>
+        <% const conversationOwner = conversation.nickname ? `${conversation.username}（${conversation.nickname}）` : conversation.username; %>
+        <article class="admin-conversation-card">
+          <div class="admin-conversation-summary">
+            <div class="admin-item-main">
+              <span class="pill pill--brand">#<%= conversation.id %></span>
+              <strong><%= conversation.title || t('未命名对话') %></strong>
+              <span class="pill"><%= conversation.status %></span>
+            </div>
+            <div class="admin-item-meta">
+              <span class="meta-chip"><%= conversationOwner %></span>
+              <span class="meta-chip"><%= t('消息 {count}', { count: conversation.message_count }) %></span>
+              <a class="quick-link" href="/admin/conversations/<%= conversation.id %>"><%= t('查看详情') %></a>
+            </div>
+          </div>
+          <div class="admin-log-meta-grid">
+            <span><strong><%= t('创建时间') %></strong><%= conversation.display_created_at %></span>
+            <span><strong><%= t('更新时间') %></strong><%= conversation.display_updated_at %></span>
+            <span><strong><%= t('最后消息') %></strong><%= conversation.display_last_message_at %></span>
+            <span><strong><%= t('状态') %></strong><%= conversation.status %></span>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Comments</p>
+        <h2><%= t('最新评论') %></h2>
+      </div>
+    </div>
+
+    <div class="admin-log-list">
+      <% if (!detail.recentComments.length) { %>
+        <div class="empty-state"><strong><%= t('还没有评论') %></strong></div>
+      <% } %>
+      <% detail.recentComments.forEach(comment => { %>
+        <% const commentOwner = comment.nickname ? `${comment.username}（${comment.nickname}）` : comment.username; %>
+        <article class="admin-character-comment-card">
+          <div class="toolbar-row toolbar-row--between">
+            <strong><%= commentOwner %></strong>
+            <span class="meta-chip"><%= comment.status %> · <%= comment.display_created_at %></span>
+          </div>
+          <p><%= comment.body %></p>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</div>

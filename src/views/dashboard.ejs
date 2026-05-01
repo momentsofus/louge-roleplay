@@ -7,6 +7,7 @@
   const characterList = Array.isArray(characters) ? characters : [];
   const conversationList = Array.isArray(conversations) ? conversations : [];
   const hasSubscription = Boolean(subscription);
+  const subscriptionDescription = hasSubscription ? String(subscription.plan_description || '').trim() : '';
   const hasQuota = Boolean(quota && quota.usage);
   const isAdmin = user.role === 'admin';
   const isActive = user.status === 'active';
@@ -105,9 +106,12 @@
       <strong><%= formatNum(conversationList.length) %></strong>
       <small><%= latestConversation ? t('最近更新：{updatedAt}', { updatedAt: latestConversation.updated_at }) : '还没有会话' %></small>
     </article>
-    <article class="stat-card">
+    <article class="stat-card stat-card--plan">
       <span>当前套餐</span>
       <strong><%= hasSubscription ? subscription.plan_name : t('未配置') %></strong>
+      <% if (subscriptionDescription) { %>
+        <small class="stat-card-description"><%= subscriptionDescription %></small>
+      <% } %>
       <small><%= hasSubscription ? t('计费方式：{billingMode}', { billingMode: subscription.billing_mode }) : t('需要管理员先给你绑定套餐') %></small>
     </article>
     <article class="stat-card">
@@ -190,9 +194,16 @@
           <div class="character-card-grid">
             <% characterList.forEach(character => { %>
               <article class="character-dashboard-card">
-                <div class="character-card-topline">
-                  <span class="meta-pill"><%= t(character.visibility === 'private' ? '私有' : '公开') %></span>
-                  <span class="meta-pill"><%= t('角色 #{id}', { id: character.id }) %></span>
+                <div class="character-dashboard-card-head">
+                  <% if (character.avatar_image_path) { %>
+                    <div class="dashboard-character-avatar"><img src="<%= character.avatar_image_path %>" alt="<%= character.name %>" /></div>
+                  <% } else { %>
+                    <div class="dashboard-character-avatar"><%= character.name.charAt(0) %></div>
+                  <% } %>
+                  <div class="character-card-topline">
+                    <span class="meta-pill"><%= t(character.visibility === 'private' ? '私有' : '公开') %></span>
+                    <span class="meta-pill"><%= t('角色 #{id}', { id: character.id }) %></span>
+                  </div>
                 </div>
                 <h3><%= character.name %></h3>
                 <p><%= character.summary || t('这个角色还没有写简介。') %></p>
@@ -235,8 +246,13 @@
           </div>
 
           <% if (hasSubscription) { %>
+            <div class="subscription-plan-heading">
+              <h3><%= subscription.plan_name %></h3>
+              <% if (subscriptionDescription) { %>
+                <p class="dashboard-note subscription-plan-description"><%= subscriptionDescription %></p>
+              <% } %>
+            </div>
             <div class="subscription-meta">
-              <span class="meta-pill"><%= subscription.plan_name %></span>
               <span class="meta-pill"><%= subscription.billing_mode %></span>
               <span class="meta-pill"><%= t('优先级 {priority}', { priority: subscription.priority_weight }) %></span>
             </div>

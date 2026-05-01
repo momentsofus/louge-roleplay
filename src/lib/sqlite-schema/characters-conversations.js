@@ -37,7 +37,9 @@ function ensureSqliteCharacterConversationSchema(db) {
       visibility          TEXT NOT NULL DEFAULT 'public',
       status              TEXT NOT NULL DEFAULT 'published',
       created_at          TEXT NOT NULL,
-      updated_at          TEXT NOT NULL
+      updated_at          TEXT NOT NULL,
+      avatar_image_path   TEXT NULL,
+      background_image_path TEXT NULL
     )
   `);
 
@@ -63,6 +65,9 @@ function ensureSqliteCharacterConversationSchema(db) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_conversations_parent ON conversations (parent_conversation_id)');
 
   ensureSqliteCharactersVisibilityColumn(db);
+  ensureSqliteColumn(db, 'characters', 'status', "status TEXT NOT NULL DEFAULT 'published'");
+  ensureSqliteColumn(db, 'characters', 'avatar_image_path', 'avatar_image_path TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'background_image_path', 'background_image_path TEXT NULL');
   db.exec(`
     CREATE TABLE IF NOT EXISTS character_likes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

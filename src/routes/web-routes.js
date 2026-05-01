@@ -14,13 +14,14 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone } = require('../services/user-service');
-const { createCharacter, updateCharacter, listPublicCharacters, listFeaturedPublicCharacters, listUserCharacters, getCharacterById, deleteCharacterSafely } = require('../services/character-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone } = require('../services/user-service');
+const { createCharacter, updateCharacter, listPublicCharacters, listFeaturedPublicCharacters, getPublicCharacterDetail, listUserCharacters, getCharacterById, deleteCharacterSafely, ensureCharacterImageColumns } = require('../services/character-service');
 const { toggleCharacterLike, addCharacterComment, listCharacterComments, markCharacterUsed } = require('../services/character-social-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
-const { listUsersWithPlans, getAdminOverview } = require('../services/admin-service');
+const { listUsersWithPlans, getAdminOverview, safelyDeleteUserById } = require('../services/admin-service');
 const { listLogEntries } = require('../services/log-service');
 const { DEFAULT_SUPPORT_QR_URL, listNotificationsForAdmin, listActiveNotificationsForUser, createNotification, updateNotification, deleteNotification } = require('../services/notification-service');
+const { deleteAdminCharacter, ensureCharactersStatusEnumSupportsBlocked, getAdminCharacterDetail, getAdminCharacterById, listAdminCharacters, updateAdminCharacterStatus } = require('../services/admin-character-service');
 const { getAdminConversationDetail, listAdminConversations, permanentlyDeleteConversation, permanentlyDeleteMessage, restoreConversation, restoreMessage } = require('../services/admin-conversation-service');
 const { listProviders, createProvider, updateProvider } = require('../services/llm-provider-service');
 const { listPresetModels, createPresetModel, updatePresetModel, deletePresetModel } = require('../services/preset-model-service');
@@ -62,6 +63,7 @@ const { hashPassword, verifyPassword } = require('../services/password-service')
 const { verifyDomesticPhoneIdentity } = require('../services/phone-auth-service');
 const { hitLimit } = require('../services/rate-limit-service');
 const { CSS_CACHE_TTL_MS, FONT_CACHE_TTL_MS, getGoogleFontCss, getFontFile, logFontProxyError } = require('../services/font-proxy-service');
+const { uploadCharacterImages, getUploadedCharacterImagePaths, cleanupUploadedCharacterFiles, deleteStoredImageIfOwned } = require('../services/upload-service');
 const logger = require('../lib/logger');
 const config = require('../config');
 const { query, getDbType } = require('../lib/db');
@@ -141,16 +143,19 @@ function registerWebRoutes(app) {
     findUserById,
     findUserAuthById,
     updateUserRole,
+    updateUserStatus,
     updateUsername,
     updatePasswordHash,
     updateUserEmail,
     unbindUserEmail,
     updateUserPhone,
     unbindUserPhone,
+    ensureCharacterImageColumns,
     createCharacter,
     updateCharacter,
     listPublicCharacters,
     listFeaturedPublicCharacters,
+    getPublicCharacterDetail,
     toggleCharacterLike,
     addCharacterComment,
     listCharacterComments,
@@ -168,6 +173,7 @@ function registerWebRoutes(app) {
     updateUserPlan,
     listUsersWithPlans,
     getAdminOverview,
+    safelyDeleteUserById,
     listLogEntries,
     DEFAULT_SUPPORT_QR_URL,
     listNotificationsForAdmin,
@@ -175,6 +181,12 @@ function registerWebRoutes(app) {
     createNotification,
     updateNotification,
     deleteNotification,
+    deleteAdminCharacter,
+    ensureCharactersStatusEnumSupportsBlocked,
+    getAdminCharacterDetail,
+    getAdminCharacterById,
+    listAdminCharacters,
+    updateAdminCharacterStatus,
     getAdminConversationDetail,
     listAdminConversations,
     permanentlyDeleteConversation,
@@ -234,6 +246,10 @@ function registerWebRoutes(app) {
     getGoogleFontCss,
     getFontFile,
     logFontProxyError,
+    uploadCharacterImages,
+    getUploadedCharacterImagePaths,
+    cleanupUploadedCharacterFiles,
+    deleteStoredImageIfOwned,
     logger,
     config,
     query,

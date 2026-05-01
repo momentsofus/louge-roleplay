@@ -1,6 +1,6 @@
 {
   "name": "ai-roleplay-site",
-  "version": "1.3.2",
+  "version": "1.3.5",
   "description": "Minimal multi-user AI roleplay website",
   "main": "src/server.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "grant-admin": "node scripts/grant-admin.js",
     "smoke:test": "node scripts/smoke-test.js",
     "health:check": "node scripts/health-check.js",
+    "security:audit": "node scripts/security-audit.js",
     "test:think": "node scripts/test-think-parser.js",
     "test:prompt-route": "node scripts/test-prompt-route.js",
     "docs:debug": "node scripts/update-docs-debug.js",
@@ -40,6 +41,7 @@
     "express-session": "^1.18.2",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "mysql2": "^3.15.2",
     "redis": "^5.8.3"
   },
