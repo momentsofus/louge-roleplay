@@ -31,52 +31,66 @@
     isDefault: index === 0,
   }));
 
-  function renderPlanModelRows(planModels, prefix) {
-    const rows = (Array.isArray(planModels) && planModels.length ? planModels : defaultPlanModels).slice(0, 6);
-    const minRows = Math.max(rows.length, 3);
-    let html = '';
-    for (let index = 0; index < minRows; index += 1) {
-      const item = rows[index] || {};
-      const rowKey = item.modelKey || (index === 0 ? 'standard' : `model-${index + 1}`);
-      const providerId = Number(item.providerId || fallbackProvider?.id || 0);
-      const hasDefaultRow = rows.some((row) => row && row.isDefault);
-      html += `
-        <div class="plan-model-row">
-          <div class="inline-grid inline-grid--dense">
-            <label>Key<input type="text" name="planModelKey" value="${esc(rowKey)}" placeholder="standard / premium" data-plan-model-key /></label>
-            <label>前台名称<input type="text" name="planModelLabel" value="${esc(item.label || '')}" placeholder="基础模型 / 高级模型" /></label>
-          </div>
-          <div class="inline-grid inline-grid--dense">
-            <label>
-              Provider
-              <select name="planModelProviderId" data-plan-model-provider>
-                ${providerOptions.map((provider) => `<option value="${esc(provider.id)}" ${providerId === Number(provider.id) ? 'selected' : ''}>${esc(provider.name)}</option>`).join('')}
-              </select>
-            </label>
-            <label>
-              模型 ID
-              <select name="planModelId" data-plan-model-select>
-                <option value="">不启用这一行</option>
-                ${providerModels.map(({ provider, model }) => `<option value="${esc(model.id)}" data-provider-id="${esc(provider.id)}" ${String(item.modelId || '') === String(model.id) && providerId === Number(provider.id) ? 'selected' : ''}>${esc(provider.name)} · ${esc(model.label)} (${esc(model.id)})</option>`).join('')}
-              </select>
-            </label>
-          </div>
-          <div class="inline-grid inline-grid--dense">
-            <label>请求倍率<input type="number" name="planModelRequestMultiplier" value="${esc(item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
-            <label>Token 倍率<input type="number" name="planModelTokenMultiplier" value="${esc(item.tokenMultiplier || item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
-          </div>
-          <label class="checkbox-line"><input type="radio" name="planModelDefaultKey" value="${esc(rowKey)}" data-plan-model-default ${(item.isDefault || (!hasDefaultRow && index === 0)) ? 'checked' : ''} /> 默认使用这个模型</label>
-        </div>`;
-    }
-    return html;
+  function renderProviderOptions(selectedProviderId = 0) {
+    return providerOptions.map((provider) => `<option value="${esc(provider.id)}" ${Number(selectedProviderId) === Number(provider.id) ? 'selected' : ''}>${esc(provider.name)}</option>`).join('');
   }
+
+  function renderModelOptions(selectedProviderId = 0, selectedModelId = '') {
+    return providerModels.map(({ provider, model }) => `<option value="${esc(model.id)}" data-provider-id="${esc(provider.id)}" ${String(selectedModelId || '') === String(model.id) && Number(selectedProviderId) === Number(provider.id) ? 'selected' : ''}>${esc(provider.name)} · ${esc(model.label)} (${esc(model.id)})</option>`).join('');
+  }
+
+  function renderPlanModelRow(item = {}, index = 0) {
+    const rowKey = item.modelKey || (index === 0 ? 'standard' : `model-${index + 1}`);
+    const providerId = Number(item.providerId || fallbackProvider?.id || 0);
+    return `
+      <div class="plan-model-row">
+        <div class="inline-grid inline-grid--dense">
+          <label>Key<input type="text" name="planModelKey" value="${esc(rowKey)}" placeholder="standard / premium" data-plan-model-key /></label>
+          <label>前台名称<input type="text" name="planModelLabel" value="${esc(item.label || '')}" placeholder="基础模型 / 高级模型" /></label>
+        </div>
+        <div class="inline-grid inline-grid--dense">
+          <label>
+            Provider
+            <select name="planModelProviderId" data-plan-model-provider>
+              ${renderProviderOptions(providerId)}
+            </select>
+          </label>
+          <label>
+            模型 ID
+            <select name="planModelId" data-plan-model-select>
+              <option value="">不启用这一行</option>
+              ${renderModelOptions(providerId, item.modelId)}
+            </select>
+          </label>
+        </div>
+        <div class="inline-grid inline-grid--dense">
+          <label>请求倍率<input type="number" name="planModelRequestMultiplier" value="${esc(item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
+          <label>Token 倍率<input type="number" name="planModelTokenMultiplier" value="${esc(item.tokenMultiplier || item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
+        </div>
+        <div class="toolbar-row toolbar-row--between toolbar-row--tight">
+          <label class="checkbox-line"><input type="radio" name="planModelDefaultKey" value="${esc(rowKey)}" data-plan-model-default ${item.isDefault || index === 0 ? 'checked' : ''} /> 默认使用这个模型</label>
+          <button type="button" class="danger-button danger-button--small" data-plan-model-remove>删除模型</button>
+        </div>
+      </div>`;
+  }
+
+  function renderPlanModelRows(planModels) {
+    const rows = Array.isArray(planModels) && planModels.length
+      ? planModels
+      : (defaultPlanModels.length ? defaultPlanModels : [{ modelKey: 'standard', requestMultiplier: 1, tokenMultiplier: 1, isDefault: true }]);
+    return `<div class="plan-model-list" data-plan-model-list>${rows.map((item, index) => renderPlanModelRow(item, index)).join('')}</div>
+      <div class="toolbar-row toolbar-row--tight"><button type="button" class="secondary-button" data-plan-model-add>添加模型</button></div>`;
+  }
+
+  const planModelRowTemplate = renderPlanModelRow({ modelKey: '__KEY__', requestMultiplier: 1, tokenMultiplier: 1 }, 0)
+    .replace(/__KEY__/g, 'model-__INDEX__');
 %>
 <div class="admin-shell">
   <section class="hero-card admin-hero">
     <div class="admin-hero-copy">
       <p class="section-kicker">Plans</p>
       <h1>套餐配置</h1>
-      <p class="muted-text">现在模型跟着套餐走：每个套餐可配置 1-6 个可用模型，并分别设置请求倍率与 Token 倍率。</p>
+      <p class="muted-text">现在模型跟着套餐走：每个套餐默认 1 个模型，也可以按需要动态添加多个模型，并分别设置请求倍率与 Token 倍率。</p>
     </div>
 
     <div class="metrics metrics--compact">
@@ -152,8 +166,8 @@
               <label>排序<input type="number" name="sortOrder" value="0" /></label>
             </div>
             <h3>套餐可用模型</h3>
-            <p class="mini-note">留空的模型行不会保存；高级模型可把请求 / Token 倍率设为 3。</p>
-            <%- renderPlanModelRows([], 'new') %>
+            <p class="mini-note">默认一个模型；需要更多模型时点「添加模型」，高级模型可把请求 / Token 倍率设为 3。</p>
+            <%- renderPlanModelRows([]) %>
             <div class="inline-grid">
               <label>
                 状态
@@ -235,8 +249,8 @@
                   <label>排序<input type="number" name="sortOrder" value="<%= plan.sort_order %>" /></label>
                 </div>
                 <h3>套餐可用模型</h3>
-                <p class="mini-note">当前用户只会看到这里配置的模型；模型 Key 会保存在会话上，改套餐时会自动回落到默认可用模型。</p>
-                <%- renderPlanModelRows(plan.planModels || [], `plan-${plan.id}`) %>
+                <p class="mini-note">当前用户只会看到这里配置的模型；可动态添加或删除，模型 Key 会保存在会话上，改套餐时会自动回落到默认可用模型。</p>
+                <%- renderPlanModelRows(plan.planModels || []) %>
                 <div class="inline-grid">
                   <label>
                     状态
@@ -273,4 +287,5 @@
   </section>
 </div>
 
+<template id="plan-model-row-template"><%- planModelRowTemplate %></template>
 <script nonce="<%= locals.cspNonce || '' %>" src="/public/js/admin-page.js"></script>
