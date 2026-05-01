@@ -8,6 +8,7 @@ const { randomUUID, randomBytes } = require('node:crypto');
 function requestContext(req, res, next) {
   req.requestId = randomUUID();
   res.locals.requestId = req.requestId;
+  res.setHeader('X-Request-Id', req.requestId);
   res.locals.currentUser = req.session ? req.session.user : null;
   res.locals.cspNonce = randomBytes(16).toString('base64');
   next();
