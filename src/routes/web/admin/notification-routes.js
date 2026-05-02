@@ -3,6 +3,8 @@
  * @description 管理后台通知中心与前台客服通知查询接口。
  */
 
+const { apiOk } = require('../../../server-helpers/view-models');
+
 function registerAdminNotificationRoutes(app, ctx) {
   const {
     requireAdmin,
@@ -65,7 +67,7 @@ function registerAdminNotificationRoutes(app, ctx) {
   app.get('/api/support-notification', async (req, res, next) => {
     try {
       const notifications = await listActiveNotificationsForUser(res.locals.currentUser || null, { supportOnly: true });
-      res.json({ notification: notifications[0] || null });
+      res.json(apiOk({ notification: notifications[0] || null }));
     } catch (error) {
       next(error);
     }

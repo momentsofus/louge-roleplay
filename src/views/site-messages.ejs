@@ -4,7 +4,8 @@
 <%
   const messageList = Array.isArray(messages) ? messages : [];
   const unreadCount = messageList.filter((message) => Number(message.is_read || 0) !== 1).length;
-  const formatDate = (value) => String(value || '—').replace('T', ' ').slice(0, 19);
+  const vm = (typeof viewModel !== 'undefined' ? viewModel : locals.viewModel) || {};
+  const formatDate = vm.formatDateTime || ((value) => String(value || '—').replace('T', ' ').slice(0, 19));
 %>
 <div class="dashboard-shell site-message-shell">
   <section class="dashboard-hero-card">

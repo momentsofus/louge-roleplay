@@ -7,15 +7,16 @@
   const activeUsers = Number(overview?.activeUsers || 0);
   const planBoundCount = Number(overview?.planBoundUsers || 0);
   const inactiveUsers = Number(overview?.inactiveUsers || 0);
-  const roleLabel = (role) => role === 'admin' ? '管理员' : '普通用户';
-  const statusLabel = (status) => status === 'active' ? '正常' : (status || '未知');
-  const safeNum = (value) => {
+  const vm = (typeof viewModel !== 'undefined' ? viewModel : locals.viewModel) || {};
+  const roleLabel = (role) => vm.roleLabel ? vm.roleLabel(role, t) : (role === 'admin' ? t('管理员') : t('普通用户'));
+  const statusLabel = (status) => vm.statusLabel ? vm.statusLabel(status, t) : (status === 'active' ? t('正常') : t(status || '未知'));
+  const safeNum = vm.safeNumber || ((value) => {
     const num = Number(value || 0);
     return Number.isFinite(num) ? num : 0;
-  };
-  const formatNum = (value) => safeNum(value).toLocaleString('zh-CN');
-  const quotaPeriodLabel = (period) => ({ daily: t('每日'), monthly: t('每月'), lifetime: t('永久') }[period] || period || t('未知'));
-  const billingModeLabel = (mode) => ({ per_request: t('按请求'), per_token: t('按 Token'), hybrid: t('混合计费') }[mode] || mode || t('未知'));
+  });
+  const formatNum = (value) => vm.formatNumber ? vm.formatNumber(value, locale || 'zh-CN') : safeNum(value).toLocaleString('zh-CN');
+  const quotaPeriodLabel = (period) => vm.quotaPeriodLabel ? vm.quotaPeriodLabel(period, t) : ({ daily: t('每日'), monthly: t('每月'), lifetime: t('永久') }[period] || period || t('未知'));
+  const billingModeLabel = (mode) => vm.billingModeLabel ? vm.billingModeLabel(mode, t) : ({ per_request: t('按请求'), per_token: t('按 Token'), hybrid: t('混合计费') }[mode] || mode || t('未知'));
   const quotaTone = (state) => state === 'danger' ? 'danger' : (state === 'warn' ? 'warn' : 'healthy');
 %>
 <div class="admin-shell">
@@ -53,51 +54,13 @@
     <%- include('partials/admin-subnav', { activeAdminNav: 'dashboard' }) %>
 
     <div class="admin-hub-grid admin-hub-grid--tools">
-      <a class="admin-hub-card" href="/admin/providers">
-        <span class="pill pill--brand">LLM</span>
-        <strong>LLM 配置</strong>
-        <p>Provider、模型发现、并发、超时、价格都放这边。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/models">
-        <span class="pill pill--brand">Models</span>
-        <strong>预设模型</strong>
-        <p>统一维护模型 ID、前台名称和描述，套餐直接复用。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/plans">
-        <span class="pill pill--brand">Plans</span>
-        <strong>套餐配置</strong>
-        <p>套餐额度、计费模式、默认套餐、优先级这些都单独管。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/prompts">
-        <span class="pill pill--brand">Prompt</span>
-        <strong>Prompt 配置</strong>
-        <p>全局片段、排序和最终 Prompt 预览都在这里，不再跟别的表单挤一起。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/notifications">
-        <span class="pill pill--brand">Notice</span>
-        <strong>通知中心</strong>
-        <p>客服入口、站内通知、强制弹窗和新人提醒统一配置。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/logs">
-        <span class="pill pill--brand">Logs</span>
-        <strong>日志查询</strong>
-        <p>按日期、等级、文件、错误类型和函数名筛查运行日志。</p>
-      </a>
-      <a class="admin-hub-card" href="/admin/characters">
-        <span class="pill pill--brand">Cards</span>
-        <strong><%= t('角色卡管理') %></strong>
-        <p><%= t('全局查看角色卡，禁用、恢复、删除并追踪关联对话。') %></p>
-      </a>
-      <a class="admin-hub-card" href="/admin/characters/import">
-        <span class="pill pill--brand">Import</span>
-        <strong><%= t('批量导入酒馆卡') %></strong>
-        <p><%= t('上传 SillyTavern / TavernAI 的 PNG 或 JSON 角色卡，先预览再入库。') %></p>
-      </a>
-      <a class="admin-hub-card" href="/admin/conversations">
-        <span class="pill pill--brand">Chats</span>
-        <strong>对话记录</strong>
-        <p>全局查看会话，按用户、角色卡和日期筛选。</p>
-      </a>
+      <% ((typeof navigation !== 'undefined' && navigation.adminHubItems) || []).forEach(item => { %>
+        <a class="admin-hub-card" href="<%= item.href %>">
+          <span class="pill pill--brand"><%= item.badge %></span>
+          <strong><%= item.label %></strong>
+          <p><%= item.description %></p>
+        </a>
+      <% }) %>
     </div>
   </section>
 

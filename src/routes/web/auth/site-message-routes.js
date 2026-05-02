@@ -3,6 +3,8 @@
  * @description 用户站内信收件箱与实时轮询接口。
  */
 
+const { apiOk } = require('../../../server-helpers/view-models');
+
 function registerAuthSiteMessageRoutes(app, ctx) {
   const {
     requireAuth,
@@ -26,7 +28,7 @@ function registerAuthSiteMessageRoutes(app, ctx) {
   app.get('/api/site-messages/status', requireAuth, async (req, res, next) => {
     try {
       const snapshot = await getSiteMessageRealtimeSnapshot(req.session.user.id);
-      res.json(snapshot);
+      res.json(apiOk(snapshot));
     } catch (error) {
       next(error);
     }
@@ -36,7 +38,7 @@ function registerAuthSiteMessageRoutes(app, ctx) {
     try {
       const messageId = parseIdParam(req.params.messageId, '站内信 ID');
       await markSiteMessageRead(req.session.user.id, messageId);
-      res.json({ ok: true });
+      res.json(apiOk());
     } catch (error) {
       next(error);
     }

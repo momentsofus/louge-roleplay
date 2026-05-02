@@ -378,7 +378,8 @@
       const response = await fetch('/api/support-notification', { headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error('support notification unavailable');
       const payload = await response.json();
-      const notification = payload && payload.notification;
+      const data = payload && payload.ok && payload.data ? payload.data : payload;
+      const notification = data && data.notification;
       if (notification) {
         return showNotification({ ...notification, showOnce: false, forceDisplay: false, displayPosition: 'modal' }, { supportMode: true, ...(options || {}) });
       }

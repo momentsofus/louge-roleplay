@@ -12,11 +12,12 @@
   const isAdmin = user.role === 'admin';
   const isActive = user.status === 'active';
   const publicId = user.public_id || user.publicId || '—';
-  const safeNum = (value) => {
+  const vm = (typeof viewModel !== 'undefined' ? viewModel : locals.viewModel) || {};
+  const safeNum = vm.safeNumber || ((value) => {
     const num = Number(value || 0);
     return Number.isFinite(num) ? num : 0;
-  };
-  const formatNum = (value) => safeNum(value).toLocaleString('zh-CN');
+  });
+  const formatNum = (value) => vm.formatNumber ? vm.formatNumber(value, locale || 'zh-CN') : safeNum(value).toLocaleString('zh-CN');
   const publicCharacterCount = characterList.filter((character) => character.visibility !== 'private').length;
   const privateCharacterCount = characterList.filter((character) => character.visibility === 'private').length;
   const requestQuotaTotal = hasQuota ? safeNum(quota.usage.usedRequests) + safeNum(quota.remainingRequests) : 0;

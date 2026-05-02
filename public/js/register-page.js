@@ -53,6 +53,12 @@
     }
   }
 
+  function unwrapApiPayload(payload) {
+    if (payload && payload.ok && payload.data) return payload.data;
+    if (payload && payload.ok === false && payload.error) return payload.error;
+    return payload;
+  }
+
   function showCaptchaHint(message) {
     const hint = document.getElementById('captchaHint');
     if (hint) {
@@ -106,7 +112,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, countryType: getCountryType(), captchaId, captchaText })
     });
-    const data = await res.json();
+    const payload = await res.json();
+    const data = unwrapApiPayload(payload);
     applyCaptchaRefreshFromResponse(data, t('邮箱验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
     alert(t(data.message || '已发送'));
   }
@@ -125,7 +132,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, captchaId, captchaText })
     });
-    const data = await res.json();
+    const payload = await res.json();
+    const data = unwrapApiPayload(payload);
     applyCaptchaRefreshFromResponse(data, t('短信验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
     alert(t(data.message || '已发送'));
   }

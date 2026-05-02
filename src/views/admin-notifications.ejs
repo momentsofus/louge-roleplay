@@ -40,13 +40,11 @@
   const scopeLabel = (scope) => (displayScopeOptions.find((item) => item[0] === scope) || [scope, scope])[1];
 %>
 <div class="admin-shell">
-  <section class="hero-card admin-hero">
-    <div class="admin-hero-copy">
-      <p class="section-kicker">Notification Center</p>
-      <h1><%= t('通知中心') %></h1>
-      <p class="muted-text"><%= t('把“客服入口”和“站内通知”分开管理。客服是全站支持入口，通知是运营公告与规则弹窗，不再混在同一张烂表单里。') %></p>
-    </div>
-  </section>
+  <%- include('partials/admin-hero', {
+    kicker: 'Notification Center',
+    title: t('通知中心'),
+    description: t('把“客服入口”和“站内通知”分开管理。客服是全站支持入口，通知是运营公告与规则弹窗，不再混在同一张烂表单里。')
+  }) %>
 
   <section class="section-card admin-section">
     <%- include('partials/admin-subnav', { activeAdminNav: 'notifications' }) %>
