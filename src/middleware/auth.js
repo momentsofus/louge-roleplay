@@ -17,7 +17,7 @@ async function requireAuth(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active' };
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0) };
   res.locals.currentUser = req.session.user;
   return next();
 }
@@ -31,7 +31,7 @@ async function requireAdmin(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active' };
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0) };
   res.locals.currentUser = req.session.user;
   if (req.session.user.role !== 'admin') {
     logger.warn('Forbidden admin access attempt', {

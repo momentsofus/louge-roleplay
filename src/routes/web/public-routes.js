@@ -11,6 +11,7 @@ function registerPublicRoutes(app, ctx) {
     listPublicCharacters,
     listFeaturedPublicCharacters,
     getPublicCharacterDetail,
+    listPublicTags,
     toggleCharacterLike,
     addCharacterComment,
     listCharacterComments,
@@ -44,6 +45,10 @@ function registerPublicRoutes(app, ctx) {
     return fallback;
   }
 
+  function canShowNsfw(req) {
+    return Boolean(req.session?.user?.id && Number(req.session.user.show_nsfw || 0) === 1);
+  }
+
   app.get('/fonts/google.css', async (req, res) => {
     try {
       const css = await getGoogleFontCss();
@@ -73,7 +78,7 @@ function registerPublicRoutes(app, ctx) {
 
   app.get('/', async (req, res, next) => {
     try {
-      const characters = await listFeaturedPublicCharacters(6);
+      const characters = await listFeaturedPublicCharacters(6, { includeNsfw: canShowNsfw(req) });
       renderPage(res, 'home', {
         title: '首页',
         characters,
@@ -95,12 +100,20 @@ function registerPublicRoutes(app, ctx) {
       const sort = ['newest', 'oldest', 'likes', 'comments', 'usage', 'heat', 'random'].includes(String(req.query.sort || '').trim())
         ? String(req.query.sort || '').trim()
         : 'heat';
-      const result = await listPublicCharacters({ page, pageSize, keyword, sort });
+      const tags = String(req.query.tags || req.query.tag || '').trim();
+      const tagMode = String(req.query.tagMode || 'or').trim() === 'and' ? 'and' : 'or';
+      const includeNsfw = canShowNsfw(req);
+      const [result, availableTags] = await Promise.all([
+        listPublicCharacters({ page, pageSize, keyword, sort, tags, tagMode, includeNsfw }),
+        listPublicTags({ includeNsfw }),
+      ]);
       renderPage(res, 'public-characters', {
         title: '公开角色',
         characters: result.characters,
         pagination: result.pagination,
         filters: result.filters,
+        availableTags,
+        showNsfw: includeNsfw,
         meta: {
           url: `/characters/public${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`,
           description: keyword
@@ -117,7 +130,7 @@ function registerPublicRoutes(app, ctx) {
     try {
       const characterId = parseIdParam(req.params.characterId, '角色 ID');
       const [character, comments] = await Promise.all([
-        getPublicCharacterDetail(characterId),
+        getPublicCharacterDetail(characterId, { includeNsfw: canShowNsfw(req) }),
         listCharacterComments(characterId, 50),
       ]);
       if (!character) {
@@ -148,7 +161,7 @@ function registerPublicRoutes(app, ctx) {
       if (limited) {
         return res.status(429).send('too many requests');
       }
-      await toggleCharacterLike(characterId, req.session.user.id);
+      await toggleCharacterLike(characterId, req.session.user.id, { includeNsfw: canShowNsfw(req) });
       return res.redirect(getSameOriginBackUrl(req, '/characters/public'));
     } catch (error) {
       next(error);
@@ -165,7 +178,7 @@ function registerPublicRoutes(app, ctx) {
       if (limited) {
         return res.status(429).send('too many requests');
       }
-      await addCharacterComment(characterId, req.session.user.id, req.body.commentBody);
+      await addCharacterComment(characterId, req.session.user.id, req.body.commentBody, { includeNsfw: canShowNsfw(req) });
       return res.redirect(getSameOriginBackUrl(req, '/characters/public'));
     } catch (error) {
       if (error.code === 'COMMENT_EMPTY') {

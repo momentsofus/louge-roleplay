@@ -126,7 +126,7 @@ function buildRuntimeContext({ user = null, now = new Date() } = {}) {
 }
 
 function buildPromptMessages({ character, messages, userMessage, systemHint = '', user = null }) {
-  const runtimeContext = buildRuntimeContext({ user });
+  const runtimeContext = { ...buildRuntimeContext({ user }), characterName: character?.name, char: character?.name };
   const runtimeCharacter = applyRuntimeTemplateToCharacter(character, runtimeContext);
 
   const historyPromptMessages = messages.slice(-24)

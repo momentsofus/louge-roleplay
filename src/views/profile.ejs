@@ -192,6 +192,27 @@
         </div>
       </section>
 
+      <section class="settings-section panel">
+        <div class="settings-section-head">
+          <div>
+            <div class="section-kicker">Content Preference</div>
+            <h2>内容显示偏好</h2>
+            <p>NSFW 角色默认不会出现在公共角色大厅、搜索和详情接口里。开启后，仅你的账号可见。</p>
+          </div>
+        </div>
+        <form method="POST" action="/profile" class="settings-form">
+          <input type="hidden" name="action" value="privacy" />
+          <label class="checkbox-row nsfw-toggle-row">
+            <input type="checkbox" name="showNsfw" value="1" <%= Number(user?.show_nsfw || 0) === 1 ? 'checked' : '' %> />
+            <span>显示 NSFW 公开角色</span>
+          </label>
+          <div class="mini-note">关闭时，未登录用户和你的账号都不会从公共 API 收到 NSFW 角色。</div>
+          <div class="settings-form-actions">
+            <button class="submit-btn" type="submit">保存内容偏好</button>
+          </div>
+        </form>
+      </section>
+
       <section class="settings-section panel profile-captcha-card">
         <div class="settings-section-head">
           <div>

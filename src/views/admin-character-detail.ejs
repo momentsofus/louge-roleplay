@@ -39,7 +39,16 @@
       <span><strong><%= t('创建时间') %></strong><%= character.display_created_at %></span>
       <span><strong><%= t('更新时间') %></strong><%= character.display_updated_at %></span>
       <span><strong><%= t('最近对话') %></strong><%= character.display_latest_conversation_at %></span>
+      <span><strong>NSFW</strong><%= Number(character.is_nsfw || 0) === 1 ? '是' : '否' %></span>
       <span><strong><%= t('评论 / 使用') %></strong><%= character.comment_count %> / <%= character.usage_count %></span>
+    </div>
+
+    <div class="toolbar-row toolbar-row--admin">
+      <% if (Array.isArray(character.tags) && character.tags.length) { %>
+        <% character.tags.forEach(tag => { %><span class="tag-chip">#<%= tag.name %></span><% }) %>
+      <% } else { %>
+        <span class="muted-text">暂无标签</span>
+      <% } %>
     </div>
 
     <div class="toolbar-row toolbar-row--admin">
@@ -124,6 +133,17 @@
           <pre><%= character.prompt_profile_json || '—' %></pre>
         <% } %>
       </article>
+      <% if (character.source_type || character.source_file_name || character.flattened_world_book_text || character.source_card_json) { %>
+        <article class="admin-character-detail-block">
+          <strong>导入来源 / 世界书保留</strong>
+          <pre><%= [
+            character.source_type ? `来源：${character.source_type}` : '',
+            character.source_format ? `格式：${character.source_format}` : '',
+            character.source_file_name ? `文件：${character.source_file_name}` : '',
+            character.flattened_world_book_text ? `\n${character.flattened_world_book_text}` : '',
+          ].filter(Boolean).join('\n') || '—' %></pre>
+        </article>
+      <% } %>
     </div>
   </section>
 

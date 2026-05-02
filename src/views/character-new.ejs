@@ -52,6 +52,12 @@
         <div class="mini-note">会作为 `【[当前背景]】{ ... }` 进入提示词；留空就不拼接。</div>
       </div>
 
+      <div class="field-group tag-field-group">
+        <label for="tags">标签</label>
+        <input id="tags" name="tags" data-tag-input maxlength="300" placeholder="输入标签后按回车，比如：奇幻、治愈、日常" value="<%= form?.tagsText || '' %>" />
+        <div class="mini-note">输入后按 Enter 或逗号生成标签；会自动去重、去掉 # 号，最多保留 12 个。公开角色大厅可以按“包含任一 / 包含全部”搜索。</div>
+      </div>
+
       <div class="field-group">
         <label for="visibility">是否公开</label>
         <select id="visibility" name="visibility">
@@ -59,6 +65,15 @@
           <option value="private" <%= (form?.visibility || 'public') === 'private' ? 'selected' : '' %>>私有（只有我自己能看到和使用）</option>
         </select>
         <div class="mini-note">公开角色会显示在公开角色页；私有角色只保留在你的控制台里，别人不能直接开始对话。</div>
+      </div>
+
+      <div class="field-group">
+        <label for="isNsfw">NSFW 选项</label>
+        <select id="isNsfw" name="isNsfw">
+          <option value="0" <%= form?.isNsfw ? '' : 'selected' %>>否</option>
+          <option value="1" <%= form?.isNsfw ? 'selected' : '' %>>是，默认不在公共角色大厅显示</option>
+        </select>
+        <div class="mini-note">NSFW 过滤由后端执行；未登录用户和未开启 NSFW 显示的用户都不会收到这些公开角色。</div>
       </div>
 
       <div class="media-upload-grid">

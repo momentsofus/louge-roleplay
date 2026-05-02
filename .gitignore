@@ -5,3 +5,5 @@ logs/
 .DS_Store
 data/
 .continue/prompts
+public/uploads/characters/*
+!public/uploads/characters/.gitkeep
