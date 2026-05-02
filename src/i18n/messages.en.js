@@ -1082,6 +1082,16 @@ const EN_MESSAGES = {
   'NSFW 角色：仅在你开启个人资料中的 NSFW 显示后可见。': 'NSFW 角色：仅在你开启个人资料中的 NSFW 显示后可见。',
   'NSFW 角色默认不会出现在公共角色大厅、搜索和详情接口里。开启后，仅你的账号可见。': 'NSFW 角色默认不会出现在公共角色大厅、搜索和详情接口里。开启后，仅你的账号可见。',
   'NSFW 选项': 'NSFW 选项',
+  '支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。开场白、示例对话、世界书与 Tavern 占位符会在这里先解析成楼阁可用的提示词片段。': 'Supports PNG character cards and JSON exported from SillyTavern / TavernAI. Uploads are previewed first and are not written to the database until confirmed; each item can set tags, NSFW, and visibility. Opening lines, example dialogue, world books, and Tavern placeholders are parsed here into Louge-ready prompt segments.',
+  '解析前不会写入数据库': 'Nothing is written before parsing confirmation',
+  '建议一次导入同一系列角色；系统会按文件 hash 和同管理员同名角色提示重复项。': 'Import characters from the same series together when possible; duplicates are flagged by file hash and same-name cards from the same admin.',
+  '文件数': 'Files',
+  '可能重复': 'Possible duplicates',
+  '无头像': 'No avatar',
+  '提示片段': 'Prompt segments',
+  '备用开场': 'Alternate openings',
+  '查看解析摘要与提示词片段': 'View parsing summary and prompt segments',
+  '世界书': 'World book',
 };
 
 module.exports = { EN_MESSAGES };

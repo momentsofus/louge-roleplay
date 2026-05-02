@@ -142,6 +142,7 @@ function applyRuntimeTemplate(text, runtimeContext = {}) {
   }
 
   const username = String(runtimeContext.username || runtimeContext.user || '用户').trim() || '用户';
+  const characterName = String(runtimeContext.characterName || runtimeContext.char || runtimeContext.character || '').trim();
   const timeValue = String(
     runtimeContext.time
       || formatRuntimeTime(runtimeContext.now instanceof Date ? runtimeContext.now : new Date(), {
@@ -149,26 +150,43 @@ function applyRuntimeTemplate(text, runtimeContext = {}) {
       }),
   ).trim();
 
-  return rawText
-    .replace(/\{user\}/g, username)
-    .replace(/\{time\}/g, timeValue);
+  let rendered = rawText
+    .replace(/{{\s*user\s*}}/gi, username)
+    .replace(/\{\{\s*user\s*\}\}/gi, username)
+    .replace(/\{user\}/gi, username)
+    .replace(/<USER>/gi, username)
+    .replace(/\{time\}/gi, timeValue)
+    .replace(/{{\s*time\s*}}/gi, timeValue)
+    .replace(/\{\{\s*time\s*\}\}/gi, timeValue);
+
+  if (characterName) {
+    rendered = rendered
+      .replace(/{{\s*char\s*}}/gi, characterName)
+      .replace(/\{\{\s*char\s*\}\}/gi, characterName)
+      .replace(/\{char\}/gi, characterName)
+      .replace(/<BOT>/gi, characterName);
+  }
+
+  return rendered;
 }
 
 function applyRuntimeTemplateToCharacter(character = {}, runtimeContext = {}) {
   const source = character && typeof character === 'object' ? character : {};
+  const resolvedCharacterName = String(source.name || runtimeContext.characterName || runtimeContext.char || '').trim();
+  const characterRuntimeContext = { ...runtimeContext, characterName: resolvedCharacterName, char: resolvedCharacterName };
   const nextCharacter = {
     ...source,
-    name: applyRuntimeTemplate(source.name, runtimeContext),
-    summary: applyRuntimeTemplate(source.summary, runtimeContext),
-    role: applyRuntimeTemplate(source.role, runtimeContext),
-    personality: applyRuntimeTemplate(source.personality, runtimeContext),
-    traitDescription: applyRuntimeTemplate(source.traitDescription, runtimeContext),
-    currentScene: applyRuntimeTemplate(source.currentScene, runtimeContext),
-    currentBackground: applyRuntimeTemplate(source.currentBackground, runtimeContext),
+    name: applyRuntimeTemplate(source.name, characterRuntimeContext),
+    summary: applyRuntimeTemplate(source.summary, characterRuntimeContext),
+    role: applyRuntimeTemplate(source.role, characterRuntimeContext),
+    personality: applyRuntimeTemplate(source.personality, characterRuntimeContext),
+    traitDescription: applyRuntimeTemplate(source.traitDescription, characterRuntimeContext),
+    currentScene: applyRuntimeTemplate(source.currentScene, characterRuntimeContext),
+    currentBackground: applyRuntimeTemplate(source.currentBackground, characterRuntimeContext),
   };
 
   const firstMessageRaw = source.first_message === undefined ? source.firstMessage : source.first_message;
-  const nextFirstMessage = applyRuntimeTemplate(firstMessageRaw, runtimeContext);
+  const nextFirstMessage = applyRuntimeTemplate(firstMessageRaw, characterRuntimeContext);
   if (source.first_message !== undefined) {
     nextCharacter.first_message = nextFirstMessage;
   }
@@ -181,8 +199,8 @@ function applyRuntimeTemplateToCharacter(character = {}, runtimeContext = {}) {
   if (Array.isArray(parsedPromptProfile)) {
     const normalizedPromptProfile = normalizePromptItems(parsedPromptProfile).map((item) => ({
       ...item,
-      key: applyRuntimeTemplate(item.key, runtimeContext),
-      value: applyRuntimeTemplate(item.value, runtimeContext),
+      key: applyRuntimeTemplate(item.key, characterRuntimeContext),
+      value: applyRuntimeTemplate(item.value, characterRuntimeContext),
     }));
     const serializedPromptProfile = JSON.stringify(normalizedPromptProfile);
     if (source.prompt_profile_json !== undefined) {

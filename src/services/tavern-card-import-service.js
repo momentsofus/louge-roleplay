@@ -300,6 +300,62 @@ function pickFirst(...values) {
   return '';
 }
 
+function normalizeLineBreaks(value) {
+  return String(value || '').replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function normalizeTavernTemplateText(value, context = {}) {
+  const charName = String(context.charName || context.characterName || '').trim();
+  let text = normalizeLineBreaks(truncateText(value, MAX_TEXT_FIELD));
+  text = text
+    .replace(/<START>/gi, '')
+    .replace(/{{\s*user\s*}}/gi, '{user}')
+    .replace(/<USER>/gi, '{user}')
+    .replace(/\bYou:/gi, '{user}:');
+  if (charName) {
+    text = text
+      .replace(/{{\s*char\s*}}/gi, charName)
+      .replace(/<BOT>/gi, charName)
+      .replace(/\bChar:/gi, `${charName}:`);
+  }
+  return normalizeLineBreaks(text);
+}
+
+function joinSections(sections = []) {
+  return sections
+    .map((section) => normalizeLineBreaks(section))
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+function createPromptItem(key, value, sortOrder, context = {}) {
+  const normalizedValue = normalizeTavernTemplateText(value, context);
+  if (!normalizedValue) return null;
+  return { key, value: normalizedValue, sortOrder, isEnabled: true };
+}
+
+function normalizeAlternateGreetings(root, data, context = {}) {
+  const candidates = [
+    data.alternate_greetings,
+    data.alternateGreetings,
+    root.alternate_greetings,
+    root.alternateGreetings,
+    data.extensions?.alternate_greetings,
+    data.extensions?.alternateGreetings,
+    root.extensions?.alternate_greetings,
+    root.extensions?.alternateGreetings,
+  ];
+  const greetings = [];
+  candidates.forEach((candidate) => {
+    if (Array.isArray(candidate)) greetings.push(...candidate);
+    else if (typeof candidate === 'string') greetings.push(candidate);
+  });
+  return greetings
+    .map((item) => normalizeTavernTemplateText(item, context))
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
 function collectTagsFromCard(root, data) {
   const tags = [];
   const candidates = [data.tags, root.tags, data.extensions?.tags, root.extensions?.tags];
@@ -310,7 +366,7 @@ function collectTagsFromCard(root, data) {
   return parseTagInput(tags);
 }
 
-function normalizeWorldBookEntries(book) {
+function normalizeWorldBookEntries(book, context = {}) {
   if (!book || typeof book !== 'object') return [];
   const rawEntries = Array.isArray(book.entries)
     ? book.entries
@@ -322,9 +378,9 @@ function normalizeWorldBookEntries(book) {
       return {
         index,
         name: pickFirst(entry.comment, entry.name, entry.title, `条目 ${index + 1}`),
-        keys: keys.map((item) => String(item || '').trim()).filter(Boolean),
-        secondaryKeys: secondaryKeys.map((item) => String(item || '').trim()).filter(Boolean),
-        content: pickFirst(entry.content, entry.entry, entry.text, entry.value),
+        keys: keys.map((item) => normalizeTavernTemplateText(item, context)).filter(Boolean),
+        secondaryKeys: secondaryKeys.map((item) => normalizeTavernTemplateText(item, context)).filter(Boolean),
+        content: normalizeTavernTemplateText(pickFirst(entry.content, entry.entry, entry.text, entry.value), context),
         enabled: entry.enabled === undefined ? true : Boolean(entry.enabled),
         position: entry.position ?? entry.insertion_order ?? entry.order ?? null,
       };
@@ -342,8 +398,9 @@ function findWorldBooks(root, data) {
   return books;
 }
 
-function flattenWorldBooks(root, data) {
-  const entries = findWorldBooks(root, data).flatMap(normalizeWorldBookEntries);
+function flattenWorldBooks(root, data, context = {}) {
+  const charName = String(context.charName || pickFirst(data.name, root.name, data.char_name, root.char_name)).trim();
+  const entries = findWorldBooks(root, data).flatMap((book) => normalizeWorldBookEntries(book, { charName }));
   if (!entries.length) {
     return { entries: [], text: '', raw: null, warning: '' };
   }
@@ -373,36 +430,39 @@ function normalizeCardPayload(cardJson) {
   const root = cardJson && typeof cardJson === 'object' ? cardJson : {};
   const data = root.data && typeof root.data === 'object' ? root.data : root;
   const extensions = normalizeExtensions(data.extensions || root.extensions);
-  const worldBook = flattenWorldBooks(root, data);
-
   const name = pickFirst(data.name, root.name, data.char_name, root.char_name);
-  const description = pickFirst(data.description, root.description, data.personality, root.personality);
-  const personality = pickFirst(data.personality, root.personality);
-  const scenario = pickFirst(data.scenario, root.scenario);
-  const mesExample = pickFirst(data.mes_example, root.mes_example, data.example_dialogue, root.example_dialogue);
-  const creatorNotes = pickFirst(data.creator_notes, root.creator_notes, data.creatorcomment, root.creatorcomment);
-  const systemPrompt = pickFirst(data.system_prompt, root.system_prompt, extensions.system_prompt);
-  const postHistory = pickFirst(data.post_history_instructions, root.post_history_instructions, extensions.post_history_instructions);
-  const firstMessage = pickFirst(data.first_mes, root.first_mes, data.first_message, root.first_message);
+  const templateContext = { charName: name };
+  const worldBook = flattenWorldBooks(root, data, templateContext);
+  const description = normalizeTavernTemplateText(pickFirst(data.description, root.description, data.personality, root.personality), templateContext);
+  const personality = normalizeTavernTemplateText(pickFirst(data.personality, root.personality), templateContext);
+  const scenario = normalizeTavernTemplateText(pickFirst(data.scenario, root.scenario), templateContext);
+  const mesExample = normalizeTavernTemplateText(pickFirst(data.mes_example, root.mes_example, data.example_dialogue, root.example_dialogue), templateContext);
+  const creatorNotes = normalizeTavernTemplateText(pickFirst(data.creator_notes, root.creator_notes, data.creatorcomment, root.creatorcomment), templateContext);
+  const systemPrompt = normalizeTavernTemplateText(pickFirst(data.system_prompt, root.system_prompt, extensions.system_prompt), templateContext);
+  const postHistory = normalizeTavernTemplateText(pickFirst(data.post_history_instructions, root.post_history_instructions, extensions.post_history_instructions), templateContext);
+  const firstMessage = normalizeTavernTemplateText(pickFirst(data.first_mes, root.first_mes, data.first_message, root.first_message), templateContext);
+  const alternateGreetings = normalizeAlternateGreetings(root, data, templateContext);
   const summary = pickFirst(data.summary, root.summary, description).slice(0, 500);
+  const personalityWithWorldBook = joinSections([personality || description, worldBook.text]);
 
   const promptItems = [
-    { key: '角色名', value: name, sortOrder: 0, isEnabled: true },
-    { key: '角色简介', value: summary, sortOrder: 1, isEnabled: true },
-    { key: '角色', value: description, sortOrder: 2, isEnabled: true },
-    { key: '描述角色性格', value: personality || description, sortOrder: 3, isEnabled: true },
-    { key: '当前场景', value: scenario, sortOrder: 4, isEnabled: true },
-    { key: '示例对话', value: mesExample, sortOrder: 5, isEnabled: true },
-    { key: '系统提示词', value: systemPrompt, sortOrder: 6, isEnabled: true },
-    { key: '后历史指令', value: postHistory, sortOrder: 7, isEnabled: true },
-    { key: '创作者备注', value: creatorNotes, sortOrder: 8, isEnabled: true },
-    { key: '世界书 / 背景资料', value: worldBook.text, sortOrder: 9, isEnabled: true },
-  ].filter((item) => item.value);
+    createPromptItem('角色名', name, 0, templateContext),
+    createPromptItem('角色简介', summary, 1, templateContext),
+    createPromptItem('角色设定', description, 2, templateContext),
+    createPromptItem('性格与行为', personality || description, 3, templateContext),
+    createPromptItem('当前场景', scenario, 4, templateContext),
+    createPromptItem('示例对话', mesExample, 5, templateContext),
+    createPromptItem('系统提示词', systemPrompt, 6, templateContext),
+    createPromptItem('后历史指令', postHistory, 7, templateContext),
+    createPromptItem('创作者备注', creatorNotes, 8, templateContext),
+    alternateGreetings.length ? createPromptItem('备用开场白', alternateGreetings.map((item, index) => `${index + 1}. ${item}`).join('\n\n'), 9, templateContext) : null,
+    createPromptItem('世界书 / 背景资料', worldBook.text, 10, templateContext),
+  ].filter(Boolean);
 
   return {
     name,
     summary: summary || `${name || '未命名角色'} · 酒馆卡导入`,
-    personality: [personality || description, worldBook.text].filter(Boolean).join('\n\n'),
+    personality: personalityWithWorldBook,
     firstMessage,
     promptProfileItems: promptItems,
     tags: collectTagsFromCard(root, data),
@@ -410,6 +470,12 @@ function normalizeCardPayload(cardJson) {
     sourceCardJson: root,
     importedWorldBookJson: worldBook.raw,
     flattenedWorldBookText: worldBook.text,
+    promptStats: {
+      promptItemCount: promptItems.length,
+      worldBookEntryCount: worldBook.entries.length,
+      alternateGreetingCount: alternateGreetings.length,
+      hasFirstMessage: Boolean(firstMessage),
+    },
     warnings: [worldBook.warning, name ? '' : '缺少角色名称，请手动填写'].filter(Boolean),
   };
 }
@@ -675,6 +741,7 @@ async function listImportBatches(limit = 20) {
 module.exports = {
   uploadTavernCards,
   parseTavernFile,
+  normalizeTavernTemplateText,
   previewTavernImport,
   saveImportPreview,
   loadImportPreview,

@@ -7,6 +7,10 @@
   const items = Array.isArray(previewItems) ? previewItems : [];
   const existingTags = Array.isArray(allTags) ? allTags : [];
   const recentBatches = Array.isArray(batches) ? batches : [];
+  const okItems = items.filter(item => item.ok);
+  const failedItems = items.filter(item => !item.ok);
+  const duplicateItems = okItems.filter(item => item.duplicate);
+  const nsfwItems = okItems.filter(item => item.parsed?.isNsfw);
 %>
 
 <div class="admin-shell">
@@ -14,7 +18,7 @@
     <div class="admin-hero-copy">
       <p class="section-kicker">Tavern Card Import</p>
       <h1>批量导入酒馆卡</h1>
-      <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。</p>
+      <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。开场白、示例对话、世界书与 Tavern 占位符会在这里先解析成楼阁可用的提示词片段。</p>
     </div>
   </section>
 
@@ -44,6 +48,13 @@
         <p class="muted-text">单个文件不超过 10MB，一次最多 30 个。PNG 会读取 tEXt/iTXt 中的 <code>chara</code>、<code>ccv3</code> 等元数据。</p>
       </div>
     </div>
+    <div class="admin-import-dropzone">
+      <div class="admin-import-dropzone-icon">PNG / JSON</div>
+      <div>
+        <strong>解析前不会写入数据库</strong>
+        <p class="muted-text">建议一次导入同一系列角色；系统会按文件 hash 和同管理员同名角色提示重复项。</p>
+      </div>
+    </div>
     <form method="POST" action="/admin/characters/import/preview" enctype="multipart/form-data" class="settings-form">
       <div class="field-group upload-field">
         <label for="cards">选择角色卡文件</label>
@@ -64,6 +75,13 @@
           <h2>逐个确认导入</h2>
           <p class="muted-text">世界书已被压平成“世界书 / 背景资料”提示词片段，同时保留原始 JSON，方便以后迁移到真正的世界书系统。</p>
         </div>
+      </div>
+
+      <div class="admin-import-summary-grid">
+        <div><span>文件数</span><strong><%= items.length %></strong></div>
+        <div><span>可导入</span><strong><%= okItems.length %></strong></div>
+        <div><span>解析失败</span><strong><%= failedItems.length %></strong></div>
+        <div><span>可能重复</span><strong><%= duplicateItems.length %></strong></div>
       </div>
 
       <form method="POST" action="/admin/characters/import/confirm" id="tavernImportConfirmForm" class="admin-import-form">
@@ -88,11 +106,22 @@
                 <% if (!item.ok) { %>
                   <p class="form-message form-message--error"><%= item.errorMessage || '未检测到 SillyTavern 角色数据' %></p>
                 <% } else { %>
-                  <% if (item.avatarPreviewDataUrl) { %>
-                    <div class="upload-preview upload-preview--avatar admin-import-avatar-preview">
-                      <img src="<%= item.avatarPreviewDataUrl %>" alt="<%= item.parsed.name || item.fileName %>" />
-                    </div>
-                  <% } %>
+                  <div class="admin-import-preview-layout">
+                    <aside class="admin-import-preview-side">
+                      <% if (item.avatarPreviewDataUrl) { %>
+                        <div class="upload-preview upload-preview--avatar admin-import-avatar-preview">
+                          <img src="<%= item.avatarPreviewDataUrl %>" alt="<%= item.parsed.name || item.fileName %>" />
+                        </div>
+                      <% } else { %>
+                        <div class="admin-import-avatar-placeholder">无头像</div>
+                      <% } %>
+                      <div class="admin-import-mini-stats">
+                        <span>提示片段 <strong><%= item.parsed.promptStats?.promptItemCount || (item.parsed.promptProfileItems || []).length %></strong></span>
+                        <span>世界书 <strong><%= item.parsed.promptStats?.worldBookEntryCount || 0 %></strong></span>
+                        <span>备用开场 <strong><%= item.parsed.promptStats?.alternateGreetingCount || 0 %></strong></span>
+                      </div>
+                    </aside>
+                    <div class="admin-import-preview-main">
                   <div class="admin-import-grid">
                     <div class="field-group">
                       <label>角色名</label>
@@ -133,17 +162,25 @@
                     <label>一句话简介</label>
                     <textarea data-field="summary" maxlength="500"><%= item.parsed.summary || '' %></textarea>
                   </div>
+                  <% if (item.parsed.firstMessage) { %>
+                    <div class="admin-import-opening-preview">
+                      <span>开场白</span>
+                      <pre><%= item.parsed.firstMessage %></pre>
+                    </div>
+                  <% } %>
                   <% if (item.warnings && item.warnings.length) { %>
                     <div class="import-warning-list">
                       <% item.warnings.forEach(warning => { %><span class="meta-pill"><%= warning %></span><% }) %>
                     </div>
                   <% } %>
                   <details class="admin-fold import-json-fold">
-                    <summary>查看解析摘要</summary>
+                    <summary>查看解析摘要与提示词片段</summary>
                     <div class="admin-fold-body">
-                      <pre class="preview-box"><%= JSON.stringify({ promptItems: item.parsed.promptProfileItems, worldBookTextLength: (item.parsed.flattenedWorldBookText || '').length }, null, 2) %></pre>
+                      <pre class="preview-box"><%= JSON.stringify({ promptStats: item.parsed.promptStats, promptItems: item.parsed.promptProfileItems, worldBookTextLength: (item.parsed.flattenedWorldBookText || '').length }, null, 2) %></pre>
                     </div>
                   </details>
+                    </div>
+                  </div>
                 <% } %>
               </div>
             </article>

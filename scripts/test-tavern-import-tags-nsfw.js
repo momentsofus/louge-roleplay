@@ -109,11 +109,12 @@ async function cleanup(adminId, prefix) {
         personality: '温柔、谨慎、会解释边界。',
         scenario: '在旧书店里测试导入。',
         first_mes: '你好，{{user}}\\n我从酒馆卡里醒来了，并说：\\"我们开始吧。\\"',
+        alternate_greetings: ['<START>\\n{{char}}: 备用开场，{{user}}。'],
         mes_example: '<START>\n{{char}}: 示例对话。',
         tags: ['验收标签A', '验收标签B', '验收标签A'],
         character_book: {
           entries: {
-            lore: { keys: ['世界'], content: '世界书内容必须压平成角色提示词。', enabled: true },
+            lore: { keys: ['世界'], content: '世界书内容必须压平成角色提示词，且 {{char}} 会称呼 {{user}}。', enabled: true },
           },
         },
       },
@@ -133,6 +134,8 @@ async function cleanup(adminId, prefix) {
     assert.equal(preview.length, 2);
     assert.equal(preview.every((item) => item.ok), true);
     assert.match(preview[0].parsed.flattenedWorldBookText, /世界书内容必须压平成角色提示词/);
+    assert.match(preview[0].parsed.flattenedWorldBookText, new RegExp(`${prefix}Alpha 会称呼 \{user\}`), '世界书应解析 {{char}} 并保留运行时用户占位符');
+    assert.match(JSON.stringify(preview[0].parsed.promptProfileItems), /备用开场/, '备用开场白应进入提示词片段预览');
     assert.ok(preview[1].avatarPreviewDataUrl.startsWith('data:image/png;base64,'));
 
     const adjustments = preview.map((item, index) => ({
@@ -152,7 +155,7 @@ async function cleanup(adminId, prefix) {
     const importedFirstMessage = await query('SELECT first_message FROM characters WHERE user_id = ? AND name = ?', [adminId, `${prefix}Alpha`]);
     assert.equal(
       importedFirstMessage[0]?.first_message,
-      '你好，{{user}}\n我从酒馆卡里醒来了，并说："我们开始吧。"',
+      '你好，{user}\n我从酒馆卡里醒来了，并说："我们开始吧。"',
       '酒馆卡 first_mes 应作为楼阁开场白并解析转义字符',
     );
 
