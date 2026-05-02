@@ -7,6 +7,15 @@
 
 const { query, getDbType, waitReady, withTransaction } = require('../lib/db');
 
+class SiteMessageValidationError extends Error {
+  constructor(message, code = 'SITE_MESSAGE_VALIDATION_ERROR') {
+    super(message);
+    this.name = 'SiteMessageValidationError';
+    this.code = code;
+    this.statusCode = 400;
+  }
+}
+
 const VALID_TARGET_MODES = new Set(['all', 'filtered', 'users']);
 const VALID_ROLES = new Set(['any', 'user', 'admin']);
 const VALID_STATUSES = new Set(['any', 'active', 'blocked']);
@@ -45,8 +54,8 @@ function normalizeUserIdList(value) {
 function buildMessagePayload(payload = {}) {
   const title = normalizeString(payload.title, 120);
   const body = normalizeString(payload.body, 6000);
-  if (!title) throw new Error('站内信标题不能为空。');
-  if (!body) throw new Error('站内信内容不能为空。');
+  if (!title) throw new SiteMessageValidationError('站内信标题不能为空。', 'SITE_MESSAGE_TITLE_REQUIRED');
+  if (!body) throw new SiteMessageValidationError('站内信内容不能为空。', 'SITE_MESSAGE_BODY_REQUIRED');
 
   const targetMode = normalizeChoice(payload.targetMode || payload.target_mode, VALID_TARGET_MODES, 'all');
   const filterRole = normalizeChoice(payload.filterRole || payload.filter_role, VALID_ROLES, 'any');
@@ -55,7 +64,7 @@ function buildMessagePayload(payload = {}) {
   const userIds = normalizeUserIdList(payload.userIds || payload.user_ids);
 
   if (targetMode === 'users' && !userIds.length) {
-    throw new Error('请至少填写一个用户 ID。');
+    throw new SiteMessageValidationError('请至少填写一个用户 ID。', 'SITE_MESSAGE_RECIPIENT_REQUIRED');
   }
 
   return {
@@ -184,7 +193,7 @@ async function createSiteMessage(payload, senderAdminUserId = null) {
   const data = buildMessagePayload(payload);
   const recipientIds = await resolveRecipients(data);
   if (!recipientIds.length) {
-    throw new Error('没有匹配到可投递的用户。');
+    throw new SiteMessageValidationError('没有匹配到可投递的用户，请调整筛选条件或改用全体用户。', 'SITE_MESSAGE_NO_RECIPIENTS');
   }
 
   return withTransaction(async (conn) => {
@@ -276,6 +285,7 @@ async function getSiteMessageRealtimeSnapshot(userId) {
 }
 
 module.exports = {
+  SiteMessageValidationError,
   ensureSiteMessageSchema,
   createSiteMessage,
   listSiteMessagesForAdmin,

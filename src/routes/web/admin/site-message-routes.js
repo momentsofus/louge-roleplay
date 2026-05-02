@@ -27,7 +27,7 @@ function registerAdminSiteMessageRoutes(app, ctx) {
         users,
         formMessage: req.query.sent
           ? { type: 'success', text: `站内信已发送给 ${Number(req.query.sent || 0)} 个用户。` }
-          : null,
+          : (req.query.error ? { type: 'error', text: String(req.query.error).slice(0, 200) } : null),
       });
     } catch (error) {
       next(error);
@@ -39,6 +39,10 @@ function registerAdminSiteMessageRoutes(app, ctx) {
       const result = await createSiteMessage(req.body, req.session?.user?.id || null);
       res.redirect(`/admin/site-messages?sent=${encodeURIComponent(result.recipientCount)}`);
     } catch (error) {
+      if (error?.statusCode === 400 || String(error?.code || '').startsWith('SITE_MESSAGE_')) {
+        res.redirect(`/admin/site-messages?error=${encodeURIComponent(error.message || '站内信发送失败。')}`);
+        return;
+      }
       next(error);
     }
   });
