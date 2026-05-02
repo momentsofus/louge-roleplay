@@ -5,16 +5,15 @@
   const messageList = Array.isArray(messages) ? messages : [];
   const planList = Array.isArray(plans) ? plans : [];
   const userList = Array.isArray(users) ? users : [];
-  const formatDate = (value) => String(value || '—').replace('T', ' ').slice(0, 19);
+  const vm = (typeof viewModel !== 'undefined' ? viewModel : locals.viewModel) || {};
+  const formatDate = vm.formatDateTime || ((value) => String(value || '—').replace('T', ' ').slice(0, 19));
 %>
 <div class="admin-shell">
-  <section class="hero-card admin-hero">
-    <div class="admin-hero-copy">
-      <p class="section-kicker">Site Mail</p>
-      <h1><%= t('站内信管理') %></h1>
-      <p class="muted-text"><%= t('站内信用于可追踪的定向消息：可发给全体用户、符合条件的用户、单个或多个指定用户。通知适合轻量公告，站内信适合需要用户后续查看和标记已读的内容。') %></p>
-    </div>
-  </section>
+  <%- include('partials/admin-hero', {
+    kicker: 'Site Mail',
+    title: t('站内信管理'),
+    description: t('站内信用于可追踪的定向消息：可发给全体用户、符合条件的用户、单个或多个指定用户。通知适合轻量公告，站内信适合需要用户后续查看和标记已读的内容。')
+  }) %>
 
   <section class="section-card admin-section">
     <%- include('partials/admin-subnav', { activeAdminNav: 'site-messages' }) %>

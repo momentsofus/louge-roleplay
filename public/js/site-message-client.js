@@ -59,9 +59,10 @@
       const response = await fetch('/api/site-messages/status', { headers: { Accept: 'application/json' } });
       if (!response.ok) return;
       const payload = await response.json();
-      const nextCount = Number(payload.unreadCount || 0);
-      if (nextCount > unreadCount && Array.isArray(payload.latest) && payload.latest.length) {
-        showInboxToast(payload.latest[0]);
+      const data = payload && payload.ok && payload.data ? payload.data : payload;
+      const nextCount = Number(data.unreadCount || 0);
+      if (nextCount > unreadCount && Array.isArray(data.latest) && data.latest.length) {
+        showInboxToast(data.latest[0]);
       }
       updateBadge(nextCount);
     } catch (_) {

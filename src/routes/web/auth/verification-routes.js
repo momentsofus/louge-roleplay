@@ -3,6 +3,8 @@
  * @description 邮箱/手机验证码发送接口，统一在响应后刷新图形验证码以降低重放风险。
  */
 
+const { apiOk, apiError } = require('../../../server-helpers/view-models');
+
 function registerAuthVerificationRoutes(app, ctx) {
   const {
     createCaptcha,
@@ -23,12 +25,13 @@ function registerAuthVerificationRoutes(app, ctx) {
   app.post('/api/send-email-code', async (req, res, next) => {
     const refreshAndRespond = async (status, payload) => {
       const nextCaptcha = await createCaptcha();
-      return res.status(status).json({
+      const data = {
         ...payload,
         nextCaptchaId: nextCaptcha.captchaId,
         nextCaptchaImageUrl: nextCaptcha.imageUrl,
         requireNewCaptcha: true,
-      });
+      };
+      return res.status(status).json(status >= 400 ? apiError(data.message, payload.code || 'VERIFICATION_ERROR', data) : apiOk(data));
     };
 
     try {
@@ -77,12 +80,13 @@ function registerAuthVerificationRoutes(app, ctx) {
   app.post('/api/send-phone-code', async (req, res, next) => {
     const refreshAndRespond = async (status, payload) => {
       const nextCaptcha = await createCaptcha();
-      return res.status(status).json({
+      const data = {
         ...payload,
         nextCaptchaId: nextCaptcha.captchaId,
         nextCaptchaImageUrl: nextCaptcha.imageUrl,
         requireNewCaptcha: true,
-      });
+      };
+      return res.status(status).json(status >= 400 ? apiError(data.message, payload.code || 'VERIFICATION_ERROR', data) : apiOk(data));
     };
 
     try {

@@ -8,6 +8,8 @@ const logger = require('../lib/logger');
 const { translate, translateHtml } = require('../i18n');
 const { getClientNotificationBootstrap } = require('../services/notification-service');
 const { getUnreadSiteMessageCount } = require('../services/site-message-service');
+const viewModel = require('./view-models');
+const { getAdminNavItems, getAdminHubItems, getLayoutNavItems } = require('./navigation');
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -67,14 +69,21 @@ async function renderPage(res, view, params = {}) {
     locale,
     title,
   });
+  const navigation = {
+    adminNavItems: getAdminNavItems(t),
+    adminHubItems: getAdminHubItems(t),
+    layoutNavItems: getLayoutNavItems(res.locals.currentUser, t),
+  };
+
   const [clientNotifications, unreadSiteMessageCount] = await Promise.all([
     getClientNotificationBootstrap(res.locals.currentUser || null, {
       pageScope: params.notificationPageScope || inferNotificationPageScope(view),
     }),
     res.locals.currentUser?.id ? getUnreadSiteMessageCount(res.locals.currentUser.id).catch(() => 0) : 0,
   ]);
+
   return new Promise((resolve) => {
-    res.render(view, params, (viewError, html) => {
+    res.render(view, { ...params, viewModel, navigation }, (viewError, html) => {
       if (viewError) {
         logger.error('[renderPage] View 渲染失败', { view, error: viewError.message });
         res.status(500).type('text').send(t('页面渲染失败，请稍后重试。'));
@@ -95,6 +104,8 @@ async function renderPage(res, view, params = {}) {
         csrfToken: res.locals.csrfToken || '',
         cspNonce: res.locals.cspNonce || '',
         clientI18nMessages: res.locals.clientI18nMessages || {},
+        viewModel,
+        navigation,
         clientNotifications,
         unreadSiteMessageCount,
         localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },

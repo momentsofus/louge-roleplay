@@ -1,0 +1,22 @@
+<%
+  const heroActions = typeof actions !== 'undefined' && Array.isArray(actions) ? actions : [];
+  const heroExtraClass = typeof extraClass !== 'undefined' ? extraClass : '';
+  const heroRightHtml = typeof rightHtml !== 'undefined' ? rightHtml : '';
+%>
+<section class="hero-card admin-hero <%= heroExtraClass %>">
+  <div class="admin-hero-copy">
+    <% if (kicker) { %><p class="section-kicker"><%= kicker %></p><% } %>
+    <h1><%= title %></h1>
+    <% if (description) { %><p class="muted-text"><%= description %></p><% } %>
+    <% if (heroActions.length) { %>
+      <div class="toolbar-row toolbar-row--admin">
+        <% heroActions.forEach(action => { %>
+          <a class="<%= action.className || 'quick-link' %>" href="<%= action.href %>"><%= action.label %></a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+  <% if (heroRightHtml) { %>
+    <%- heroRightHtml %>
+  <% } %>
+</section>

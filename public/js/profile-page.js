@@ -6,6 +6,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const t = window.AI_ROLEPLAY_I18N?.t || ((key) => key);
 
+  function unwrapApiPayload(payload) {
+    if (payload && payload.ok && payload.data) return payload.data;
+    if (payload && payload.ok === false && payload.error) return payload.error;
+    return payload;
+  }
+
   function showCaptchaHint(message) {
     const hint = document.getElementById('profileCaptchaHint');
     if (hint) {
@@ -64,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, countryType: 'domestic', purpose: 'profile-email', captchaId, captchaText })
     });
-    const data = await res.json();
+    const payload = await res.json();
+    const data = unwrapApiPayload(payload);
     applyCaptchaRefreshFromResponse(data, t('邮箱验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
     alert(t(data.message || '已发送'));
   }
@@ -82,7 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, purpose: 'profile-phone', captchaId, captchaText })
     });
-    const data = await res.json();
+    const payload = await res.json();
+    const data = unwrapApiPayload(payload);
     applyCaptchaRefreshFromResponse(data, t('短信验证码处理完成；只有再次发送验证码时才需要填写新的图形验证码。'));
     alert(t(data.message || '已发送'));
   }
