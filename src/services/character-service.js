@@ -8,6 +8,7 @@ const { normalizeStoredImagePath } = require('./upload-service');
 const {
   attachTagsToCharacters,
   getCharacterTags,
+  getTagSearchNames,
   parseTagInput,
   setCharacterTags,
 } = require('./character-tag-service');
@@ -148,6 +149,7 @@ async function listPublicCharacters(options = {}) {
   const params = [];
   const includeNsfw = Boolean(options.includeNsfw);
   const tagNames = parseTagInput(options.tags);
+  const tagSearchNameGroups = tagNames.map((tagName) => getTagSearchNames(tagName));
   const tagMode = String(options.tagMode || 'or') === 'and' ? 'and' : 'or';
 
   if (!includeNsfw) {
@@ -156,21 +158,22 @@ async function listPublicCharacters(options = {}) {
 
   if (tagNames.length) {
     if (tagMode === 'and') {
-      tagNames.forEach((tagName) => {
+      tagSearchNameGroups.forEach((searchNames) => {
         where.push(`EXISTS (
           SELECT 1 FROM character_tags filter_ct
           JOIN tags filter_t ON filter_t.id = filter_ct.tag_id
-          WHERE filter_ct.character_id = c.id AND filter_t.is_enabled = 1 AND LOWER(filter_t.name) = LOWER(?)
+          WHERE filter_ct.character_id = c.id AND filter_t.is_enabled = 1 AND LOWER(filter_t.name) IN (${searchNames.map(() => 'LOWER(?)').join(',')})
         )`);
-        params.push(tagName);
+        params.push(...searchNames);
       });
     } else {
+      const flattenedSearchNames = [...new Set(tagSearchNameGroups.flat())];
       where.push(`EXISTS (
         SELECT 1 FROM character_tags filter_ct
         JOIN tags filter_t ON filter_t.id = filter_ct.tag_id
-        WHERE filter_ct.character_id = c.id AND filter_t.is_enabled = 1 AND LOWER(filter_t.name) IN (${tagNames.map(() => 'LOWER(?)').join(',')})
+        WHERE filter_ct.character_id = c.id AND filter_t.is_enabled = 1 AND LOWER(filter_t.name) IN (${flattenedSearchNames.map(() => 'LOWER(?)').join(',')})
       )`);
-      params.push(...tagNames);
+      params.push(...flattenedSearchNames);
     }
   }
 

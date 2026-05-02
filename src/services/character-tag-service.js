@@ -6,13 +6,16 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const OpenCC = require('opencc-js');
 const { query } = require('../lib/db');
 
 const MAX_TAGS_PER_CHARACTER = 12;
 const MAX_TAG_NAME_LENGTH = 32;
+const simplifiedToTraditional = OpenCC.Converter({ from: 'cn', to: 'tw' });
+const traditionalToSimplified = OpenCC.Converter({ from: 'tw', to: 'cn' });
 
 function normalizeTagName(value) {
-  return String(value || '')
+  return simplifiedToTraditional(String(value || ''))
     .normalize('NFC')
     .replace(/[#＃]/g, '')
     .replace(/\s+/g, ' ')
@@ -30,6 +33,12 @@ function normalizeTagSlug(value) {
     .slice(0, 64);
   if (base) return base;
   return `tag-${crypto.createHash('sha1').update(String(value || '')).digest('hex').slice(0, 12)}`;
+}
+
+function getTagSearchNames(value) {
+  const normalizedName = normalizeTagName(value);
+  const simplifiedName = traditionalToSimplified(normalizedName).normalize('NFC');
+  return [...new Set([normalizedName, simplifiedName].filter(Boolean))];
 }
 
 function uniqueTagNames(values = []) {
@@ -71,8 +80,8 @@ async function ensureTagByName(name, conn = null) {
 
   const existing = await runSql(
     conn,
-    'SELECT id, name, slug FROM tags WHERE slug = ? OR name = ? LIMIT 1',
-    [slug, normalizedName],
+    'SELECT id, name, slug FROM tags WHERE slug = ? OR name IN (?, ?) LIMIT 1',
+    [slug, ...getTagSearchNames(normalizedName)],
   );
   if (existing[0]) {
     return existing[0];
@@ -92,8 +101,8 @@ async function ensureTagByName(name, conn = null) {
     }
     const rows = await runSql(
       conn,
-      'SELECT id, name, slug FROM tags WHERE slug = ? OR name = ? LIMIT 1',
-      [slug, normalizedName],
+      'SELECT id, name, slug FROM tags WHERE slug = ? OR name IN (?, ?) LIMIT 1',
+      [slug, ...getTagSearchNames(normalizedName)],
     );
     return rows[0] || null;
   }
@@ -215,6 +224,7 @@ module.exports = {
   MAX_TAGS_PER_CHARACTER,
   normalizeTagName,
   normalizeTagSlug,
+  getTagSearchNames,
   parseTagInput,
   uniqueTagNames,
   ensureTagByName,
