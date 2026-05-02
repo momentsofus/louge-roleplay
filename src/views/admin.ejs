@@ -42,6 +42,8 @@
       </div>
     </div>
 
+    <%- include('partials/admin-subnav', { activeAdminNav: 'dashboard' }) %>
+
     <div class="admin-hub-grid admin-hub-grid--tools">
       <a class="admin-hub-card" href="/admin/providers">
         <span class="pill pill--brand">LLM</span>
@@ -78,6 +80,11 @@
         <strong><%= t('角色卡管理') %></strong>
         <p><%= t('全局查看角色卡，禁用、恢复、删除并追踪关联对话。') %></p>
       </a>
+      <a class="admin-hub-card" href="/admin/characters/import">
+        <span class="pill pill--brand">Import</span>
+        <strong><%= t('批量导入酒馆卡') %></strong>
+        <p><%= t('上传 SillyTavern / TavernAI 的 PNG 或 JSON 角色卡，先预览再入库。') %></p>
+      </a>
       <a class="admin-hub-card" href="/admin/conversations">
         <span class="pill pill--brand">Chats</span>
         <strong>对话记录</strong>
@@ -100,8 +107,6 @@
         </label>
       </div>
     </div>
-
-    <%- include('partials/admin-subnav', { activeAdminNav: 'dashboard' }) %>
 
     <div class="admin-users-summary" aria-label="用户权限概览">
       <div class="admin-users-summary-card">

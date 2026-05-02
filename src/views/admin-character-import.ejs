@@ -1,8 +1,6 @@
 <%# @file src/views/admin-character-import.ejs 后台批量导入 SillyTavern/TavernAI 角色卡。 %>
 <link rel="stylesheet" href="/public/styles/site-pages.css" />
 
-<%- include('partials/admin-subnav', { activeAdminNav: 'character-import' }) %>
-
 <%
   const items = Array.isArray(previewItems) ? previewItems : [];
   const existingTags = Array.isArray(allTags) ? allTags : [];
@@ -20,6 +18,10 @@
       <h1>批量导入酒馆卡</h1>
       <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。开场白、示例对话、世界书与 Tavern 占位符会在这里先解析成楼阁可用的提示词片段。</p>
     </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <%- include('partials/admin-subnav', { activeAdminNav: 'character-import' }) %>
   </section>
 
   <% if (importResult) { %>

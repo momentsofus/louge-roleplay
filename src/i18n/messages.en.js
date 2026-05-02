@@ -1030,6 +1030,7 @@ const EN_MESSAGES = {
   '还没有关联对话': 'No related conversations yet',
   '还没有评论': 'No comments yet',
   '批量导入酒馆卡': 'Batch import Tavern cards',
+  '上传 SillyTavern / TavernAI 的 PNG 或 JSON 角色卡，先预览再入库。': 'Upload SillyTavern / TavernAI PNG or JSON cards, preview them first, then import.',
   '，失败': '，失败',
   '，跳过': '，跳过',
   '# · · 成功 / 失败 / 跳过': '# · · 成功 / 失败 / 跳过',

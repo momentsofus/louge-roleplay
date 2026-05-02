@@ -130,15 +130,25 @@ async function cleanup(adminId, prefix) {
       buffer: buildPngCard({ data: { ...card.data, name: `${prefix}PngAvatar`, tags: ['验收标签A', '验收标签C'] } }),
     };
 
-    const preview = await previewTavernImport([jsonFile, pngFile], adminId);
-    assert.equal(preview.length, 2);
+    const mojibakeGoodName = `${prefix}Mojibake朝雾花音`;
+    const mojibakeName = Buffer.from(mojibakeGoodName, 'utf8').toString('latin1');
+    const mojibakeFile = {
+      originalname: `${prefix}-mojibake.json`,
+      mimetype: 'application/json',
+      buffer: Buffer.from(JSON.stringify({ data: { ...card.data, name: mojibakeName, tags: ['验收标签A'] } }), 'utf8'),
+    };
+
+    const preview = await previewTavernImport([jsonFile, pngFile, mojibakeFile], adminId);
+    assert.equal(preview.length, 3);
     assert.equal(preview.every((item) => item.ok), true);
+    assert.equal(preview[2].parsed.name, mojibakeGoodName, '酒馆卡角色名出现 Latin-1/UTF-8 乱码时应自动修复');
     assert.match(preview[0].parsed.flattenedWorldBookText, /世界书内容必须压平成角色提示词/);
     assert.match(preview[0].parsed.flattenedWorldBookText, new RegExp(`${prefix}Alpha 会称呼 \{user\}`), '世界书应解析 {{char}} 并保留运行时用户占位符');
     assert.match(JSON.stringify(preview[0].parsed.promptProfileItems), /备用开场/, '备用开场白应进入提示词片段预览');
     assert.ok(preview[1].avatarPreviewDataUrl.startsWith('data:image/png;base64,'));
 
-    const adjustments = preview.map((item, index) => ({
+    const importablePreview = preview.slice(0, 2);
+    const adjustments = importablePreview.map((item, index) => ({
       index: item.index,
       selected: true,
       name: item.parsed.name,
@@ -148,7 +158,7 @@ async function cleanup(adminId, prefix) {
       isNsfw: index === 0,
       duplicateAction: 'copy',
     }));
-    const items = buildConfirmItemsFromPreview(preview, { adjustmentsJson: JSON.stringify(adjustments) });
+    const items = buildConfirmItemsFromPreview(importablePreview, { adjustmentsJson: JSON.stringify(adjustments) });
     const result = await confirmTavernImport(adminId, items);
     assert.equal(result.successCount, 2);
     assert.equal(result.failedCount, 0);
