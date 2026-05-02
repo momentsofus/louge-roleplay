@@ -1,0 +1,205 @@
+<%# @file src/views/admin-character-import.ejs 后台批量导入 SillyTavern/TavernAI 角色卡。 %>
+<link rel="stylesheet" href="/public/styles/site-pages.css" />
+
+<%- include('partials/admin-subnav', { activeAdminNav: 'character-import' }) %>
+
+<%
+  const items = Array.isArray(previewItems) ? previewItems : [];
+  const existingTags = Array.isArray(allTags) ? allTags : [];
+  const recentBatches = Array.isArray(batches) ? batches : [];
+%>
+
+<div class="admin-shell">
+  <section class="hero-card admin-hero">
+    <div class="admin-hero-copy">
+      <p class="section-kicker">Tavern Card Import</p>
+      <h1>批量导入酒馆卡</h1>
+      <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。</p>
+    </div>
+  </section>
+
+  <% if (importResult) { %>
+    <section class="section-card import-result-card">
+      <p class="section-kicker">Import Result</p>
+      <h2>导入完成</h2>
+      <p class="muted-text">
+        <% if (importResult.batchId) { %>
+          批次 #<%= importResult.batchId %>：成功 <strong><%= importResult.successCount %></strong>，跳过 <strong><%= importResult.skippedCount %></strong>，失败 <strong><%= importResult.failedCount %></strong>。
+        <% } else { %>
+          <%= importResult.message || '没有选中的可导入角色。' %>
+        <% } %>
+      </p>
+      <div class="section-actions">
+        <a class="quick-link" href="/admin/characters">查看角色卡管理</a>
+        <a class="quick-link" href="/admin/characters/import">继续导入</a>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="section-card">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Upload</p>
+        <h2>上传 PNG / JSON</h2>
+        <p class="muted-text">单个文件不超过 10MB，一次最多 30 个。PNG 会读取 tEXt/iTXt 中的 <code>chara</code>、<code>ccv3</code> 等元数据。</p>
+      </div>
+    </div>
+    <form method="POST" action="/admin/characters/import/preview" enctype="multipart/form-data" class="settings-form">
+      <div class="field-group upload-field">
+        <label for="cards">选择角色卡文件</label>
+        <input id="cards" name="cards" type="file" multiple accept=".png,.json,application/json,image/png" required />
+        <div class="mini-note">这里只做解析预览；真正入库要在下一步确认。</div>
+      </div>
+      <div class="settings-form-actions">
+        <button class="submit-btn" type="submit">解析并预览</button>
+      </div>
+    </form>
+  </section>
+
+  <% if (items.length) { %>
+    <section class="section-card">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Preview</p>
+          <h2>逐个确认导入</h2>
+          <p class="muted-text">世界书已被压平成“世界书 / 背景资料”提示词片段，同时保留原始 JSON，方便以后迁移到真正的世界书系统。</p>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/characters/import/confirm" id="tavernImportConfirmForm" class="admin-import-form">
+        <input type="hidden" name="previewToken" value="<%= previewToken || '' %>" />
+        <input type="hidden" name="adjustmentsJson" id="adjustmentsJson" value="" />
+        <div class="admin-list admin-import-list">
+          <% items.forEach((item, index) => { %>
+            <article class="admin-item import-preview-item" data-import-item data-index="<%= item.index ?? index %>" data-ok="<%= item.ok ? '1' : '0' %>" data-duplicate-id="<%= item.duplicate?.id || '' %>">
+              <div class="admin-item-body">
+                <div class="admin-import-item-head">
+                  <label class="checkbox-row">
+                    <input type="checkbox" data-field="selected" <%= item.ok ? 'checked' : '' %> <%= item.ok ? '' : 'disabled' %> />
+                    <strong><%= item.fileName %></strong>
+                  </label>
+                  <% if (item.ok) { %>
+                    <span class="meta-pill">可导入</span>
+                  <% } else { %>
+                    <span class="meta-pill meta-pill--danger">解析失败</span>
+                  <% } %>
+                </div>
+
+                <% if (!item.ok) { %>
+                  <p class="form-message form-message--error"><%= item.errorMessage || '未检测到 SillyTavern 角色数据' %></p>
+                <% } else { %>
+                  <% if (item.avatarPreviewDataUrl) { %>
+                    <div class="upload-preview upload-preview--avatar admin-import-avatar-preview">
+                      <img src="<%= item.avatarPreviewDataUrl %>" alt="<%= item.parsed.name || item.fileName %>" />
+                    </div>
+                  <% } %>
+                  <div class="admin-import-grid">
+                    <div class="field-group">
+                      <label>角色名</label>
+                      <input data-field="name" maxlength="100" value="<%= item.parsed.name %>" />
+                    </div>
+                    <div class="field-group">
+                      <label>标签（逗号分隔）</label>
+                      <input data-field="tags" maxlength="300" value="<%= (item.parsed.tags || []).join(', ') %>" placeholder="奇幻, 日常, 治愈" />
+                    </div>
+                    <div class="field-group">
+                      <label>公开状态</label>
+                      <select data-field="visibility">
+                        <option value="public" selected>公开</option>
+                        <option value="private">私有</option>
+                      </select>
+                    </div>
+                    <div class="field-group">
+                      <label>NSFW</label>
+                      <select data-field="isNsfw">
+                        <option value="0" selected>否</option>
+                        <option value="1">是，默认从公共大厅隐藏</option>
+                      </select>
+                    </div>
+                    <div class="field-group">
+                      <label>重复角色处理</label>
+                      <select data-field="duplicateAction">
+                        <% if (item.duplicate) { %>
+                          <option value="skip">跳过已有角色 #<%= item.duplicate.id %></option>
+                          <option value="copy" selected>创建副本</option>
+                          <option value="overwrite">覆盖已有角色 #<%= item.duplicate.id %></option>
+                        <% } else { %>
+                          <option value="copy" selected>创建新角色</option>
+                        <% } %>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label>一句话简介</label>
+                    <textarea data-field="summary" maxlength="500"><%= item.parsed.summary || '' %></textarea>
+                  </div>
+                  <% if (item.warnings && item.warnings.length) { %>
+                    <div class="import-warning-list">
+                      <% item.warnings.forEach(warning => { %><span class="meta-pill"><%= warning %></span><% }) %>
+                    </div>
+                  <% } %>
+                  <details class="admin-fold import-json-fold">
+                    <summary>查看解析摘要</summary>
+                    <div class="admin-fold-body">
+                      <pre class="preview-box"><%= JSON.stringify({ promptItems: item.parsed.promptProfileItems, worldBookTextLength: (item.parsed.flattenedWorldBookText || '').length }, null, 2) %></pre>
+                    </div>
+                  </details>
+                <% } %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+        <div class="settings-form-actions">
+          <button class="submit-btn" type="submit">确认导入选中角色</button>
+        </div>
+      </form>
+    </section>
+  <% } %>
+
+  <section class="section-card">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Recent Batches</p>
+        <h2>最近导入批次</h2>
+      </div>
+    </div>
+    <% if (!recentBatches.length) { %>
+      <p class="muted-text">还没有导入记录。</p>
+    <% } else { %>
+      <div class="admin-list">
+        <% recentBatches.forEach(batch => { %>
+          <details class="admin-fold">
+            <summary>#<%= batch.id %> · <%= batch.status %> · 成功 <%= batch.success_count %> / 失败 <%= batch.failed_count %> / 跳过 <%= batch.skipped_count %></summary>
+            <div class="admin-fold-body">
+              <% (batch.items || []).forEach(item => { %>
+                <p class="muted-text"><strong><%= item.status %></strong> · <%= item.file_name %> <%= item.error_message ? `— ${item.error_message}` : '' %></p>
+              <% }) %>
+            </div>
+          </details>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<script nonce="<%= cspNonce || '' %>">
+  document.getElementById('tavernImportConfirmForm')?.addEventListener('submit', (event) => {
+    const items = Array.from(document.querySelectorAll('[data-import-item]')).map((card) => {
+      const raw = { index: Number(card.getAttribute('data-index') || 0), ok: card.getAttribute('data-ok') === '1' };
+      const field = (name) => card.querySelector(`[data-field="${name}"]`);
+      if (!raw.ok) return { ...raw, selected: false };
+      return {
+        ...raw,
+        selected: Boolean(field('selected')?.checked),
+        name: field('name')?.value || '',
+        summary: field('summary')?.value || '',
+        tags: field('tags')?.value || '',
+        visibility: field('visibility')?.value || 'public',
+        isNsfw: field('isNsfw')?.value === '1',
+        duplicateAction: field('duplicateAction')?.value || 'copy',
+        duplicateId: Number(card.getAttribute('data-duplicate-id') || 0) || null,
+      };
+    });
+    document.getElementById('adjustmentsJson').value = JSON.stringify(items);
+  });
+</script>

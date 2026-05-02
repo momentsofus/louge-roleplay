@@ -39,7 +39,16 @@ function ensureSqliteCharacterConversationSchema(db) {
       created_at          TEXT NOT NULL,
       updated_at          TEXT NOT NULL,
       avatar_image_path   TEXT NULL,
-      background_image_path TEXT NULL
+      background_image_path TEXT NULL,
+      is_nsfw             INTEGER NOT NULL DEFAULT 0,
+      source_type         TEXT NULL,
+      source_format       TEXT NULL,
+      source_file_name    TEXT NULL,
+      source_file_hash    TEXT NULL,
+      source_card_json    TEXT NULL,
+      imported_world_book_json TEXT NULL,
+      flattened_world_book_text TEXT NULL,
+      import_batch_id     INTEGER NULL
     )
   `);
 
@@ -68,6 +77,73 @@ function ensureSqliteCharacterConversationSchema(db) {
   ensureSqliteColumn(db, 'characters', 'status', "status TEXT NOT NULL DEFAULT 'published'");
   ensureSqliteColumn(db, 'characters', 'avatar_image_path', 'avatar_image_path TEXT NULL');
   ensureSqliteColumn(db, 'characters', 'background_image_path', 'background_image_path TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'is_nsfw', 'is_nsfw INTEGER NOT NULL DEFAULT 0');
+  ensureSqliteColumn(db, 'characters', 'source_type', 'source_type TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'source_format', 'source_format TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'source_file_name', 'source_file_name TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'source_file_hash', 'source_file_hash TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'source_card_json', 'source_card_json TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'imported_world_book_json', 'imported_world_book_json TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'flattened_world_book_text', 'flattened_world_book_text TEXT NULL');
+  ensureSqliteColumn(db, 'characters', 'import_batch_id', 'import_batch_id INTEGER NULL');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_characters_public_nsfw ON characters (visibility, status, is_nsfw, id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_characters_source_file_hash ON characters (source_file_hash)');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      description TEXT NULL,
+      color TEXT NULL,
+      icon TEXT NULL,
+      is_nsfw INTEGER NOT NULL DEFAULT 0,
+      is_enabled INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      usage_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_tags_slug ON tags (slug)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_tags_enabled_sort ON tags (is_enabled, sort_order, name)');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS character_tags (
+      character_id INTEGER NOT NULL,
+      tag_id INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (character_id, tag_id)
+    )
+  `);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_character_tags_tag ON character_tags (tag_id, character_id)');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS import_batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_user_id INTEGER NULL,
+      total_count INTEGER NOT NULL DEFAULT 0,
+      success_count INTEGER NOT NULL DEFAULT 0,
+      failed_count INTEGER NOT NULL DEFAULT 0,
+      skipped_count INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending',
+      options_json TEXT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS import_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      batch_id INTEGER NOT NULL,
+      file_name TEXT NOT NULL,
+      file_hash TEXT NULL,
+      status TEXT NOT NULL,
+      error_message TEXT NULL,
+      parsed_role_name TEXT NULL,
+      created_role_id INTEGER NULL,
+      raw_json TEXT NULL,
+      created_at TEXT NOT NULL
+    )
+  `);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_import_items_batch ON import_items (batch_id, id)');
   db.exec(`
     CREATE TABLE IF NOT EXISTS character_likes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

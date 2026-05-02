@@ -14,7 +14,7 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone } = require('../services/user-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone, updateUserNsfwPreference } = require('../services/user-service');
 const { createCharacter, updateCharacter, listPublicCharacters, listFeaturedPublicCharacters, getPublicCharacterDetail, listUserCharacters, getCharacterById, deleteCharacterSafely, ensureCharacterImageColumns } = require('../services/character-service');
 const { toggleCharacterLike, addCharacterComment, listCharacterComments, markCharacterUsed } = require('../services/character-social-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
@@ -22,6 +22,8 @@ const { listUsersWithPlans, getAdminOverview, safelyDeleteUserById } = require('
 const { listLogEntries } = require('../services/log-service');
 const { DEFAULT_SUPPORT_QR_URL, listNotificationsForAdmin, listActiveNotificationsForUser, createNotification, updateNotification, deleteNotification } = require('../services/notification-service');
 const { deleteAdminCharacter, ensureCharactersStatusEnumSupportsBlocked, getAdminCharacterDetail, getAdminCharacterById, listAdminCharacters, updateAdminCharacterStatus } = require('../services/admin-character-service');
+const { listPublicTags, listAllTags } = require('../services/character-tag-service');
+const { uploadTavernCards, previewTavernImport, saveImportPreview, loadImportPreview, deleteImportPreview, buildConfirmItemsFromPreview, confirmTavernImport, listImportBatches } = require('../services/tavern-card-import-service');
 const { getAdminConversationDetail, listAdminConversations, permanentlyDeleteConversation, permanentlyDeleteMessage, restoreConversation, restoreMessage } = require('../services/admin-conversation-service');
 const { listProviders, createProvider, updateProvider } = require('../services/llm-provider-service');
 const { listPresetModels, createPresetModel, updatePresetModel, deletePresetModel } = require('../services/preset-model-service');
@@ -150,6 +152,7 @@ function registerWebRoutes(app) {
     unbindUserEmail,
     updateUserPhone,
     unbindUserPhone,
+    updateUserNsfwPreference,
     ensureCharacterImageColumns,
     createCharacter,
     updateCharacter,
@@ -187,6 +190,16 @@ function registerWebRoutes(app) {
     getAdminCharacterById,
     listAdminCharacters,
     updateAdminCharacterStatus,
+    listPublicTags,
+    listAllTags,
+    uploadTavernCards,
+    previewTavernImport,
+    saveImportPreview,
+    loadImportPreview,
+    deleteImportPreview,
+    buildConfirmItemsFromPreview,
+    confirmTavernImport,
+    listImportBatches,
     getAdminConversationDetail,
     listAdminConversations,
     permanentlyDeleteConversation,

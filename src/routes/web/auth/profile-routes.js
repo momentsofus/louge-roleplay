@@ -18,6 +18,7 @@ function registerAuthProfileRoutes(app, ctx) {
     unbindUserEmail,
     updateUserPhone,
     unbindUserPhone,
+    updateUserNsfwPreference,
     verifyEmailCode,
     verifyPhoneCode,
     hashPassword,
@@ -150,6 +151,14 @@ function registerAuthProfileRoutes(app, ctx) {
         await unbindUserPhone(userId);
         const refreshedUser = await findUserById(userId);
         return await renderProfileMessage('手机号已经解绑。', 'success', refreshedUser);
+      }
+
+      if (action === 'privacy') {
+        const showNsfw = String(req.body.showNsfw || '').trim() === '1';
+        await updateUserNsfwPreference(userId, showNsfw);
+        req.session.user.show_nsfw = showNsfw ? 1 : 0;
+        const refreshedUser = await findUserById(userId);
+        return await renderProfileMessage(showNsfw ? 'NSFW 角色显示已开启。' : 'NSFW 角色显示已关闭，公共角色大厅会默认隐藏。', 'success', refreshedUser);
       }
 
       if (action === 'password') {

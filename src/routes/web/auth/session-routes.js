@@ -66,7 +66,7 @@ function registerAuthSessionRoutes(app, ctx) {
         ...buildLoginLogMeta(req, { login }),
         userId: user.id,
       });
-      req.session.user = { id: user.id, publicId: user.public_id || null, username: user.username, role: user.role || 'user', status: user.status || 'active' };
+      req.session.user = { id: user.id, publicId: user.public_id || null, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0) };
       return res.redirect('/dashboard');
     } catch (error) {
       logger.error('Login request failed', {

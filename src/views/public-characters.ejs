@@ -6,10 +6,15 @@
 <%
   const characterList = Array.isArray(characters) ? characters : [];
   const pager = pagination || { page: 1, pageSize: 12, total: characterList.length, totalPages: 1, hasPrev: false, hasNext: false };
-  const currentFilters = filters || { keyword: '', sort: 'heat' };
+  const currentFilters = filters || { keyword: '', sort: 'heat', tags: [], tagMode: 'or' };
+  const activeTagsText = Array.isArray(currentFilters.tags) ? currentFilters.tags.join(', ') : String(currentFilters.tags || '');
+  const tagOptions = Array.isArray(availableTags) ? availableTags : [];
+  const nsfwVisible = Boolean(showNsfw);
   const buildPageUrl = (page) => {
     const params = new URLSearchParams();
     if (currentFilters.keyword) params.set('q', currentFilters.keyword);
+    if (activeTagsText) params.set('tags', activeTagsText);
+    if (currentFilters.tagMode && currentFilters.tagMode !== 'or') params.set('tagMode', currentFilters.tagMode);
     if (currentFilters.sort && currentFilters.sort !== 'heat') params.set('sort', currentFilters.sort);
     if (pager.pageSize && Number(pager.pageSize) !== 12) params.set('pageSize', String(pager.pageSize));
     params.set('page', String(page));
@@ -31,11 +36,12 @@
     <div>
       <div class="section-kicker">Public Characters</div>
       <h1>公开角色</h1>
-      <p>公开角色支持点赞、评论、使用量统计和综合热度排序。想找热门角色，直接按热度或互动数据筛。</p>
+      <p>公开角色支持点赞、评论、使用量统计、标签筛选和综合热度排序。NSFW 角色默认隐藏，只有登录并在个人资料开启后才会显示。</p>
       <div class="public-hero-meta">
         <span><strong><%= pager.total %></strong> 个公开角色</span>
         <span>每页 <strong><%= pager.pageSize %></strong> 个</span>
         <span>第 <strong><%= pager.page %></strong> / <strong><%= pager.totalPages %></strong> 页</span>
+        <span>NSFW：<strong><%= nsfwVisible ? '已显示' : '默认隐藏' %></strong></span>
       </div>
     </div>
     <div class="public-hero-actions">
@@ -55,6 +61,20 @@
         <input id="publicCharacterKeyword" name="q" value="<%= currentFilters.keyword || '' %>" maxlength="80" placeholder="搜索角色名、简介或创建者" />
       </div>
       <div class="field-group">
+        <label for="publicCharacterTags">标签</label>
+        <input id="publicCharacterTags" name="tags" value="<%= activeTagsText %>" maxlength="160" placeholder="多个标签用逗号分隔" list="publicCharacterTagOptions" />
+        <datalist id="publicCharacterTagOptions">
+          <% tagOptions.forEach(tag => { %><option value="<%= tag.name %>"><% }) %>
+        </datalist>
+      </div>
+      <div class="field-group">
+        <label for="publicCharacterTagMode">标签模式</label>
+        <select id="publicCharacterTagMode" name="tagMode">
+          <option value="or" <%= currentFilters.tagMode !== 'and' ? 'selected' : '' %>>包含任一</option>
+          <option value="and" <%= currentFilters.tagMode === 'and' ? 'selected' : '' %>>包含全部</option>
+        </select>
+      </div>
+      <div class="field-group">
         <label for="publicCharacterSort">排序</label>
         <select id="publicCharacterSort" name="sort">
           <% sortOptions.forEach(([value, label]) => { %>
@@ -72,7 +92,7 @@
       </div>
       <div class="public-filter-actions">
         <button class="btn-brand" type="submit">筛选</button>
-        <% if (currentFilters.keyword || currentFilters.sort !== 'heat' || Number(pager.pageSize) !== 12) { %>
+        <% if (currentFilters.keyword || activeTagsText || currentFilters.tagMode === 'and' || currentFilters.sort !== 'heat' || Number(pager.pageSize) !== 12) { %>
           <a class="quick-link" href="/characters/public">清空</a>
         <% } %>
       </div>
@@ -105,6 +125,13 @@
             </div>
           </div>
           <p class="public-character-summary"><%= character.summary || '这个角色还没有写简介。' %></p>
+          <% if (Array.isArray(character.tags) && character.tags.length) { %>
+            <div class="tag-list">
+              <% character.tags.forEach(tag => { %>
+                <a class="tag-chip" href="/characters/public?tags=<%= encodeURIComponent(tag.name) %>">#<%= tag.name %></a>
+              <% }) %>
+            </div>
+          <% } %>
           <div class="public-character-stats">
             <span>🔥 热度 <strong><%= character.heat_score || 0 %></strong></span>
             <span>♥ 点赞 <strong><%= character.like_count || 0 %></strong></span>
@@ -113,6 +140,7 @@
           </div>
           <div class="public-character-meta">
             <span class="meta-pill">公开</span>
+            <% if (Number(character.is_nsfw || 0) === 1) { %><span class="meta-pill meta-pill--danger">NSFW</span><% } %>
             <span class="meta-pill"><%= character.created_at %></span>
           </div>
           <div class="public-character-actions public-character-actions--split">

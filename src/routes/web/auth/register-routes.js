@@ -138,7 +138,7 @@ function registerAuthRegisterRoutes(app, ctx) {
         ...registerLogMeta(),
         userId,
       });
-      req.session.user = { id: userId, publicId: null, username, role: 'user' };
+      req.session.user = { id: userId, publicId: null, username, role: 'user', show_nsfw: 0 };
       const registeredUser = await findUserById(userId);
       req.session.user.publicId = registeredUser?.public_id || null;
       return res.redirect('/dashboard');

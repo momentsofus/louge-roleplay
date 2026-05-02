@@ -336,6 +336,7 @@ async function main() {
       phone_verified TINYINT(1) NOT NULL DEFAULT 0,
       role          ENUM('user','admin') NOT NULL DEFAULT 'user',
       status        ENUM('active','blocked') NOT NULL DEFAULT 'active',
+      show_nsfw     TINYINT(1) NOT NULL DEFAULT 0,
       created_at    DATETIME NOT NULL,
       updated_at    DATETIME NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -348,6 +349,7 @@ async function main() {
   await ensureColumn('users', 'phone_verified', 'phone_verified TINYINT(1) NOT NULL DEFAULT 0');
   await ensureColumn('users', 'role',           "role ENUM('user','admin') NOT NULL DEFAULT 'user'");
   await ensureColumn('users', 'status',         "status ENUM('active','blocked') NOT NULL DEFAULT 'active'");
+  await ensureColumn('users', 'show_nsfw',      'show_nsfw TINYINT(1) NOT NULL DEFAULT 0');
   await ensureUniqueIndex('users', 'uniq_users_email', 'email');
   await ensureUniqueIndex('users', 'uniq_users_phone', 'phone');
   await backfillUserPublicIds(connection);
@@ -597,6 +599,15 @@ async function main() {
       updated_at          DATETIME NOT NULL,
       avatar_image_path   VARCHAR(500) NULL,
       background_image_path VARCHAR(500) NULL,
+      is_nsfw             TINYINT(1) NOT NULL DEFAULT 0,
+      source_type         VARCHAR(40) NULL,
+      source_format       VARCHAR(80) NULL,
+      source_file_name    VARCHAR(255) NULL,
+      source_file_hash    VARCHAR(64) NULL,
+      source_card_json    JSON NULL,
+      imported_world_book_json JSON NULL,
+      flattened_world_book_text LONGTEXT NULL,
+      import_batch_id     BIGINT NULL,
       CONSTRAINT fk_characters_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
@@ -605,6 +616,17 @@ async function main() {
   await ensureColumn('characters', 'background_image_path', 'background_image_path VARCHAR(500) NULL');
   await ensureColumn('characters', 'visibility', "visibility ENUM('public','private','unlisted') DEFAULT 'public'");
   await ensureColumn('characters', 'status', "status ENUM('draft','published','blocked') NOT NULL DEFAULT 'published'");
+  await ensureColumn('characters', 'is_nsfw', 'is_nsfw TINYINT(1) NOT NULL DEFAULT 0');
+  await ensureColumn('characters', 'source_type', 'source_type VARCHAR(40) NULL');
+  await ensureColumn('characters', 'source_format', 'source_format VARCHAR(80) NULL');
+  await ensureColumn('characters', 'source_file_name', 'source_file_name VARCHAR(255) NULL');
+  await ensureColumn('characters', 'source_file_hash', 'source_file_hash VARCHAR(64) NULL');
+  await ensureColumn('characters', 'source_card_json', 'source_card_json JSON NULL');
+  await ensureColumn('characters', 'imported_world_book_json', 'imported_world_book_json JSON NULL');
+  await ensureColumn('characters', 'flattened_world_book_text', 'flattened_world_book_text LONGTEXT NULL');
+  await ensureColumn('characters', 'import_batch_id', 'import_batch_id BIGINT NULL');
+  await ensureIndex('characters', 'idx_characters_public_nsfw', '(visibility, status, is_nsfw, id)');
+  await ensureIndex('characters', 'idx_characters_source_file_hash', '(source_file_hash)');
 
   await connection.query(`
     ALTER TABLE \`characters\`
@@ -619,6 +641,69 @@ async function main() {
       NOT NULL DEFAULT 'published'
   `);
   console.log('[init-db]   ~ characters.visibility/status ENUM 已确认完整');
+
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS tags (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(32) NOT NULL,
+      slug VARCHAR(80) NOT NULL,
+      description VARCHAR(255) NULL,
+      color VARCHAR(32) NULL,
+      icon VARCHAR(32) NULL,
+      is_nsfw TINYINT(1) NOT NULL DEFAULT 0,
+      is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+      sort_order INT NOT NULL DEFAULT 0,
+      usage_count INT NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL,
+      UNIQUE KEY uniq_tags_slug (slug),
+      INDEX idx_tags_enabled_sort (is_enabled, sort_order, name)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS character_tags (
+      character_id BIGINT NOT NULL,
+      tag_id BIGINT NOT NULL,
+      created_at DATETIME NOT NULL,
+      PRIMARY KEY (character_id, tag_id),
+      INDEX idx_character_tags_tag (tag_id, character_id),
+      CONSTRAINT fk_character_tags_character FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+      CONSTRAINT fk_character_tags_tag FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS import_batches (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      admin_user_id BIGINT NULL,
+      total_count INT NOT NULL DEFAULT 0,
+      success_count INT NOT NULL DEFAULT 0,
+      failed_count INT NOT NULL DEFAULT 0,
+      skipped_count INT NOT NULL DEFAULT 0,
+      status VARCHAR(30) NOT NULL DEFAULT 'pending',
+      options_json JSON NULL,
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL,
+      INDEX idx_import_batches_created (created_at),
+      CONSTRAINT fk_import_batches_admin FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS import_items (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      batch_id BIGINT NOT NULL,
+      file_name VARCHAR(255) NOT NULL,
+      file_hash VARCHAR(64) NULL,
+      status VARCHAR(30) NOT NULL,
+      error_message TEXT NULL,
+      parsed_role_name VARCHAR(100) NULL,
+      created_role_id BIGINT NULL,
+      raw_json JSON NULL,
+      created_at DATETIME NOT NULL,
+      INDEX idx_import_items_batch (batch_id, id),
+      CONSTRAINT fk_import_items_batch FOREIGN KEY (batch_id) REFERENCES import_batches(id) ON DELETE CASCADE,
+      CONSTRAINT fk_import_items_character FOREIGN KEY (created_role_id) REFERENCES characters(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
   // ── 角色公开互动表 ─────────────────────────────────────────────────────────────
   console.log('[init-db] 初始化 character_likes / comments / usage 表...');

@@ -11,16 +11,20 @@ function normalizeCommentBody(body) {
   return String(body || '').trim().slice(0, 500);
 }
 
-async function ensurePublicCharacter(characterId) {
+async function ensurePublicCharacter(characterId, options = {}) {
+  const where = ["id = ?", "visibility = 'public'", "status = 'published'"];
+  if (!options.includeNsfw) {
+    where.push('COALESCE(is_nsfw, 0) = 0');
+  }
   const rows = await query(
-    "SELECT id FROM characters WHERE id = ? AND visibility = 'public' AND status = 'published' LIMIT 1",
+    `SELECT id FROM characters WHERE ${where.join(' AND ')} LIMIT 1`,
     [characterId],
   );
   return rows[0] || null;
 }
 
-async function toggleCharacterLike(characterId, userId) {
-  const character = await ensurePublicCharacter(characterId);
+async function toggleCharacterLike(characterId, userId, options = {}) {
+  const character = await ensurePublicCharacter(characterId, options);
   if (!character) {
     const error = new Error('CHARACTER_NOT_FOUND');
     error.code = 'CHARACTER_NOT_FOUND';
@@ -46,8 +50,8 @@ async function toggleCharacterLike(characterId, userId) {
   });
 }
 
-async function addCharacterComment(characterId, userId, body) {
-  const character = await ensurePublicCharacter(characterId);
+async function addCharacterComment(characterId, userId, body, options = {}) {
+  const character = await ensurePublicCharacter(characterId, options);
   if (!character) {
     const error = new Error('CHARACTER_NOT_FOUND');
     error.code = 'CHARACTER_NOT_FOUND';

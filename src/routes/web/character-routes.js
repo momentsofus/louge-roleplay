@@ -60,6 +60,8 @@ function registerCharacterRoutes(app, ctx) {
           visibility: character.visibility === 'private' ? 'private' : 'public',
           avatarImagePath: character.avatar_image_path || '',
           backgroundImagePath: character.background_image_path || '',
+          isNsfw: Number(character.is_nsfw || 0) === 1,
+          tagsText: Array.isArray(character.tags) ? character.tags.map(tag => tag.name).join(', ') : '',
         },
         extraPromptItems: extraItems,
       });
@@ -80,6 +82,8 @@ function registerCharacterRoutes(app, ctx) {
         firstMessage: String(req.body.firstMessage || '').trim(),
         promptProfileJson: JSON.stringify(promptProfileItems),
         visibility: String(req.body.visibility || 'public').trim() === 'private' ? 'private' : 'public',
+        isNsfw: String(req.body.isNsfw || '').trim() === '1',
+        tags: req.body.tags,
         avatarImagePath: uploadedPaths.avatarImagePath,
         backgroundImagePath: uploadedPaths.backgroundImagePath,
       };
@@ -113,6 +117,8 @@ function registerCharacterRoutes(app, ctx) {
         firstMessage: String(req.body.firstMessage || '').trim(),
         promptProfileJson: JSON.stringify(promptProfileItems),
         visibility: String(req.body.visibility || 'public').trim() === 'private' ? 'private' : 'public',
+        isNsfw: String(req.body.isNsfw || '').trim() === '1',
+        tags: req.body.tags,
         avatarImagePath,
         backgroundImagePath,
       };
@@ -166,6 +172,9 @@ function registerCharacterRoutes(app, ctx) {
 
       if (!character || (character.visibility !== 'public' && Number(character.user_id) !== Number(req.session.user.id))) {
         return renderPage(res, 'message', { title: '提示', message: '角色不存在。' });
+      }
+      if (character.visibility === 'public' && Number(character.is_nsfw || 0) === 1 && Number(character.user_id) !== Number(req.session.user.id) && Number(req.session.user.show_nsfw || 0) !== 1) {
+        return renderPage(res, 'message', { title: '提示', message: '这个角色设置为 NSFW。请先在个人资料页开启 NSFW 显示后再开始聊天。' });
       }
 
       const selectedModelMode = await resolveAllowedInitialModelMode(req.session.user.id, req.body.modelMode);

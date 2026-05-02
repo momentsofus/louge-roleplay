@@ -21,6 +21,16 @@
         </div>
       </div>
       <p class="public-character-detail-summary"><%= character.summary || t('这个角色还没有写简介。') %></p>
+      <% if (Array.isArray(character.tags) && character.tags.length) { %>
+        <div class="tag-list">
+          <% character.tags.forEach(tag => { %>
+            <a class="tag-chip" href="/characters/public?tags=<%= encodeURIComponent(tag.name) %>">#<%= tag.name %></a>
+          <% }) %>
+        </div>
+      <% } %>
+      <% if (Number(character.is_nsfw || 0) === 1) { %>
+        <p class="public-character-safe-note public-character-safe-note--nsfw">NSFW 角色：仅在你开启个人资料中的 NSFW 显示后可见。</p>
+      <% } %>
       <p class="public-character-safe-note"><%= t('公开详情页只展示角色名、简介和评论；完整设定会保留在角色卡内部，不在公共区域泄露。') %></p>
     </div>
 

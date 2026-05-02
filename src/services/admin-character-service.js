@@ -7,6 +7,7 @@
 
 const { query, withTransaction, getDbType } = require('../lib/db');
 const { deleteStoredImageIfOwned } = require('./upload-service');
+const { attachTagsToCharacters, getCharacterTags } = require('./character-tag-service');
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
@@ -143,6 +144,7 @@ async function listAdminCharacters(options = {}) {
        c.first_message,
        c.visibility,
        c.status,
+       c.is_nsfw,
        c.created_at,
        c.updated_at,
        u.username,
@@ -163,8 +165,10 @@ async function listAdminCharacters(options = {}) {
 
   const filterUsers = await listCharacterFilterUsers();
 
+  const rowsWithTags = await attachTagsToCharacters(rows);
+
   return {
-    characters: rows.map((row) => ({
+    characters: rowsWithTags.map((row) => ({
       ...row,
       id: Number(row.id),
       user_id: Number(row.user_id),
@@ -246,6 +250,7 @@ async function getAdminCharacterDetail(characterId) {
     comment_count: Number(row.comment_count || 0),
     usage_count: Number(row.usage_count || 0),
     prompt_profile_items: parsePromptProfileItems(row.prompt_profile_json),
+    tags: await getCharacterTags(row.id),
     display_created_at: formatDateTime(row.created_at),
     display_updated_at: formatDateTime(row.updated_at),
     display_latest_conversation_at: formatDateTime(row.latest_conversation_at),
@@ -324,6 +329,7 @@ async function deleteAdminCharacter(characterId) {
     await conn.execute('DELETE FROM character_likes WHERE character_id = ?', [id]);
     await conn.execute('DELETE FROM character_comments WHERE character_id = ?', [id]);
     await conn.execute('DELETE FROM character_usage_events WHERE character_id = ?', [id]);
+    await conn.execute('DELETE FROM character_tags WHERE character_id = ?', [id]);
     const [result] = await conn.execute('DELETE FROM characters WHERE id = ?', [id]);
 
     return {

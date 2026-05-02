@@ -118,6 +118,7 @@
               <strong><%= character.name %></strong>
               <span class="pill <%= character.status === 'blocked' ? 'pill--level-warn' : '' %>"><%= character.status %></span>
               <span class="pill"><%= character.visibility || 'public' %></span>
+              <% if (Number(character.is_nsfw || 0) === 1) { %><span class="pill pill--level-warn">NSFW</span><% } %>
             </div>
             <div class="admin-item-meta">
               <span class="meta-chip"><%= t('对话 {count}', { count: character.conversation_count }) %></span>
@@ -137,6 +138,11 @@
           </div>
 
           <p class="admin-conversation-preview"><%= character.summary_preview || t('这个角色还没有写简介。') %></p>
+          <% if (Array.isArray(character.tags) && character.tags.length) { %>
+            <div class="tag-list">
+              <% character.tags.forEach(tag => { %><span class="tag-chip">#<%= tag.name %></span><% }) %>
+            </div>
+          <% } %>
 
           <div class="toolbar-row toolbar-row--admin">
             <form class="compact-admin-form compact-admin-form--inline" method="POST" action="/admin/characters/<%= character.id %>/status">

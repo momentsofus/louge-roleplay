@@ -26,6 +26,17 @@ function registerAdminCharacterRoutes(app, ctx) {
     getAdminCharacterById,
     listAdminCharacters,
     updateAdminCharacterStatus,
+    ensureCharacterImageColumns,
+    uploadTavernCards,
+    previewTavernImport,
+    saveImportPreview,
+    loadImportPreview,
+    deleteImportPreview,
+    importPreviewExists,
+    buildConfirmItemsFromPreview,
+    confirmTavernImport,
+    listImportBatches,
+    listAllTags,
     renderPage,
     renderValidationMessage,
     parseIntegerField,
@@ -47,6 +58,77 @@ function registerAdminCharacterRoutes(app, ctx) {
         title: '角色卡管理',
         characterResult,
         buildPageUrl: (targetPage) => buildPageUrl('/admin/characters', characterResult.filters, targetPage, characterResult.pageSize, { skipZero: true }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/admin/characters/import', requireAdmin, async (req, res, next) => {
+    try {
+      await ensureCharacterImageColumns();
+      const [batches, allTags] = await Promise.all([listImportBatches(10), listAllTags()]);
+      renderPage(res, 'admin-character-import', {
+        title: '批量导入酒馆卡',
+        previewItems: [],
+        previewToken: '',
+        importResult: null,
+        batches,
+        allTags,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/admin/characters/import/preview', requireAdmin, uploadTavernCards, async (req, res, next) => {
+    try {
+      await ensureCharacterImageColumns();
+      const files = Array.isArray(req.files) ? req.files : [];
+      if (!files.length) {
+        return renderValidationMessage(res, '请选择至少一个 PNG 或 JSON 酒馆卡文件。', '批量导入酒馆卡');
+      }
+      const [previewItems, batches, allTags] = await Promise.all([
+        previewTavernImport(files, req.session.user.id),
+        listImportBatches(10),
+        listAllTags(),
+      ]);
+      const previewToken = await saveImportPreview(previewItems);
+      req.session.tavernImportPreviewToken = previewToken;
+      renderPage(res, 'admin-character-import', {
+        title: '批量导入酒馆卡',
+        previewItems,
+        previewToken,
+        importResult: null,
+        batches,
+        allTags,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/admin/characters/import/confirm', requireAdmin, async (req, res, next) => {
+    try {
+      await ensureCharacterImageColumns();
+      const previewToken = String(req.body.previewToken || req.session.tavernImportPreviewToken || '').trim();
+      const previewStillExists = await importPreviewExists(previewToken);
+      const previewItems = previewStillExists ? await loadImportPreview(previewToken) : [];
+      if (!previewStillExists || !previewItems.length) {
+        return renderValidationMessage(res, '导入预览已过期或不存在，请重新上传解析后再确认。', '批量导入酒馆卡');
+      }
+      const submittedItems = buildConfirmItemsFromPreview(previewItems, req.body);
+      const importResult = await confirmTavernImport(req.session.user.id, submittedItems);
+      await deleteImportPreview(previewToken);
+      delete req.session.tavernImportPreviewToken;
+      const [batches, allTags] = await Promise.all([listImportBatches(10), listAllTags()]);
+      renderPage(res, 'admin-character-import', {
+        title: '批量导入酒馆卡',
+        previewItems: [],
+        previewToken: '',
+        importResult,
+        batches,
+        allTags,
       });
     } catch (error) {
       next(error);
