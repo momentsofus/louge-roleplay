@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.3.12] - 2026-05-02
+
+### Fixed
+
+- 修复酒馆卡导入确认路由漏注入 `importPreviewExists`，导致 `/admin/characters/import/confirm` 返回 `INTERNAL_SERVER_ERROR` 的问题。
+
 ## [1.3.11] - 2026-05-02
 
 ### Changed
