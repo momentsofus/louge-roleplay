@@ -8,6 +8,14 @@
     <div class="feedback-kicker feedback-kicker--danger">Something went wrong</div>
     <h1 class="feedback-title">出了点小问题</h1>
     <p class="feedback-copy"><%= message %></p>
+    <div class="feedback-copy feedback-support-hint">
+      <strong><%= t('需要帮忙？') %></strong>
+      <% if (typeof supportNotification !== 'undefined' && supportNotification) { %>
+        <span><%= supportNotification.body || t('如果这个问题反复出现，可以微信扫码联系客服处理。') %></span>
+      <% } else { %>
+        <span><%= t('如果这个问题反复出现，可以微信扫码联系客服，并把请求编号一并发给工作人员。') %></span>
+      <% } %>
+    </div>
     <div class="feedback-meta">
       <div class="feedback-code"><strong>错误码</strong><%= errorCode %></div>
       <% if (requestId) { %>
@@ -15,10 +23,10 @@
       <% } %>
     </div>
     <div class="feedback-actions">
-      <button type="button" class="feedback-back-link" data-open-support>微信扫码联系客服</button>
+      <button type="button" class="feedback-back-link" data-open-support data-support-reason="error-page">微信扫码联系客服</button>
       <a class="feedback-back-link" href="/">回到首页</a>
     </div>
   </div>
 </div>
 
-<script nonce="<%= cspNonce || '' %>" src="/public/js/error-page.js"></script>
+<script nonce="<%= (typeof cspNonce !== 'undefined' && cspNonce) ? cspNonce : '' %>" src="/public/js/error-page.js"></script>

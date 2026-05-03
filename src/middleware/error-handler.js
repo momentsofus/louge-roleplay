@@ -14,7 +14,9 @@ const { getClientNotificationBootstrap } = require('../services/notification-ser
  */
 async function renderErrorWithLayout(res, statusCode, title, message, errorCode) {
   const t = res.locals.t || ((key, vars) => translate(res.locals.locale || 'zh-CN', key, vars));
-  const errorParams = { title, message, errorCode, requestId: res.locals.requestId };
+  const supportNotifications = await getClientNotificationBootstrap(res.locals.currentUser || null, { supportOnly: true });
+  const supportNotification = supportNotifications[0] || null;
+  const errorParams = { title, message, errorCode, requestId: res.locals.requestId, supportNotification, t };
   const clientNotifications = await getClientNotificationBootstrap(res.locals.currentUser || null);
   res.render('error', errorParams, (viewErr, html) => {
     if (viewErr) {
@@ -62,6 +64,10 @@ function mapErrorToPresentation(error) {
 
   if (error?.code === 'LIMIT_FILE_COUNT' || error?.code === 'LIMIT_UNEXPECTED_FILE') {
     return { statusCode: 400, title: '上传字段不正确', message: '一次只能上传角色头像和对话背景各一张图片。', errorCode: error.code };
+  }
+
+  if (error?.type === 'entity.too.large' || error?.statusCode === 413 || error?.status === 413 || /request entity too large/i.test(message)) {
+    return { statusCode: 413, title: '内容太长', message: '提交内容太长了，请先缩短后再保存。', errorCode: 'REQUEST_ENTITY_TOO_LARGE' };
   }
 
   if (message === 'REQUEST_QUOTA_EXCEEDED') {
@@ -115,4 +121,5 @@ function errorHandler(error, req, res, next) {
 
 module.exports = {
   errorHandler,
+  mapErrorToPresentation,
 };

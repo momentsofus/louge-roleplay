@@ -140,8 +140,8 @@ async function bootstrap() {
       }
     },
   }));
-  app.use(express.urlencoded({ extended: false, limit: '20kb' }));
-  app.use(express.json({ limit: '20kb' }));
+  app.use(express.urlencoded({ extended: false, limit: '256kb' }));
+  app.use(express.json({ limit: '256kb' }));
   app.use(morgan('combined', {
     stream: {
       write(line) {

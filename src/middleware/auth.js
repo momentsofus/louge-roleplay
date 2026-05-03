@@ -7,6 +7,7 @@ const logger = require('../lib/logger');
 const config = require('../config');
 const { translate } = require('../i18n');
 const { findUserById, normalizeReplyLengthPreference, normalizeChatVisibleMessageCount } = require('../services/user-service');
+const { getClientNotificationBootstrap } = require('../services/notification-service');
 
 async function requireAuth(req, res, next) {
   if (!req.session || !req.session.user) {
@@ -46,7 +47,10 @@ async function requireAdmin(req, res, next) {
       message: t('这里只有管理员能进。'),
       errorCode: 'FORBIDDEN',
       requestId: req.requestId,
+      t,
     };
+    const supportNotifications = await getClientNotificationBootstrap(res.locals.currentUser || null, { supportOnly: true });
+    errorParams.supportNotification = supportNotifications[0] || null;
     return res.render('error', errorParams, (viewErr, html) => {
       if (viewErr) {
         return res.status(403).type('text').send(t('权限不足'));
