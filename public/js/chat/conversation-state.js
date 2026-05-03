@@ -38,8 +38,8 @@
 
     function collapseOldRenderedMessages(options) {
       if (!chatContainer) return;
-      const settings = Object.assign({ keepLatest: 24 }, options || {});
-      const keepLatest = Math.max(6, Number(settings.keepLatest || 24));
+      const settings = Object.assign({ keepLatest: Number(chatContainer.dataset.keepLatest || 8) || 8 }, options || {});
+      const keepLatest = Math.max(4, Math.min(80, Number(settings.keepLatest || 8) || 8));
       const articles = Array.from(chatContainer.querySelectorAll('article.bubble[data-message-id]'));
       if (articles.length <= keepLatest) {
         updateChatCounts();
@@ -78,7 +78,7 @@
       if (chatContainer) {
         chatContainer.querySelectorAll('.empty-chat-state').forEach((node) => node.remove());
         updateChatCounts();
-        collapseOldRenderedMessages({ keepLatest: 24 });
+        collapseOldRenderedMessages({ keepLatest: Number(chatContainer.dataset.keepLatest || 8) || 8 });
       }
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('leaf', normalizedMessageId);

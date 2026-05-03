@@ -19,6 +19,7 @@ async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {
       status        ENUM('active','blocked') NOT NULL DEFAULT 'active',
       show_nsfw     TINYINT(1) NOT NULL DEFAULT 0,
       reply_length_preference ENUM('low','medium','high') NOT NULL DEFAULT 'medium',
+      chat_visible_message_count INT NOT NULL DEFAULT 8,
       created_at    DATETIME NOT NULL,
       updated_at    DATETIME NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -33,6 +34,7 @@ async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {
   await ensureColumn('users', 'status',         "status ENUM('active','blocked') NOT NULL DEFAULT 'active'");
   await ensureColumn('users', 'show_nsfw',      'show_nsfw TINYINT(1) NOT NULL DEFAULT 0');
   await ensureColumn('users', 'reply_length_preference', "reply_length_preference ENUM('low','medium','high') NOT NULL DEFAULT 'medium'");
+  await ensureColumn('users', 'chat_visible_message_count', 'chat_visible_message_count INT NOT NULL DEFAULT 8');
   await ensureUniqueIndex('users', 'uniq_users_email', 'email');
   await ensureUniqueIndex('users', 'uniq_users_phone', 'phone');
   await backfillUserPublicIds(connection);

@@ -15,7 +15,7 @@ const {
   getConversationMessageCount,
   fetchPathMessages,
 } = require('../src/services/conversation-service');
-const { buildChatRequestContext } = require('../src/server-helpers/chat-view');
+const { buildChatRequestContext, renderChatPage } = require('../src/server-helpers/chat-view');
 
 async function main() {
   const suffix = Date.now();
@@ -143,6 +143,47 @@ async function main() {
     const freshPath = await fetchPathMessages(freshConversationId, seedReplyMessageId);
     assert.equal(oldPath.length, 62, 'old long conversation should keep its own path');
     assert.equal(freshPath.length, 2, 'fresh conversation should only have its own seed path');
+
+    const renderUserPreferenceConversationId = await createConversation(userId, characterId, {
+      title: 'visible preference conversation',
+      selectedModelMode: 'standard',
+    });
+    conversationIds.push(renderUserPreferenceConversationId);
+    let renderLeafMessageId = null;
+    for (let i = 1; i <= 12; i += 1) {
+      renderLeafMessageId = await addMessage({
+        conversationId: renderUserPreferenceConversationId,
+        senderType: i % 2 ? 'user' : 'character',
+        content: `visible message ${i}`,
+        parentMessageId: renderLeafMessageId,
+        promptKind: 'normal',
+      });
+    }
+    const renderPreferenceConversation = await getConversationById(renderUserPreferenceConversationId, userId);
+    const renderPayload = await new Promise((resolve, reject) => {
+      const req = {
+        query: {},
+        session: { user: { id: userId, username: 'conversation-service-test', chat_visible_message_count: 8 } },
+        t: (key) => key,
+      };
+      const res = {
+        locals: {},
+      };
+      renderChatPage(req, res, renderPreferenceConversation, {
+        getChatModelSelector: async () => ({ options: [] }),
+        renderPage: (_res, view, params) => {
+          try {
+            resolve({ view, params });
+          } catch (error) {
+            reject(error);
+          }
+        },
+      }).catch(reject);
+    });
+    assert.equal(renderPayload.view, 'chat', 'renderChatPage should render chat view');
+    assert.equal(renderPayload.params.view.initialVisibleCount, 8, 'chat visible preference should default to 8');
+    assert.equal(renderPayload.params.view.visiblePathMessages.length, 8, 'chat page should initially render latest 8 messages');
+    assert.equal(renderPayload.params.view.visiblePathMessages[0].content, 'visible message 5', 'initial render should keep the latest messages only');
 
     console.log('Conversation service regression test passed.');
   } finally {

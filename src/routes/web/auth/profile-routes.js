@@ -20,6 +20,7 @@ function registerAuthProfileRoutes(app, ctx) {
     unbindUserPhone,
     updateUserNsfwPreference,
     updateUserReplyLengthPreference,
+    updateUserChatVisibleMessageCount,
     verifyEmailCode,
     verifyPhoneCode,
     hashPassword,
@@ -176,6 +177,18 @@ function registerAuthProfileRoutes(app, ctx) {
           high: '回复长度已设为详细：之后会更充分展开，尽力补足细节与推演。',
         };
         return await renderProfileMessage(messageMap[preference], 'success', refreshedUser);
+      }
+
+      if (action === 'chatDisplay') {
+        const rawCount = String(req.body.chatVisibleMessageCount || '').trim();
+        const parsedCount = Number.parseInt(rawCount, 10);
+        if (!Number.isFinite(parsedCount) || parsedCount < 4 || parsedCount > 80) {
+          return await renderProfileMessage('聊天页默认显示数量请填写 4 到 80 之间的整数。');
+        }
+        await updateUserChatVisibleMessageCount(userId, parsedCount);
+        req.session.user.chat_visible_message_count = Math.max(4, Math.min(80, parsedCount));
+        const refreshedUser = await findUserById(userId);
+        return await renderProfileMessage(`聊天页默认显示最新 ${req.session.user.chat_visible_message_count} 条消息。`, 'success', refreshedUser);
       }
 
       if (action === 'password') {

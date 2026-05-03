@@ -6,7 +6,7 @@
 const logger = require('../lib/logger');
 const config = require('../config');
 const { translate } = require('../i18n');
-const { findUserById, normalizeReplyLengthPreference } = require('../services/user-service');
+const { findUserById, normalizeReplyLengthPreference, normalizeChatVisibleMessageCount } = require('../services/user-service');
 
 async function requireAuth(req, res, next) {
   if (!req.session || !req.session.user) {
@@ -17,7 +17,7 @@ async function requireAuth(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference) };
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference), chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count) };
   res.locals.currentUser = req.session.user;
   return next();
 }
@@ -31,7 +31,7 @@ async function requireAdmin(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference) };
+  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference), chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count) };
   res.locals.currentUser = req.session.user;
   if (req.session.user.role !== 'admin') {
     logger.warn('Forbidden admin access attempt', {

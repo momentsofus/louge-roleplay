@@ -39,7 +39,7 @@
           <span class="mini-note"><%= t('为了打开更快，较早内容会在需要时加载。') %></span>
         </div>
       <% } %>
-      <div class="chat-transcript" data-visible-count="<%= view.visiblePathMessages.length %>" data-total-count="<%= view.pathMessages.length %>" data-oldest-visible-id="<%= view.oldestVisibleMessageId || '' %>">
+      <div class="chat-transcript" data-visible-count="<%= view.visiblePathMessages.length %>" data-total-count="<%= view.pathMessages.length %>" data-oldest-visible-id="<%= view.oldestVisibleMessageId || '' %>" data-keep-latest="<%= view.initialVisibleCount || 8 %>">
         <% if (!view.visiblePathMessages.length) { %>
           <div class="empty-chat-state">
             <h2><%= t('开始和 {name} 对话', { name: conversation.character_name }) %></h2>

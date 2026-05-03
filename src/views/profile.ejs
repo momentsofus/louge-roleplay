@@ -18,6 +18,7 @@
   const replyLengthPreference = ['low', 'medium', 'high'].includes(String(user?.reply_length_preference || ''))
     ? String(user.reply_length_preference)
     : 'medium';
+  const chatVisibleMessageCount = Math.max(4, Math.min(80, Number.parseInt(String(user?.chat_visible_message_count || '8'), 10) || 8));
 %>
 
 <div class="profile-shell">
@@ -237,6 +238,27 @@
           </div>
           <div class="settings-form-actions">
             <button class="submit-btn" type="submit"><%= t('保存回复长度') %></button>
+          </div>
+        </form>
+      </section>
+
+      <section class="settings-section panel">
+        <div class="settings-section-head">
+          <div>
+            <div class="section-kicker">Chat Display</div>
+            <h2><%= t('聊天显示数量') %></h2>
+            <p><%= t('控制聊天页首次加载和连续对话时保留在浏览器里的最近消息数量。默认 8 条，前面的消息仍可点“查看更早的消息”加载。') %></p>
+          </div>
+        </div>
+        <form method="POST" action="/profile" class="settings-form">
+          <input type="hidden" name="action" value="chatDisplay" />
+          <div class="field-group">
+            <label for="chatVisibleMessageCount"><%= t('默认显示最新消息数') %></label>
+            <input id="chatVisibleMessageCount" name="chatVisibleMessageCount" type="number" min="4" max="80" step="1" required value="<%= chatVisibleMessageCount %>" />
+            <div class="mini-note"><%= t('建议 8 到 24 条。数值越小，长对话页面越轻；需要回看时可以手动加载更早消息。') %></div>
+          </div>
+          <div class="settings-form-actions">
+            <button class="submit-btn" type="submit"><%= t('保存聊天显示数量') %></button>
           </div>
         </form>
       </section>

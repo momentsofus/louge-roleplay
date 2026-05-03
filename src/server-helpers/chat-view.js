@@ -11,8 +11,8 @@ const {
   buildConversationPathView,
   fetchPathMessages,
 } = require('../services/conversation-service');
-const { getChatModelSelector } = require('../services/llm-gateway-service');
-const { renderPage } = require('./rendering');
+const { getChatModelSelector: defaultGetChatModelSelector } = require('../services/llm-gateway-service');
+const { renderPage: defaultRenderPage } = require('./rendering');
 
 async function buildChatRequestContext(req, conversation, rawContent, parentMessageId, options = {}) {
   const messageCount = options.messageCount === undefined
@@ -58,11 +58,15 @@ async function renderChatPage(req, res, conversation, options = {}) {
   const view = activeLeafId
     ? await buildConversationPathView(conversation.id, activeLeafId, { messageCount: options.messageCount })
     : { pathMessages: [], activeLeafId: null, messageCount: options.messageCount === undefined ? await getConversationMessageCount(conversation.id) : Number(options.messageCount || 0) };
-  const initialVisibleCount = Math.max(3, Number(options.initialVisibleCount || 3));
-  const keepFromIndex = Math.max(0, view.pathMessages.length - initialVisibleCount - 1);
+  const userVisibleCount = req.session?.user?.chat_visible_message_count;
+  const initialVisibleCount = Math.max(4, Math.min(80, Number(options.initialVisibleCount || userVisibleCount || 8)));
+  const keepFromIndex = Math.max(0, view.pathMessages.length - initialVisibleCount);
   view.visiblePathMessages = view.pathMessages.slice(keepFromIndex);
   view.hasOlderMessages = view.pathMessages.length > view.visiblePathMessages.length;
   view.oldestVisibleMessageId = view.visiblePathMessages.length ? view.visiblePathMessages[0].id : null;
+  view.initialVisibleCount = initialVisibleCount;
+  const getChatModelSelector = options.getChatModelSelector || defaultGetChatModelSelector;
+  const renderPage = options.renderPage || defaultRenderPage;
   const chatModelSelector = await getChatModelSelector(req.session?.user?.id || null);
 
   const activeMode = (chatModelSelector.options || []).some((option) => option.mode === conversation.selected_model_mode)
@@ -87,7 +91,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
 async function loadConversationForUserOrFail(req, res, conversationId) {
   const conversation = await getConversationById(conversationId, req.session.user.id);
   if (!conversation) {
-    renderPage(res, 'message', { title: req.t ? req.t('提示') : '提示', message: req.t ? req.t('会话不存在或无权访问。') : '会话不存在或无权访问。' });
+    defaultRenderPage(res, 'message', { title: req.t ? req.t('提示') : '提示', message: req.t ? req.t('会话不存在或无权访问。') : '会话不存在或无权访问。' });
     return null;
   }
   return conversation;

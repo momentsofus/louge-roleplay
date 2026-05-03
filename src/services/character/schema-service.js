@@ -55,6 +55,7 @@ async function ensureMysqlCharacterSchema() {
   await ensureMysqlIndex('characters', 'idx_characters_source_file_hash', '(`source_file_hash`)');
   await ensureMysqlColumn('users', 'show_nsfw', '`show_nsfw` TINYINT(1) NOT NULL DEFAULT 0');
   await ensureMysqlColumn('users', 'reply_length_preference', "`reply_length_preference` ENUM('low','medium','high') NOT NULL DEFAULT 'medium'");
+  await ensureMysqlColumn('users', 'chat_visible_message_count', '`chat_visible_message_count` INT NOT NULL DEFAULT 8');
   await query(`CREATE TABLE IF NOT EXISTS tags (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(32) NOT NULL,
@@ -126,6 +127,12 @@ async function ensureSqliteCharacterSchema() {
     });
   }
   await query('ALTER TABLE users ADD COLUMN show_nsfw INTEGER NOT NULL DEFAULT 0').catch((error) => {
+    if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
+  });
+  await query("ALTER TABLE users ADD COLUMN reply_length_preference TEXT NOT NULL DEFAULT 'medium'").catch((error) => {
+    if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
+  });
+  await query('ALTER TABLE users ADD COLUMN chat_visible_message_count INTEGER NOT NULL DEFAULT 8').catch((error) => {
     if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
   });
   await query(`CREATE TABLE IF NOT EXISTS tags (
