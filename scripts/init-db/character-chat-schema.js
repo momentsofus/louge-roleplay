@@ -27,6 +27,9 @@ async function ensureCharacterSchema(connection, helpers) {
       imported_world_book_json JSON NULL,
       flattened_world_book_text LONGTEXT NULL,
       import_batch_id     BIGINT NULL,
+      like_count          INT NOT NULL DEFAULT 0,
+      comment_count       INT NOT NULL DEFAULT 0,
+      usage_count         INT NOT NULL DEFAULT 0,
       CONSTRAINT fk_characters_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
@@ -48,7 +51,12 @@ async function ensureCharacterSchema(connection, helpers) {
   await ensureColumn('characters', 'imported_world_book_json', 'imported_world_book_json JSON NULL');
   await ensureColumn('characters', 'flattened_world_book_text', 'flattened_world_book_text LONGTEXT NULL');
   await ensureColumn('characters', 'import_batch_id', 'import_batch_id BIGINT NULL');
+  await ensureColumn('characters', 'like_count', 'like_count INT NOT NULL DEFAULT 0');
+  await ensureColumn('characters', 'comment_count', 'comment_count INT NOT NULL DEFAULT 0');
+  await ensureColumn('characters', 'usage_count', 'usage_count INT NOT NULL DEFAULT 0');
   await ensureIndex('characters', 'idx_characters_public_nsfw', '(visibility, status, is_nsfw, id)');
+  await ensureIndex('characters', 'idx_characters_public_heat', '(visibility, status, is_nsfw, like_count, comment_count, usage_count, id)');
+  await ensureIndex('characters', 'idx_characters_user_status', '(user_id, status, id)');
   await ensureIndex('characters', 'idx_characters_source_file_hash', '(source_file_hash)');
 
   await connection.query(`
@@ -201,6 +209,8 @@ async function ensureChatSchema(connection, helpers) {
   `);
   await ensureColumn('conversations', 'deleted_at',               'deleted_at DATETIME NULL');
   await ensureIndex('conversations', 'idx_conversations_parent',         '(parent_conversation_id)');
+  await ensureIndex('conversations', 'idx_conversations_user_status_updated', '(user_id, status, updated_at, id)');
+  await ensureIndex('conversations', 'idx_conversations_character_status', '(character_id, status, id)');
   await ensureIndex('conversations', 'idx_conversations_branch_message', '(branched_from_message_id)');
   await ensureIndex('conversations', 'idx_conversations_current_message','(current_message_id)');
 
@@ -232,6 +242,8 @@ async function ensureChatSchema(connection, helpers) {
   await ensureColumn('messages', 'metadata_json', 'metadata_json JSON NULL');
   await ensureColumn('messages', 'deleted_at', 'deleted_at DATETIME NULL');
   await ensureIndex('messages', 'idx_messages_parent',      '(parent_message_id)');
+  await ensureIndex('messages', 'idx_messages_conversation_deleted_id', '(conversation_id, deleted_at, id)');
+  await ensureIndex('messages', 'idx_messages_conversation_deleted_sequence', '(conversation_id, deleted_at, sequence_no, id)');
   await ensureIndex('messages', 'idx_messages_branch_from', '(branch_from_message_id)');
   await ensureIndex('messages', 'idx_messages_edited_from', '(edited_from_message_id)');
   await connection.query(`

@@ -289,12 +289,14 @@ async function ensureMessagingAndProviderSchema(connection, helpers) {
       created_at DATETIME NOT NULL,
       updated_at DATETIME NOT NULL,
       INDEX idx_notifications_active_window (is_active, starts_at, ends_at),
+      INDEX idx_notifications_scope_window (is_active, notification_type, audience, starts_at, ends_at, priority, id),
       INDEX idx_notifications_audience (audience, notification_type)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   await ensureColumn('notifications', 'display_scopes', "display_scopes VARCHAR(160) NOT NULL DEFAULT 'global' AFTER audience");
   await connection.query("UPDATE notifications SET display_scopes = 'global' WHERE display_scopes IS NULL OR display_scopes = ''");
   await ensureIndex('notifications', 'idx_notifications_display_scopes', '(display_scopes)');
+  await ensureIndex('notifications', 'idx_notifications_scope_window', '(is_active, notification_type, audience, starts_at, ends_at, priority, id)');
 }
 
 module.exports = {

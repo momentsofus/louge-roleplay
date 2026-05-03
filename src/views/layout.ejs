@@ -50,7 +50,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/public/icons/icon-180.png" />
   <link rel="manifest" href="/public/icons/site.webmanifest" />
   <meta name="theme-color" content="#0b3f45" />
-  <link rel="preconnect" href="/" />
+  <link rel="preload" href="/fonts/google.css?v=latin-v2" as="style" />
+  <link rel="preload" href="/public/styles/site-pages.css" as="style" />
   <link rel="stylesheet" href="/fonts/google.css?v=latin-v2" />
   <link rel="stylesheet" href="/public/styles/site-pages.css" />
   <script id="app-bootstrap-data" type="application/json" nonce="<%= cspNonce || '' %>"><%- JSON.stringify({
@@ -60,10 +61,10 @@
     currentUser: currentUser ? { id: currentUser.id, username: currentUser.username, role: currentUser.role } : null,
     csrfToken: csrfToken || ''
   }) %></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js"></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js"></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js"></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js"></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js" defer></script>
   <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js" defer></script>
   <script nonce="<%= cspNonce || '' %>" src="/public/js/notification-client.js" defer></script>
   <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js" defer></script>

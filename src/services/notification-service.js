@@ -6,6 +6,7 @@
 'use strict';
 
 const { query, getDbType, waitReady } = require('../lib/db');
+const { redisClient } = require('../lib/redis');
 const logger = require('../lib/logger');
 const { markdownToHtml } = require('./markdown-service');
 
@@ -98,6 +99,23 @@ function formatDateForInput(value) {
   return raw.replace(' ', 'T').slice(0, 16);
 }
 
+async function invalidateNotificationBootstrapCache() {
+  try {
+    await redisClient.incr('notification-bootstrap:version:v1');
+    await redisClient.expire('notification-bootstrap:version:v1', 30 * 24 * 60 * 60).catch(() => {});
+  } catch (error) {
+    logger.warn('[notification-service] 通知前台缓存失效失败', { error: error.message });
+  }
+}
+
+async function getNotificationBootstrapVersion() {
+  try {
+    return (await redisClient.get('notification-bootstrap:version:v1')) || '1';
+  } catch (_) {
+    return '1';
+  }
+}
+
 async function ensureNotificationSchema() {
   await waitReady();
   if (getDbType() === 'mysql') {
@@ -124,6 +142,7 @@ async function ensureNotificationSchema() {
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
         INDEX idx_notifications_active_window (is_active, starts_at, ends_at),
+        INDEX idx_notifications_scope_window (is_active, notification_type, audience, starts_at, ends_at, priority, id),
         INDEX idx_notifications_audience (audience, notification_type)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
@@ -132,6 +151,9 @@ async function ensureNotificationSchema() {
     });
     await query("UPDATE notifications SET display_scopes = 'global' WHERE display_scopes IS NULL OR display_scopes = ''");
     await query('CREATE INDEX idx_notifications_display_scopes ON notifications (display_scopes)').catch((error) => {
+      if (!/duplicate key|already exists/i.test(String(error?.message || ''))) throw error;
+    });
+    await query('CREATE INDEX idx_notifications_scope_window ON notifications (is_active, notification_type, audience, starts_at, ends_at, priority, id)').catch((error) => {
       if (!/duplicate key|already exists/i.test(String(error?.message || ''))) throw error;
     });
     return;
@@ -168,6 +190,7 @@ async function ensureNotificationSchema() {
   });
   await query("UPDATE notifications SET display_scopes = 'global' WHERE display_scopes IS NULL OR display_scopes = ''");
   await query('CREATE INDEX IF NOT EXISTS idx_notifications_display_scopes ON notifications (display_scopes)');
+  await query('CREATE INDEX IF NOT EXISTS idx_notifications_scope_window ON notifications (is_active, notification_type, audience, starts_at, ends_at, priority, id)');
 }
 
 async function seedSupportNotificationIfEmpty() {
@@ -264,6 +287,7 @@ async function createNotification(payload) {
       data.priority,
     ],
   );
+  await invalidateNotificationBootstrapCache();
   return result.insertId;
 }
 
@@ -301,11 +325,13 @@ async function updateNotification(id, payload) {
       notificationId,
     ],
   );
+  await invalidateNotificationBootstrapCache();
 }
 
 async function deleteNotification(id) {
   await ensureNotificationSchema();
   await query('DELETE FROM notifications WHERE id = ?', [Number(id)]);
+  await invalidateNotificationBootstrapCache();
 }
 
 function normalizePageScope(value) {
@@ -393,6 +419,7 @@ module.exports = {
   ensureNotificationSchema,
   listNotificationsForAdmin,
   listActiveNotificationsForUser,
+  getNotificationBootstrapVersion,
   getClientNotificationBootstrap,
   createNotification,
   updateNotification,

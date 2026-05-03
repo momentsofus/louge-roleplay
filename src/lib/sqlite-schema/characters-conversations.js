@@ -48,7 +48,10 @@ function ensureSqliteCharacterConversationSchema(db) {
       source_card_json    TEXT NULL,
       imported_world_book_json TEXT NULL,
       flattened_world_book_text TEXT NULL,
-      import_batch_id     INTEGER NULL
+      import_batch_id     INTEGER NULL,
+      like_count          INTEGER NOT NULL DEFAULT 0,
+      comment_count       INTEGER NOT NULL DEFAULT 0,
+      usage_count         INTEGER NOT NULL DEFAULT 0
     )
   `);
 
@@ -71,6 +74,8 @@ function ensureSqliteCharacterConversationSchema(db) {
     )
   `);
   db.exec('CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations (user_id, updated_at)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_conversations_user_status_updated ON conversations (user_id, status, updated_at, id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_conversations_character_status ON conversations (character_id, status, id)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_conversations_parent ON conversations (parent_conversation_id)');
 
   ensureSqliteCharactersVisibilityColumn(db);
@@ -86,7 +91,12 @@ function ensureSqliteCharacterConversationSchema(db) {
   ensureSqliteColumn(db, 'characters', 'imported_world_book_json', 'imported_world_book_json TEXT NULL');
   ensureSqliteColumn(db, 'characters', 'flattened_world_book_text', 'flattened_world_book_text TEXT NULL');
   ensureSqliteColumn(db, 'characters', 'import_batch_id', 'import_batch_id INTEGER NULL');
+  ensureSqliteColumn(db, 'characters', 'like_count', 'like_count INTEGER NOT NULL DEFAULT 0');
+  ensureSqliteColumn(db, 'characters', 'comment_count', 'comment_count INTEGER NOT NULL DEFAULT 0');
+  ensureSqliteColumn(db, 'characters', 'usage_count', 'usage_count INTEGER NOT NULL DEFAULT 0');
   db.exec('CREATE INDEX IF NOT EXISTS idx_characters_public_nsfw ON characters (visibility, status, is_nsfw, id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_characters_public_heat ON characters (visibility, status, is_nsfw, like_count, comment_count, usage_count, id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_characters_user_status ON characters (user_id, status, id)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_characters_source_file_hash ON characters (source_file_hash)');
   db.exec(`
     CREATE TABLE IF NOT EXISTS tags (
@@ -202,6 +212,8 @@ function ensureSqliteCharacterConversationSchema(db) {
     )
   `);
   db.exec('CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages (conversation_id, sequence_no)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_messages_conversation_deleted_id ON messages (conversation_id, deleted_at, id)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_messages_conversation_deleted_sequence ON messages (conversation_id, deleted_at, sequence_no, id)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages (parent_message_id)');
   ensureSqliteColumn(db, 'messages', 'deleted_at', 'deleted_at TEXT NULL');
 }

@@ -4,11 +4,61 @@
  */
 
 const { query } = require('../../lib/db');
+const { redisClient } = require('../../lib/redis');
+const logger = require('../../lib/logger');
 const { normalizeMessageForView } = require('./message-view');
+
+const PATH_MESSAGES_CACHE_TTL_SECONDS = 45;
+
+function getPathMessagesCacheKey(conversationId, leafMessageId) {
+  return `conversation:${conversationId}:path:${leafMessageId}:v2`;
+}
+
+async function invalidatePathMessagesCache(conversationId, leafMessageId = null) {
+  const normalizedConversationId = Number(conversationId || 0);
+  if (!normalizedConversationId) return;
+  const keys = [];
+  if (leafMessageId) {
+    keys.push(getPathMessagesCacheKey(normalizedConversationId, Number(leafMessageId)));
+  }
+  keys.push(`conversation:${normalizedConversationId}:path-version:v2`);
+  try {
+    await redisClient.incr(`conversation:${normalizedConversationId}:path-version:v2`);
+    await redisClient.expire(`conversation:${normalizedConversationId}:path-version:v2`, 24 * 60 * 60).catch(() => {});
+    if (keys.length > 1) await redisClient.del(keys.slice(0, -1));
+  } catch (error) {
+    logger.warn('Failed to invalidate conversation path cache', {
+      conversationId: normalizedConversationId,
+      leafMessageId,
+      error: error.message,
+    });
+  }
+}
+
+async function getPathCacheVersion(conversationId) {
+  try {
+    return await redisClient.get(`conversation:${conversationId}:path-version:v2`) || '1';
+  } catch (_) {
+    return '1';
+  }
+}
 
 async function fetchPathMessages(conversationId, leafMessageId) {
   const normalizedLeafId = Number(leafMessageId || 0);
   if (!normalizedLeafId) return [];
+  const version = await getPathCacheVersion(conversationId);
+  const cacheKey = `${getPathMessagesCacheKey(conversationId, normalizedLeafId)}:pv${version}`;
+
+  try {
+    const cached = await redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (error) {
+    logger.warn('Failed to read conversation path cache', {
+      conversationId,
+      leafMessageId: normalizedLeafId,
+      error: error.message,
+    });
+  }
 
   const rows = await query(
     `WITH RECURSIVE message_path AS (
@@ -65,7 +115,17 @@ async function fetchPathMessages(conversationId, leafMessageId) {
     [conversationId, normalizedLeafId, conversationId],
   );
 
-  return rows.map(normalizeMessageForView);
+  const messages = rows.map(normalizeMessageForView);
+  try {
+    await redisClient.setEx(cacheKey, PATH_MESSAGES_CACHE_TTL_SECONDS, JSON.stringify(messages));
+  } catch (error) {
+    logger.warn('Failed to write conversation path cache', {
+      conversationId,
+      leafMessageId: normalizedLeafId,
+      error: error.message,
+    });
+  }
+  return messages;
 }
 
-module.exports = { fetchPathMessages };
+module.exports = { fetchPathMessages, invalidatePathMessagesCache };

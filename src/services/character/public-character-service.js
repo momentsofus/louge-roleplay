@@ -5,15 +5,31 @@
 
 const { query, getDbType } = require('../../lib/db');
 const {
+  buildPublicCharacterCacheKey,
+  readPublicCharacterCache,
+  writePublicCharacterCache,
+} = require('./public-character-cache');
+const {
   attachTagsToCharacters,
   getCharacterTags,
   getTagSearchNames,
   parseTagInput,
 } = require('../character-tag-service');
 
+const PUBLIC_CHARACTER_LIST_CACHE_TTL_SECONDS = 45;
+const PUBLIC_CHARACTER_FEATURED_CACHE_TTL_SECONDS = 90;
+const PUBLIC_CHARACTER_DETAIL_CACHE_TTL_SECONDS = 120;
+
+function getStatsSelectFields() {
+  return `COALESCE(c.like_count, 0) AS like_count,
+            COALESCE(c.comment_count, 0) AS comment_count,
+            COALESCE(c.usage_count, 0) AS usage_count,
+            (COALESCE(c.like_count, 0) * 3 + COALESCE(c.comment_count, 0) * 4 + COALESCE(c.usage_count, 0) * 2) AS heat_score`;
+}
+
 function getPublicCharacterSortSql(sort) {
   const dbType = getDbType();
-  const heatExpr = '(COALESCE(like_stats.like_count, 0) * 3 + COALESCE(comment_stats.comment_count, 0) * 4 + COALESCE(usage_stats.usage_count, 0) * 2)';
+  const heatExpr = '(COALESCE(c.like_count, 0) * 3 + COALESCE(c.comment_count, 0) * 4 + COALESCE(c.usage_count, 0) * 2)';
   const randomSql = dbType === 'mysql' ? 'RAND()' : 'RANDOM()';
   const sortMap = {
     newest: 'c.id DESC',
@@ -32,32 +48,9 @@ function normalizePublicCharacterSort(sort) {
   return ['newest', 'oldest', 'likes', 'comments', 'usage', 'heat', 'random'].includes(value) ? value : 'newest';
 }
 
-function getPublicCharacterStatsJoinSql() {
-  return `
-     LEFT JOIN (
-       SELECT character_id, COUNT(*) AS like_count
-       FROM character_likes
-       GROUP BY character_id
-     ) like_stats ON like_stats.character_id = c.id
-     LEFT JOIN (
-       SELECT character_id, COUNT(*) AS comment_count
-       FROM character_comments
-       WHERE status = 'visible'
-       GROUP BY character_id
-     ) comment_stats ON comment_stats.character_id = c.id
-     LEFT JOIN (
-       SELECT character_id, COUNT(*) AS usage_count
-       FROM character_usage_events
-       GROUP BY character_id
-     ) usage_stats ON usage_stats.character_id = c.id`;
-}
-
 function getPublicCharacterSelectFields() {
   return `c.id, c.name, c.summary, c.visibility, c.is_nsfw, c.created_at, c.updated_at, c.avatar_image_path, u.username,
-            COALESCE(like_stats.like_count, 0) AS like_count,
-            COALESCE(comment_stats.comment_count, 0) AS comment_count,
-            COALESCE(usage_stats.usage_count, 0) AS usage_count,
-            (COALESCE(like_stats.like_count, 0) * 3 + COALESCE(comment_stats.comment_count, 0) * 4 + COALESCE(usage_stats.usage_count, 0) * 2) AS heat_score`;
+            ${getStatsSelectFields()}`;
 }
 
 function appendTagFilters(where, params, tagNames, tagMode) {
@@ -98,6 +91,18 @@ async function listPublicCharacters(options = {}) {
   const tagNames = parseTagInput(options.tags);
   const tagMode = String(options.tagMode || 'or') === 'and' ? 'and' : 'or';
 
+  const cacheKey = await buildPublicCharacterCacheKey('list', {
+    page,
+    pageSize,
+    keyword,
+    sort,
+    tagNames,
+    tagMode,
+    includeNsfw,
+  });
+  const cached = await readPublicCharacterCache(cacheKey);
+  if (cached) return cached;
+
   if (!includeNsfw) {
     where.push('COALESCE(c.is_nsfw, 0) = 0');
   }
@@ -115,7 +120,6 @@ async function listPublicCharacters(options = {}) {
     `SELECT ${getPublicCharacterSelectFields()}
      FROM characters c
      JOIN users u ON u.id = c.user_id
-     ${getPublicCharacterStatsJoinSql()}
      WHERE ${whereSql}
      ORDER BY ${sortSql}
      LIMIT ${pageSize} OFFSET ${offset}`,
@@ -131,7 +135,7 @@ async function listPublicCharacters(options = {}) {
   const total = Number(countRows[0]?.total || 0);
   const characters = await attachTagsToCharacters(rows);
 
-  return {
+  const result = {
     characters,
     pagination: {
       page,
@@ -149,6 +153,9 @@ async function listPublicCharacters(options = {}) {
       includeNsfw,
     },
   };
+
+  await writePublicCharacterCache(cacheKey, result, PUBLIC_CHARACTER_LIST_CACHE_TTL_SECONDS);
+  return result;
 }
 
 async function listFeaturedPublicCharacters(limit = 6, options = {}) {
@@ -156,30 +163,42 @@ async function listFeaturedPublicCharacters(limit = 6, options = {}) {
   const limitSql = Number(safeLimit);
   const where = ["c.visibility = 'public'", "c.status = 'published'"];
   const params = [];
-  if (!options.includeNsfw) {
+  const includeNsfw = Boolean(options.includeNsfw);
+  const cacheKey = await buildPublicCharacterCacheKey('featured', { safeLimit, includeNsfw });
+  const cached = await readPublicCharacterCache(cacheKey);
+  if (cached) return cached;
+
+  if (!includeNsfw) {
     where.push('COALESCE(c.is_nsfw, 0) = 0');
   }
   const rows = await query(
     `SELECT ${getPublicCharacterSelectFields()}
      FROM characters c
      JOIN users u ON u.id = c.user_id
-     ${getPublicCharacterStatsJoinSql()}
      WHERE ${where.join(' AND ')}
      ORDER BY heat_score DESC, c.id DESC
      LIMIT ${limitSql}`,
     params,
   );
-  return attachTagsToCharacters(rows);
+  const characters = await attachTagsToCharacters(rows);
+  await writePublicCharacterCache(cacheKey, characters, PUBLIC_CHARACTER_FEATURED_CACHE_TTL_SECONDS);
+  return characters;
 }
 
 async function getPublicCharacterDetail(characterId, options = {}) {
+  const includeNsfw = Boolean(options.includeNsfw);
+  const cacheKey = await buildPublicCharacterCacheKey('detail', { characterId: Number(characterId || 0), includeNsfw });
+  const cached = await readPublicCharacterCache(cacheKey);
+  if (cached) return cached;
+
   const where = ['c.id = ?', "c.visibility = 'public'", "c.status = 'published'"];
   const params = [characterId];
   if (!options.includeNsfw) {
     where.push('COALESCE(c.is_nsfw, 0) = 0');
   }
   const rows = await query(
-    `SELECT c.id, c.name, c.summary, c.avatar_image_path, c.is_nsfw
+    `SELECT c.id, c.name, c.summary, c.avatar_image_path, c.is_nsfw,
+            ${getStatsSelectFields()}
      FROM characters c
      WHERE ${where.join(' AND ')}
      LIMIT 1`,
@@ -188,6 +207,7 @@ async function getPublicCharacterDetail(characterId, options = {}) {
   const character = rows[0] || null;
   if (!character) return null;
   character.tags = await getCharacterTags(character.id);
+  await writePublicCharacterCache(cacheKey, character, PUBLIC_CHARACTER_DETAIL_CACHE_TTL_SECONDS);
   return character;
 }
 

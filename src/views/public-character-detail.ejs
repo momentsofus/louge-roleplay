@@ -11,7 +11,7 @@
       <a class="quick-link public-character-back" href="/characters/public"><%= t('返回公开角色') %></a>
       <div class="public-character-detail-title-row">
         <% if (character.avatar_image_path) { %>
-          <div class="character-avatar character-avatar--image" aria-hidden="true"><img src="<%= character.avatar_image_path %>" alt="" /></div>
+          <div class="character-avatar character-avatar--image" aria-hidden="true"><img src="<%= character.avatar_image_path %>" alt="" loading="lazy" decoding="async" /></div>
         <% } else { %>
           <div class="character-avatar" aria-hidden="true"><%= character.name.charAt(0) %></div>
         <% } %>

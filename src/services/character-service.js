@@ -4,6 +4,7 @@
  */
 
 const { query } = require('../lib/db');
+const { invalidatePublicCharacterCache } = require('./character/public-character-cache');
 const { clampCharacterField } = require('../constants/character-limits');
 const { normalizeStoredImagePath, deleteStoredImageIfOwned } = require('./upload-service');
 const {
@@ -58,6 +59,7 @@ async function createCharacter(userId, payload) {
     ],
   );
   await setCharacterTags(result.insertId, parseTagInput(payload.tags));
+  await invalidatePublicCharacterCache('character-created');
   return result.insertId;
 }
 
@@ -92,6 +94,7 @@ async function updateCharacter(characterId, userId, payload) {
   );
   if (Number(result.affectedRows || 0) > 0) {
     await setCharacterTags(characterId, parseTagInput(payload.tags));
+    await invalidatePublicCharacterCache('character-updated');
   }
 }
 
@@ -148,6 +151,7 @@ async function deleteCharacterSafely(characterId, userId) {
   }
 
   await query('DELETE FROM characters WHERE id = ? AND user_id = ?', [characterId, userId]);
+  await invalidatePublicCharacterCache('character-deleted');
   deleteStoredImageIfOwned(character.avatar_image_path);
   deleteStoredImageIfOwned(character.background_image_path);
 }

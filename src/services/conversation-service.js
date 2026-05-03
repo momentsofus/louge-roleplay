@@ -18,9 +18,17 @@ const {
   buildPathMessages,
   decoratePathMessages,
 } = require('./conversation/message-view');
-const { fetchPathMessages } = require('./conversation/path-repository');
+const {
+  fetchPathMessages,
+  invalidatePathMessagesCache,
+} = require('./conversation/path-repository');
 
 const MESSAGE_LIST_CACHE_TTL_SECONDS = 60;
+const MESSAGE_COUNT_CACHE_TTL_SECONDS = 60;
+
+function getConversationMessageCountCacheKey(conversationId) {
+  return `conversation:${conversationId}:message-count:v2`;
+}
 
 const MESSAGE_PROMPT_KIND_VALUES = new Set([
   'normal',
@@ -47,12 +55,15 @@ function getConversationMessagesCacheKey(conversationId) {
 
 async function invalidateConversationCache(conversationId) {
   const cacheKey = getConversationMessagesCacheKey(conversationId);
+  const countCacheKey = getConversationMessageCountCacheKey(conversationId);
   try {
-    await redisClient.del(cacheKey);
+    await redisClient.del(cacheKey, countCacheKey);
+    await invalidatePathMessagesCache(conversationId);
   } catch (error) {
     logger.warn('Failed to invalidate conversation cache', {
       conversationId,
       cacheKey,
+      countCacheKey,
       error: error.message,
     });
   }
@@ -221,11 +232,35 @@ async function getLatestMessage(conversationId) {
 }
 
 async function getConversationMessageCount(conversationId) {
+  const cacheKey = getConversationMessageCountCacheKey(conversationId);
+  try {
+    const cached = await redisClient.get(cacheKey);
+    if (cached !== null && cached !== undefined) {
+      return Number(cached || 0);
+    }
+  } catch (error) {
+    logger.warn('Failed to read conversation message count cache', {
+      conversationId,
+      cacheKey,
+      error: error.message,
+    });
+  }
+
   const rows = await query(
     'SELECT COUNT(*) AS messageCount FROM messages WHERE conversation_id = ? AND deleted_at IS NULL',
     [conversationId],
   );
-  return Number(rows[0]?.messageCount || 0);
+  const count = Number(rows[0]?.messageCount || 0);
+  try {
+    await redisClient.setEx(cacheKey, MESSAGE_COUNT_CACHE_TTL_SECONDS, String(count));
+  } catch (error) {
+    logger.warn('Failed to write conversation message count cache', {
+      conversationId,
+      cacheKey,
+      error: error.message,
+    });
+  }
+  return count;
 }
 
 async function addMessage(options) {

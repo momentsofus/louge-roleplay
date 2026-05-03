@@ -52,6 +52,12 @@ async function ensureMysqlCharacterSchema() {
   await ensureMysqlColumn('characters', 'imported_world_book_json', '`imported_world_book_json` JSON NULL');
   await ensureMysqlColumn('characters', 'flattened_world_book_text', '`flattened_world_book_text` LONGTEXT NULL');
   await ensureMysqlColumn('characters', 'import_batch_id', '`import_batch_id` BIGINT NULL');
+  await ensureMysqlColumn('characters', 'like_count', '`like_count` INT NOT NULL DEFAULT 0');
+  await ensureMysqlColumn('characters', 'comment_count', '`comment_count` INT NOT NULL DEFAULT 0');
+  await ensureMysqlColumn('characters', 'usage_count', '`usage_count` INT NOT NULL DEFAULT 0');
+  await ensureMysqlIndex('characters', 'idx_characters_public_nsfw', '(`visibility`, `status`, `is_nsfw`, `id`)');
+  await ensureMysqlIndex('characters', 'idx_characters_public_heat', '(`visibility`, `status`, `is_nsfw`, `like_count`, `comment_count`, `usage_count`, `id`)');
+  await ensureMysqlIndex('characters', 'idx_characters_user_status', '(`user_id`, `status`, `id`)');
   await ensureMysqlIndex('characters', 'idx_characters_source_file_hash', '(`source_file_hash`)');
   await ensureMysqlColumn('users', 'show_nsfw', '`show_nsfw` TINYINT(1) NOT NULL DEFAULT 0');
   await ensureMysqlColumn('users', 'reply_length_preference', "`reply_length_preference` ENUM('low','medium','high') NOT NULL DEFAULT 'medium'");
@@ -119,6 +125,9 @@ async function ensureSqliteCharacterSchema() {
     ['imported_world_book_json', 'TEXT NULL'],
     ['flattened_world_book_text', 'TEXT NULL'],
     ['import_batch_id', 'INTEGER NULL'],
+    ['like_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['comment_count', 'INTEGER NOT NULL DEFAULT 0'],
+    ['usage_count', 'INTEGER NOT NULL DEFAULT 0'],
   ];
   for (const [column, definition] of sqliteColumns) {
     // eslint-disable-next-line no-await-in-loop
@@ -149,6 +158,9 @@ async function ensureSqliteCharacterSchema() {
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   )`);
+  await query('CREATE INDEX IF NOT EXISTS idx_characters_public_nsfw ON characters (visibility, status, is_nsfw, id)');
+  await query('CREATE INDEX IF NOT EXISTS idx_characters_public_heat ON characters (visibility, status, is_nsfw, like_count, comment_count, usage_count, id)');
+  await query('CREATE INDEX IF NOT EXISTS idx_characters_user_status ON characters (user_id, status, id)');
   await query('CREATE INDEX IF NOT EXISTS idx_characters_source_file_hash ON characters (source_file_hash)');
   await query('CREATE UNIQUE INDEX IF NOT EXISTS uniq_tags_slug ON tags (slug)');
   await query(`CREATE TABLE IF NOT EXISTS character_tags (

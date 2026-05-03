@@ -6,6 +6,7 @@
 'use strict';
 
 const { query, getDbType, waitReady, withTransaction } = require('../lib/db');
+const { redisClient } = require('../lib/redis');
 const { markdownToHtml } = require('./markdown-service');
 
 class SiteMessageValidationError extends Error {
@@ -50,6 +51,20 @@ function normalizeUserIdList(value) {
   return Array.from(new Set(source
     .map((item) => Number(String(item || '').trim()))
     .filter((item) => Number.isFinite(item) && item > 0)));
+}
+
+async function invalidateUnreadSiteMessageCountCache(userIds = []) {
+  const ids = Array.from(new Set((Array.isArray(userIds) ? userIds : [userIds])
+    .map((id) => Number(id || 0))
+    .filter((id) => id > 0)));
+  if (!ids.length) return;
+  try {
+    await redisClient.del(ids.map((id) => `site-message:unread-count:${id}:v1`));
+  } catch (_) {}
+}
+
+async function invalidateAllUnreadSiteMessageCountCacheBestEffort() {
+  // 全员投递/撤回时不做 KEYS/SCAN，避免线上 Redis 阻塞；20 秒 TTL 会自然收敛。
 }
 
 function buildMessagePayload(payload = {}) {
@@ -224,7 +239,7 @@ async function createSiteMessage(payload, senderAdminUserId = null) {
     throw new SiteMessageValidationError('没有匹配到可投递的用户，请调整筛选条件或改用全体用户。', 'SITE_MESSAGE_NO_RECIPIENTS');
   }
 
-  return withTransaction(async (conn) => {
+  const result = await withTransaction(async (conn) => {
     const [messageResult] = await conn.execute(
       `INSERT INTO site_messages (
         title, body, sender_admin_user_id, target_mode, filter_role, filter_status,
@@ -251,6 +266,8 @@ async function createSiteMessage(payload, senderAdminUserId = null) {
     }
     return { messageId, recipientCount: recipientIds.length };
   });
+  await invalidateUnreadSiteMessageCountCache(recipientIds.slice(0, 1000));
+  return result;
 }
 
 async function listSiteMessagesForAdmin(limit = 50) {
@@ -346,7 +363,11 @@ async function revokeSiteMessage(messageId, adminUserId = null) {
      WHERE id = ? AND COALESCE(is_revoked, 0) = 0`,
     [adminUserId ? Number(adminUserId) : null, Number(messageId)],
   );
-  return Number(result?.affectedRows || 0) > 0;
+  if (Number(result?.affectedRows || 0) > 0) {
+    await invalidateAllUnreadSiteMessageCountCacheBestEffort();
+    return true;
+  }
+  return false;
 }
 
 async function markSiteMessageRead(userId, messageId) {
@@ -355,6 +376,7 @@ async function markSiteMessageRead(userId, messageId) {
     'UPDATE site_message_recipients SET is_read = 1, read_at = NOW() WHERE user_id = ? AND message_id = ?',
     [Number(userId), Number(messageId)],
   );
+  await invalidateUnreadSiteMessageCountCache(userId);
 }
 
 async function markAllSiteMessagesRead(userId) {
@@ -363,6 +385,7 @@ async function markAllSiteMessagesRead(userId) {
     'UPDATE site_message_recipients SET is_read = 1, read_at = NOW() WHERE user_id = ? AND is_read = 0',
     [Number(userId)],
   );
+  await invalidateUnreadSiteMessageCountCache(userId);
 }
 
 async function getSiteMessageRealtimeSnapshot(userId) {

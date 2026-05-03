@@ -6,6 +6,7 @@
 'use strict';
 
 const { query, withTransaction } = require('../lib/db');
+const { invalidatePublicCharacterCache } = require('./character/public-character-cache');
 
 function normalizeCommentBody(body) {
   return String(body || '').trim().slice(0, 500);
@@ -39,6 +40,8 @@ async function toggleCharacterLike(characterId, userId, options = {}) {
 
     if (existingRows.length > 0) {
       await conn.execute('DELETE FROM character_likes WHERE id = ?', [existingRows[0].id]);
+      await conn.execute('UPDATE characters SET like_count = CASE WHEN COALESCE(like_count, 0) > 0 THEN COALESCE(like_count, 0) - 1 ELSE 0 END, updated_at = updated_at WHERE id = ?', [characterId]);
+      await invalidatePublicCharacterCache('character-like-removed');
       return { liked: false };
     }
 
@@ -46,6 +49,8 @@ async function toggleCharacterLike(characterId, userId, options = {}) {
       'INSERT INTO character_likes (character_id, user_id, created_at) VALUES (?, ?, NOW())',
       [characterId, userId],
     );
+    await conn.execute('UPDATE characters SET like_count = COALESCE(like_count, 0) + 1, updated_at = updated_at WHERE id = ?', [characterId]);
+    await invalidatePublicCharacterCache('character-liked');
     return { liked: true };
   });
 }
@@ -70,6 +75,8 @@ async function addCharacterComment(characterId, userId, body, options = {}) {
      VALUES (?, ?, ?, 'visible', NOW(), NOW())`,
     [characterId, userId, normalizedBody],
   );
+  await query('UPDATE characters SET comment_count = COALESCE(comment_count, 0) + 1, updated_at = updated_at WHERE id = ?', [characterId]);
+  await invalidatePublicCharacterCache('character-comment-added');
 }
 
 async function listCharacterComments(characterId, limit = 3) {
@@ -91,6 +98,8 @@ async function markCharacterUsed(characterId, userId) {
      VALUES (?, ?, NOW())`,
     [characterId, userId],
   );
+  await query('UPDATE characters SET usage_count = COALESCE(usage_count, 0) + 1, updated_at = updated_at WHERE id = ?', [characterId]);
+  await invalidatePublicCharacterCache('character-used');
 }
 
 module.exports = {

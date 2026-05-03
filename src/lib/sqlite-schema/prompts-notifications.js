@@ -59,6 +59,7 @@ function ensureSqlitePromptNotificationSchema(db) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_active_window ON notifications (is_active, starts_at, ends_at)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_audience ON notifications (audience, notification_type)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_display_scopes ON notifications (display_scopes)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_notifications_scope_window ON notifications (is_active, notification_type, audience, starts_at, ends_at, priority, id)');
 }
 
 module.exports = { ensureSqlitePromptNotificationSchema };
