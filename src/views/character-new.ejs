@@ -150,6 +150,16 @@
     </form>
 
     <% if (mode === 'edit' && character) { %>
+      <section class="hint-card character-start-card">
+        <strong><%= t('想重新开始？') %></strong>
+        <p class="mini-note"><%= t('开启新对话会创建一条全新的独立会话，不会带入这个角色之前的聊天内容。') %></p>
+        <form method="POST" action="/conversations/start/<%= character.id %>">
+          <button type="submit" class="btn-brand"><%= t('开启新对话') %></button>
+        </form>
+      </section>
+    <% } %>
+
+    <% if (mode === 'edit' && character) { %>
       <section class="danger-zone">
         <h3>危险操作</h3>
         <p>为了保护已有故事，现在只允许删除从未开始过对话的角色。已经聊过的角色会先保留，避免误删整段内容。</p>

@@ -21,6 +21,13 @@
       }, 450);
     }
 
+    function updateChatCounts() {
+      if (!chatContainer) return;
+      const currentCount = chatContainer.querySelectorAll('article.bubble[data-message-id]').length;
+      chatContainer.dataset.visibleCount = String(currentCount);
+      chatContainer.dataset.totalCount = String(Math.max(Number(chatContainer.dataset.totalCount || '0'), currentCount));
+    }
+
     function updateHiddenParentInputs(messageId) {
       const normalizedMessageId = String(messageId || '').trim();
       if (!normalizedMessageId) return;
@@ -29,17 +36,49 @@
       });
     }
 
+    function collapseOldRenderedMessages(options) {
+      if (!chatContainer) return;
+      const settings = Object.assign({ keepLatest: 24 }, options || {});
+      const keepLatest = Math.max(6, Number(settings.keepLatest || 24));
+      const articles = Array.from(chatContainer.querySelectorAll('article.bubble[data-message-id]'));
+      if (articles.length <= keepLatest) {
+        updateChatCounts();
+        return;
+      }
+
+      const removable = articles.slice(0, Math.max(0, articles.length - keepLatest));
+      if (!removable.length) {
+        updateChatCounts();
+        return;
+      }
+
+      const firstKept = articles[removable.length];
+      const nextBeforeId = firstKept ? String(firstKept.dataset.messageId || '').trim() : '';
+      const removedCount = removable.length;
+      removable.forEach((article) => article.remove());
+      updateChatCounts();
+      if (nextBeforeId) {
+        chatContainer.dataset.oldestVisibleId = nextBeforeId;
+        const loader = document.querySelector('[data-history-loader]');
+        const button = loader ? loader.querySelector('[data-load-older-messages]') : null;
+        if (button) {
+          button.dataset.beforeId = nextBeforeId;
+        }
+      }
+      if (settings.showNotice && removedCount > 0 && typeof settings.showToast === 'function') {
+        settings.showToast(t('已折叠较早消息，可点“查看更早的消息”重新加载。'));
+      }
+    }
+
     function updateCurrentMessageState(messageId) {
       const normalizedMessageId = String(messageId || '').trim();
       if (!normalizedMessageId) return;
       updateHiddenParentInputs(normalizedMessageId);
       form.dataset.messageCount = String(Math.max(Number(form.dataset.messageCount || '0'), 1));
       if (chatContainer) {
-        const currentCount = Number(chatContainer.dataset.visibleCount || '0') || chatContainer.querySelectorAll('article.bubble[data-message-id]').length;
-        const totalCount = Number(chatContainer.dataset.totalCount || '0') || currentCount;
-        chatContainer.dataset.visibleCount = String(Math.max(currentCount, chatContainer.querySelectorAll('article.bubble[data-message-id]').length));
-        chatContainer.dataset.totalCount = String(Math.max(totalCount, chatContainer.querySelectorAll('article.bubble[data-message-id]').length));
         chatContainer.querySelectorAll('.empty-chat-state').forEach((node) => node.remove());
+        updateChatCounts();
+        collapseOldRenderedMessages({ keepLatest: 24 });
       }
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('leaf', normalizedMessageId);
@@ -60,8 +99,7 @@
       const index = articles.findIndex((article) => String(article.dataset.messageId || '') === normalizedMessageId);
       if (index < 0) return;
       articles.slice(index + 1).forEach((article) => article.remove());
-      chatContainer.dataset.visibleCount = String(chatContainer.querySelectorAll('article.bubble[data-message-id]').length);
-      chatContainer.dataset.totalCount = String(Math.max(Number(chatContainer.dataset.totalCount || '0'), Number(chatContainer.dataset.visibleCount || '0')));
+      updateChatCounts();
       updateHiddenParentInputs(normalizedMessageId);
     }
 
@@ -86,6 +124,7 @@
       reloadToMessage,
       updateHiddenParentInputs,
       updateCurrentMessageState,
+      collapseOldRenderedMessages,
       ensureStartMessage,
       removeStaleLinearTail,
       applyInitialUrlState,

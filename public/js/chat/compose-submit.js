@@ -17,6 +17,7 @@
       consumeNdjsonStream,
       setBubbleFinalState,
       updateCurrentMessageState,
+      collapseOldRenderedMessages,
       ensureStartMessage,
     } = settings;
 
@@ -79,6 +80,9 @@
 
         if (result.finalMessageId) {
           updateCurrentMessageState(result.finalMessageId);
+          if (typeof collapseOldRenderedMessages === 'function') {
+            collapseOldRenderedMessages({ keepLatest: 24 });
+          }
         }
 
         textarea.value = '';

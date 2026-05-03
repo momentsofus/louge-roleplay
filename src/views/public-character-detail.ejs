@@ -21,6 +21,12 @@
         </div>
       </div>
       <p class="public-character-detail-summary"><%= character.summary || t('这个角色还没有写简介。') %></p>
+      <% if (currentUser) { %>
+        <form method="POST" action="/conversations/start/<%= character.id %>" class="public-character-start-inline">
+          <button class="btn-brand" type="submit"><%= t('开启新对话') %></button>
+          <span class="mini-note"><%= t('会创建一条全新的独立会话，不带入你和这个角色的旧聊天。') %></span>
+        </form>
+      <% } %>
       <% if (Array.isArray(character.tags) && character.tags.length) { %>
         <div class="tag-list">
           <% character.tags.forEach(tag => { %>
@@ -38,8 +44,9 @@
       <div class="public-character-actions public-character-actions--detail">
         <% if (currentUser) { %>
           <form method="POST" action="/conversations/start/<%= character.id %>">
-            <button class="btn-brand" type="submit"><%= t('开始聊天') %></button>
+            <button class="btn-brand" type="submit"><%= t('开启新对话') %></button>
           </form>
+          <p class="mini-note"><%= t('每次都会创建独立新会话，旧聊天不会被带入。') %></p>
           <form method="POST" action="/characters/public/<%= character.id %>/like">
             <button class="inline-btn" type="submit"><%= t('点赞') %></button>
           </form>

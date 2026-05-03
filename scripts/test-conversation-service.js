@@ -12,7 +12,10 @@ const {
   addMessage,
   cloneConversationBranch,
   getConversationById,
+  getConversationMessageCount,
+  fetchPathMessages,
 } = require('../src/services/conversation-service');
+const { buildChatRequestContext } = require('../src/server-helpers/chat-view');
 
 async function main() {
   const suffix = Date.now();
@@ -49,6 +52,7 @@ async function main() {
       parentMessageId: firstUserMessageId,
       promptKind: 'normal',
     });
+    let oldLeafMessageId = firstReplyMessageId;
 
     const cloneResult = await cloneConversationBranch({
       userId,
@@ -74,6 +78,71 @@ async function main() {
     const fallbackConversation = await getConversationById(fallbackConversationId, userId);
     assert.ok(fallbackConversation, 'fallback conversation should be visible to owner');
     assert.notEqual(fallbackConversation.selected_model_mode, '', 'model fallback should keep a non-empty mode');
+
+    for (let i = 1; i <= 30; i += 1) {
+      const oldUserMessageId = await addMessage({
+        conversationId: sourceConversationId,
+        senderType: 'user',
+        content: `OLD_CONVERSATION_SECRET_${i}`,
+        parentMessageId: oldLeafMessageId,
+        promptKind: 'normal',
+      });
+      oldLeafMessageId = await addMessage({
+        conversationId: sourceConversationId,
+        senderType: 'character',
+        content: `OLD_CONVERSATION_REPLY_${i}`,
+        parentMessageId: oldUserMessageId,
+        promptKind: 'normal',
+      });
+    }
+
+    const freshConversationId = await createConversation(userId, characterId, {
+      title: 'fresh same-character conversation',
+      selectedModelMode: 'standard',
+    });
+    conversationIds.push(freshConversationId);
+    const freshConversation = await getConversationById(freshConversationId, userId);
+    assert.ok(freshConversation, 'fresh conversation should be visible to owner');
+    assert.equal(await getConversationMessageCount(freshConversationId), 0, 'new conversation should start with no copied messages');
+
+    const firstFreshRequest = await buildChatRequestContext(
+      { session: { user: { id: userId, username: 'conversation-service-test' } } },
+      freshConversation,
+      'hello fresh thread',
+      null,
+    );
+    assert.equal(firstFreshRequest.isFirstTurn, true, 'fresh conversation should be treated as first turn');
+    assert.deepEqual(firstFreshRequest.history, [], 'fresh conversation prompt history should be empty before seed messages');
+
+    const seedUserMessageId = await addMessage({
+      conversationId: freshConversationId,
+      senderType: 'user',
+      content: '[开始一次新的对话]',
+      promptKind: 'conversation-start',
+    });
+    const seedReplyMessageId = await addMessage({
+      conversationId: freshConversationId,
+      senderType: 'character',
+      content: 'fresh greeting only',
+      parentMessageId: seedUserMessageId,
+      promptKind: 'first-message',
+    });
+    const seededFreshConversation = await getConversationById(freshConversationId, userId);
+    const seededFreshRequest = await buildChatRequestContext(
+      { session: { user: { id: userId, username: 'conversation-service-test' } } },
+      seededFreshConversation,
+      'continue fresh thread',
+      seedReplyMessageId,
+    );
+    const freshHistoryText = seededFreshRequest.history.map((message) => message.content).join('\n');
+    assert.ok(freshHistoryText.includes('fresh greeting only'), 'seeded fresh history should include its own first message');
+    assert.ok(!freshHistoryText.includes('OLD_CONVERSATION_SECRET_'), 'fresh prompt history must not include previous conversation user messages');
+    assert.ok(!freshHistoryText.includes('OLD_CONVERSATION_REPLY_'), 'fresh prompt history must not include previous conversation assistant messages');
+
+    const oldPath = await fetchPathMessages(sourceConversationId, oldLeafMessageId);
+    const freshPath = await fetchPathMessages(freshConversationId, seedReplyMessageId);
+    assert.equal(oldPath.length, 62, 'old long conversation should keep its own path');
+    assert.equal(freshPath.length, 2, 'fresh conversation should only have its own seed path');
 
     console.log('Conversation service regression test passed.');
   } finally {

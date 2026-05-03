@@ -114,6 +114,7 @@
       consumeNdjsonStream,
       setBubbleFinalState: streamingUi.setBubbleFinalState,
       updateCurrentMessageState: conversationState.updateCurrentMessageState,
+      collapseOldRenderedMessages: conversationState.collapseOldRenderedMessages,
       ensureStartMessage: conversationState.ensureStartMessage,
     });
 
