@@ -1207,6 +1207,9 @@ const EN_MESSAGES = {
   '选择投递范围后发送。指定用户模式可填写多个用户 ID，用逗号、空格或换行分隔。正文支持 Markdown。': 'Choose a delivery scope, then send. In specified-user mode, enter multiple user IDs separated by commas, spaces, or new lines. The body supports Markdown.',
   '站内信正文，支持 Markdown 和换行。': 'Site mail body. Markdown and line breaks are supported.',
   '通知正文，支持 Markdown 和换行。': 'Notification body. Markdown and line breaks are supported.',
+  '需要帮忙？': 'Need help?',
+  '如果这个问题反复出现，可以微信扫码联系客服处理。': 'If this keeps happening, scan the WeChat code to contact support.',
+  '如果这个问题反复出现，可以微信扫码联系客服，并把请求编号一并发给工作人员。': 'If this keeps happening, scan the WeChat code to contact support and include the request ID.',
 };
 
 module.exports = { EN_MESSAGES };

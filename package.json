@@ -17,6 +17,7 @@
     "test:character-tags": "node scripts/test-character-tags.js",
     "docs:debug": "node scripts/update-docs-debug.js",
     "logs:test": "node scripts/test-log-service.js",
+    "error-handler:test": "node scripts/test-error-handler.js",
     "admin-logs:test": "node scripts/test-admin-logs-route.js",
     "admin-conversations:test": "node scripts/test-admin-conversations.js",
     "conversation-service:test": "node scripts/test-conversation-service.js",
