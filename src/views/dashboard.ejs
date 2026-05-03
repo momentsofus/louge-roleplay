@@ -204,7 +204,7 @@
               <article class="character-dashboard-card">
                 <div class="character-dashboard-card-head">
                   <% if (character.avatar_image_path) { %>
-                    <div class="dashboard-character-avatar"><img src="<%= character.avatar_image_path %>" alt="<%= character.name %>" /></div>
+                    <div class="dashboard-character-avatar"><img src="<%= character.avatar_image_path %>" alt="<%= character.name %>" loading="lazy" decoding="async" /></div>
                   <% } %>
                   <div class="character-card-topline">
                     <span class="meta-pill"><%= t(character.visibility === 'private' ? '私有' : '公开') %></span>

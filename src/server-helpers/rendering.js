@@ -6,8 +6,9 @@
 const config = require('../config');
 const logger = require('../lib/logger');
 const { translate, translateHtml } = require('../i18n');
-const { getClientNotificationBootstrap } = require('../services/notification-service');
+const { getClientNotificationBootstrap, getNotificationBootstrapVersion } = require('../services/notification-service');
 const { getUnreadSiteMessageCount } = require('../services/site-message-service');
+const { redisClient } = require('../lib/redis');
 const viewModel = require('./view-models');
 const { getAdminNavItems, getAdminHubItems, getLayoutNavItems } = require('./navigation');
 
@@ -59,6 +60,45 @@ function inferNotificationPageScope(view) {
   return 'global';
 }
 
+async function getCachedUnreadSiteMessageCount(userId, method = 'GET') {
+  const normalizedUserId = Number(userId || 0);
+  if (!normalizedUserId) return 0;
+  if (String(method || 'GET').toUpperCase() !== 'GET') {
+    return getUnreadSiteMessageCount(normalizedUserId).catch(() => 0);
+  }
+  const cacheKey = `site-message:unread-count:${normalizedUserId}:v1`;
+  try {
+    const cached = await redisClient.get(cacheKey);
+    if (cached !== null && cached !== undefined) return Number(cached || 0);
+  } catch (_) {}
+
+  const count = await getUnreadSiteMessageCount(normalizedUserId).catch(() => 0);
+  try {
+    await redisClient.setEx(cacheKey, 20, String(count));
+  } catch (_) {}
+  return count;
+}
+
+async function getCachedClientNotificationBootstrap(user, options = {}) {
+  const userKey = user?.id ? `${user.id}:${user.role || 'user'}` : 'guest';
+  if (String(options.method || 'GET').toUpperCase() !== 'GET') {
+    return getClientNotificationBootstrap(user || null, options);
+  }
+  const pageScope = options.pageScope || 'global';
+  const version = await getNotificationBootstrapVersion();
+  const cacheKey = `notification-bootstrap:${userKey}:${pageScope}:v${version}`;
+  try {
+    const cached = await redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (_) {}
+
+  const notifications = await getClientNotificationBootstrap(user || null, options);
+  try {
+    await redisClient.setEx(cacheKey, 30, JSON.stringify(notifications || []));
+  } catch (_) {}
+  return notifications;
+}
+
 async function renderPage(res, view, params = {}) {
   const locale = res.locals.locale || 'zh-CN';
   const t = res.locals.t || ((key, vars) => translate(locale, key, vars));
@@ -76,10 +116,11 @@ async function renderPage(res, view, params = {}) {
   };
 
   const [clientNotifications, unreadSiteMessageCount] = await Promise.all([
-    getClientNotificationBootstrap(res.locals.currentUser || null, {
+    getCachedClientNotificationBootstrap(res.locals.currentUser || null, {
+      method: res.req?.method || 'GET',
       pageScope: params.notificationPageScope || inferNotificationPageScope(view),
     }),
-    res.locals.currentUser?.id ? getUnreadSiteMessageCount(res.locals.currentUser.id).catch(() => 0) : 0,
+    res.locals.currentUser?.id ? getCachedUnreadSiteMessageCount(res.locals.currentUser.id, res.req?.method || 'GET') : 0,
   ]);
 
   return new Promise((resolve) => {

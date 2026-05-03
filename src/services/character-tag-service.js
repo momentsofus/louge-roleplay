@@ -8,9 +8,13 @@
 const crypto = require('node:crypto');
 const OpenCC = require('opencc-js');
 const { query } = require('../lib/db');
+const { redisClient } = require('../lib/redis');
+const logger = require('../lib/logger');
+const { invalidatePublicCharacterCache } = require('./character/public-character-cache');
 
 const MAX_TAGS_PER_CHARACTER = 12;
 const MAX_TAG_NAME_LENGTH = 32;
+const PUBLIC_TAGS_CACHE_TTL_SECONDS = 120;
 const simplifiedToTraditional = OpenCC.Converter({ from: 'cn', to: 'tw' });
 const traditionalToSimplified = OpenCC.Converter({ from: 'tw', to: 'cn' });
 
@@ -60,6 +64,14 @@ function parseTagInput(value) {
     ? value
     : String(value || '').split(/[，,\n]/g);
   return uniqueTagNames(rawItems);
+}
+
+async function invalidatePublicTagCache() {
+  try {
+    await redisClient.del(['public-tags:v2:safe', 'public-tags:v2:nsfw']);
+  } catch (error) {
+    logger.warn('[character-tag-service] 失效公开标签缓存失败', { error: error.message });
+  }
 }
 
 async function runSql(conn, sql, params = []) {
@@ -146,6 +158,8 @@ async function setCharacterTags(characterId, tagValues = [], conn = null) {
     );
   } catch (_) {}
 
+  await invalidatePublicCharacterCache('character-tags-updated');
+  await invalidatePublicTagCache();
   return attached;
 }
 
@@ -201,13 +215,21 @@ async function listAllTags() {
 
 async function listPublicTags(options = {}) {
   const includeNsfw = Boolean(options.includeNsfw);
+  const cacheKey = `public-tags:v2:${includeNsfw ? 'nsfw' : 'safe'}`;
+  try {
+    const cached = await redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (error) {
+    logger.warn('[character-tag-service] 读取公开标签缓存失败', { error: error.message });
+  }
+
   const where = ["c.visibility = 'public'", "c.status = 'published'", 't.is_enabled = 1'];
   const params = [];
   if (!includeNsfw) {
     where.push('COALESCE(c.is_nsfw, 0) = 0');
     where.push('COALESCE(t.is_nsfw, 0) = 0');
   }
-  return query(
+  const rows = await query(
     `SELECT t.id, t.name, t.slug, t.color, t.icon, t.is_nsfw, COUNT(DISTINCT c.id) AS usage_count
      FROM tags t
      JOIN character_tags ct ON ct.tag_id = t.id
@@ -219,6 +241,12 @@ async function listPublicTags(options = {}) {
      LIMIT 200`,
     params,
   );
+  try {
+    await redisClient.setEx(cacheKey, PUBLIC_TAGS_CACHE_TTL_SECONDS, JSON.stringify(rows));
+  } catch (error) {
+    logger.warn('[character-tag-service] 写入公开标签缓存失败', { error: error.message });
+  }
+  return rows;
 }
 
 module.exports = {
@@ -233,6 +261,7 @@ module.exports = {
   getCharacterTags,
   getTagsForCharacterIds,
   attachTagsToCharacters,
+  invalidatePublicTagCache,
   listAllTags,
   listPublicTags,
 };

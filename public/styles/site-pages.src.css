@@ -1,0 +1,34 @@
+/*
+ * Source stylesheet index for scripts/build-css.js.
+ *
+ * Edit the module files under ./site-pages/ and run `npm run build:css`.
+ * Runtime templates should load /public/styles/site-pages.css, the generated flat bundle.
+ */
+
+@import url("./site-pages/00-core.css");
+@import url("./site-pages/01-typography.css");
+@import url("./site-pages/10-home.css");
+@import url("./site-pages/11-home-polish.css");
+@import url("./site-pages/12-public-characters.css");
+@import url("./site-pages/20-admin.css");
+@import url("./site-pages/21-admin-polish.css");
+@import url("./site-pages/25-notifications.css");
+@import url("./site-pages/26-admin-import.css");
+@import url("./site-pages/27-tags.css");
+@import url("./site-pages/30-character-editor.css");
+@import url("./site-pages/31-character-polish.css");
+@import url("./site-pages/40-dashboard.css");
+@import url("./site-pages/41-dashboard-polish.css");
+@import url("./site-pages/42-dashboard-sections.css");
+@import url("./site-pages/43-dashboard-responsive.css");
+@import url("./site-pages/50-chat.css");
+@import url("./site-pages/51-chat-polish.css");
+@import url("./site-pages/52-rich-content.css");
+@import url("./site-pages/53-mobile-chat.css");
+@import url("./site-pages/60-auth.css");
+@import url("./site-pages/61-register.css");
+@import url("./site-pages/70-shared-utilities.css");
+@import url("./site-pages/80-chat-polish.css");
+@import url("./site-pages/90-profile.css");
+@import url("./site-pages/91-profile-polish.css");
+@import url("./site-pages/95-polish.css");

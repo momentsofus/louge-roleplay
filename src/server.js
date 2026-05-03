@@ -114,14 +114,30 @@ async function bootstrap() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'views'));
 
-  app.use('/public', express.static(path.join(__dirname, '..', 'public')));
   app.use(compression({
+    threshold: 1024,
+    level: 6,
     filter: (req, res) => {
       const contentType = String(res.getHeader('Content-Type') || '').toLowerCase();
       if (contentType.includes('application/x-ndjson')) {
         return false;
       }
       return compression.filter(req, res);
+    },
+  }));
+  app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
+    etag: true,
+    lastModified: true,
+    maxAge: '7d',
+    immutable: true,
+    setHeaders(res, filePath) {
+      if (/[/\\]uploads[/\\]/.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+        return;
+      }
+      if (/\.(?:html?|json|webmanifest)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+      }
     },
   }));
   app.use(express.urlencoded({ extended: false, limit: '20kb' }));

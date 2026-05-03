@@ -6,6 +6,7 @@
 'use strict';
 
 const { query, withTransaction, getDbType } = require('../lib/db');
+const { invalidatePublicCharacterCache } = require('./character/public-character-cache');
 const { deleteStoredImageIfOwned } = require('./upload-service');
 const { attachTagsToCharacters, getCharacterTags } = require('./character-tag-service');
 
@@ -177,9 +178,9 @@ async function listAdminCharacters(options = {}) {
        u.nickname,
        (SELECT COUNT(*) FROM conversations conv WHERE conv.character_id = c.id) AS conversation_count,
        (SELECT COUNT(*) FROM conversations conv WHERE conv.character_id = c.id AND conv.status <> 'deleted') AS active_conversation_count,
-       (SELECT COUNT(*) FROM character_likes cl WHERE cl.character_id = c.id) AS like_count,
-       (SELECT COUNT(*) FROM character_comments cc WHERE cc.character_id = c.id AND cc.status = 'visible') AS comment_count,
-       (SELECT COUNT(*) FROM character_usage_events cue WHERE cue.character_id = c.id) AS usage_count,
+       COALESCE(c.like_count, 0) AS like_count,
+       COALESCE(c.comment_count, 0) AS comment_count,
+       COALESCE(c.usage_count, 0) AS usage_count,
        (SELECT MAX(conv.updated_at) FROM conversations conv WHERE conv.character_id = c.id) AS latest_conversation_at
      FROM characters c
      JOIN users u ON u.id = c.user_id
@@ -237,9 +238,9 @@ async function getAdminCharacterDetail(characterId) {
        (SELECT COUNT(*) FROM conversations conv WHERE conv.character_id = c.id AND conv.status <> 'deleted') AS active_conversation_count,
        (SELECT COUNT(*) FROM conversations conv WHERE conv.character_id = c.id AND conv.status = 'deleted') AS deleted_conversation_count,
        (SELECT COUNT(*) FROM messages m JOIN conversations conv ON conv.id = m.conversation_id WHERE conv.character_id = c.id) AS message_count,
-       (SELECT COUNT(*) FROM character_likes cl WHERE cl.character_id = c.id) AS like_count,
-       (SELECT COUNT(*) FROM character_comments cc WHERE cc.character_id = c.id AND cc.status = 'visible') AS comment_count,
-       (SELECT COUNT(*) FROM character_usage_events cue WHERE cue.character_id = c.id) AS usage_count,
+       COALESCE(c.like_count, 0) AS like_count,
+       COALESCE(c.comment_count, 0) AS comment_count,
+       COALESCE(c.usage_count, 0) AS usage_count,
        (SELECT MAX(conv.updated_at) FROM conversations conv WHERE conv.character_id = c.id) AS latest_conversation_at
      FROM characters c
      JOIN users u ON u.id = c.user_id
@@ -329,7 +330,11 @@ async function updateAdminCharacterStatus(characterId, status) {
     return false;
   }
   const result = await query('UPDATE characters SET status = ?, updated_at = NOW() WHERE id = ?', [normalizedStatus, id]);
-  return Number(result.affectedRows || 0) > 0;
+  if (Number(result.affectedRows || 0) > 0) {
+    await invalidatePublicCharacterCache('admin-character-status-updated');
+    return true;
+  }
+  return false;
 }
 
 async function deleteAdminCharacter(characterId) {
@@ -372,6 +377,7 @@ async function deleteAdminCharacter(characterId) {
   });
 
   if (result.deleted) {
+    await invalidatePublicCharacterCache('admin-character-deleted');
     deleteStoredImageIfOwned(imagePaths.avatarImagePath);
     deleteStoredImageIfOwned(imagePaths.backgroundImagePath);
   }

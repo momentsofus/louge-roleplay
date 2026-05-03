@@ -4,6 +4,27 @@
 
 ## [Unreleased]
 
+## [1.3.19] - 2026-05-03
+
+### Added
+
+- 新增公开角色 Redis 版本化缓存，覆盖角色大厅列表、首页推荐与公开详情，并在角色、标签、互动和后台状态变更时自动失效。
+- 新增聊天路径消息与消息数量缓存，减少聊天页首屏重复查询。
+- 新增前端构建脚本：`npm run build:css` 打平 CSS import，`npm run build:js` 合并聊天页脚本，`npm run build` 统一生成前端产物。
+- 新增 `npm run backfill:character-stats`，可从点赞、评论、使用明细回填角色统计缓存字段。
+
+### Changed
+
+- 公开角色热度、点赞、评论、使用排序改为读取 `characters` 表统计缓存字段，避免列表页实时聚合明细表。
+- Express 静态资源启用压缩、ETag、Last-Modified、长缓存与 immutable 策略，上传和 manifest/json 使用更保守缓存头。
+- 聊天页合并脚本请求并改为 defer 加载；布局全局脚本 defer 加载，CSS/font 预加载，移除聊天页重复 CSS 请求。
+- 首页、角色大厅、角色详情、控制台和聊天侧栏图片增加 lazy/async 解码提示，降低首屏阻塞。
+- 页面通知 bootstrap 与站内信未读数量增加短 TTL Redis 缓存，减少每次渲染的公共查询压力。
+
+### Fixed
+
+- MemoryRedis 补齐 `decr()`，保证 Redis 降级模式下计数器接口兼容。
+
 ## [1.3.18] - 2026-05-02
 
 ### Added

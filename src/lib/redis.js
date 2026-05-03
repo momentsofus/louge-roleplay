@@ -152,6 +152,22 @@ class MemoryRedis {
   }
 
   /**
+   * 递减整数计数器。key 不存在或已过期从 0 起计。
+   * @param {string} key
+   * @returns {Promise<number>}
+   */
+  async decr(key) {
+    if (this._isExpired(key)) {
+      this._store.set(key, '-1');
+      return -1;
+    }
+    const current = parseInt(this._store.get(key) ?? '0', 10);
+    const next = Number.isNaN(current) ? -1 : current - 1;
+    this._store.set(key, String(next));
+    return next;
+  }
+
+  /**
    * 为已存在的 key 设置过期时间。key 不存在返回 0，成功返回 1。
    * @param {string} key
    * @param {number} seconds
