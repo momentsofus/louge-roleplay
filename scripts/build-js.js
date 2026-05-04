@@ -11,6 +11,11 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 
+const notificationBundleFiles = [
+  'public/js/notification/markdown-renderer.js',
+  'public/js/notification-client.js',
+];
+
 const chatBundleFiles = [
   'public/js/chat/rich-renderer/formatting.js',
   'public/js/chat/rich-renderer/sanitizer.js',
@@ -43,4 +48,5 @@ function buildBundle(outputRelativePath, sourceFiles) {
   console.log(`[build-js] wrote ${outputRelativePath} (${Buffer.byteLength(content)} bytes)`);
 }
 
+buildBundle('public/js/generated/notification.bundle.js', notificationBundleFiles);
 buildBundle('public/js/generated/chat.bundle.js', chatBundleFiles);
