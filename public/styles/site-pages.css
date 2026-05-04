@@ -818,7 +818,7 @@ textarea, .bubble-rich, .rich-preview {
 
 .public-filter-form {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
   gap: 14px;
   align-items: start;
 }
@@ -827,6 +827,13 @@ textarea, .bubble-rich, .rich-preview {
 
 .public-filter-main {
   display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.public-filter-fields-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr);
   gap: 12px;
   min-width: 0;
 }
@@ -848,12 +855,10 @@ textarea, .bubble-rich, .rich-preview {
   display: grid;
   gap: 8px;
   min-width: 0;
-  min-height: 0;
-  max-height: 150px;
-  padding: 10px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  max-height: 116px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .public-filter-tag-suggestions-head {
@@ -878,12 +883,12 @@ textarea, .bubble-rich, .rich-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-height: 104px;
+  max-height: 72px;
   overflow: auto;
   overscroll-behavior: contain;
   align-content: flex-start;
   margin: 0;
-  padding-right: 2px;
+  padding: 0 2px 0 0;
 }
 
 .public-filter-actions {
@@ -1085,9 +1090,8 @@ textarea, .bubble-rich, .rich-preview {
 .nsfw-toggle-row { justify-content: flex-start; }
 
 @media (max-width: 1100px) {
-  .public-filter-form { grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr); }
+  .public-filter-form { grid-template-columns: 1fr; }
   .public-filter-toolbar {
-    grid-column: 1 / -1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     justify-self: stretch;
     width: 100%;
@@ -1099,7 +1103,7 @@ textarea, .bubble-rich, .rich-preview {
   .public-hero-card, .public-character-detail-hero, .admin-import-grid {
     grid-template-columns: 1fr;
   }
-  .public-filter-form, .public-filter-main, .public-filter-toolbar { grid-template-columns: 1fr; }
+  .public-filter-form, .public-filter-main, .public-filter-fields-row, .public-filter-toolbar { grid-template-columns: 1fr; }
   .public-filter-toolbar { grid-column: auto; }
   .public-filter-toolbar .field-group:first-child { grid-column: auto; }
   .public-hero-actions, .public-filter-actions { width: 100%; }
