@@ -3410,6 +3410,48 @@ textarea, .bubble-rich, .rich-preview {
 .public-tag-filter-field .tag-input-shell { min-height: 44px; }
 .admin-import-tag-field .tag-input-shell { min-height: 40px; }
 
+.public-filter-panel .public-tag-filter-field .tag-input-shell {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.015);
+  box-shadow: none;
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-shell:focus-within {
+  border-color: rgba(124, 107, 240, 0.42);
+  box-shadow: 0 0 0 3px rgba(124, 107, 240, 0.12);
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-chip-list {
+  flex: 0 1 auto;
+  max-width: 55%;
+  overflow: hidden;
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-chip {
+  min-height: 24px;
+  max-width: 100%;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-chip span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-editor {
+  height: 24px;
+  min-width: 140px;
+}
+
+.public-filter-panel .public-tag-filter-field .tag-input-meta {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .tag-input-shell { min-height: 44px; }
   .tag-input-editor { flex-basis: 100%; }
