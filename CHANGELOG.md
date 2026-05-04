@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-05-04
+
+### Changed
+
+- 继续拆分过大文件：通知样式入口 `public/styles/site-pages/25-notifications.css` 改为聚合入口，弹窗、toast/banner、后台通知、客服后台、站内信与 Markdown 样式拆入 `public/styles/site-pages/notifications/`。
+- 前台通知脚本拆出 Markdown 降级渲染模块，并新增通知合并包 `public/js/generated/notification.bundle.js`，保持 `window.LougeNotifications` 公开接口不变。
+- 会话服务继续轻量化：缓存读写/失效与消息 prompt kind 规范化拆入 `src/services/conversation/`，保留 `conversation-service.js` 兼容门面。
+
 ## [1.4.0] - 2026-05-04
 
 ### Added
