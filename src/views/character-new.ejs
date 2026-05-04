@@ -4,14 +4,14 @@
 <div class="editor-shell">
   <div class="editor-card">
     <h1><%= mode === 'edit' ? '编辑角色' : '创建角色' %></h1>
-    <p>这页不再写那种太虚的描述了。下面这些字段里，哪些会进提示词、怎么进，我都直接摊开给你看。</p>
+    <p>这里用于配置角色基础资料、行为设定、展示信息和开场白。保存前可预览最终规则。</p>
 
     <div class="hint-card">
-      <strong>提示词规则</strong>
+      <strong>角色配置说明</strong>
       <ul>
-        <li><strong>会进入提示词：</strong>角色名、一句话简介、角色、描述角色性格、当前场景、当前背景、以及你额外添加并启用的片段。</li>
-        <li><strong>不会进入提示词：</strong>开场白、留空的字段、被你手动停用的额外片段。</li>
-        <li><strong>进入方式：</strong>统一按 <code>【[key]】{ value }</code> 拼接到 system prompt 里，下面预览看到的基本就是实际喂给模型的样子。</li>
+        <li><strong>影响角色表现：</strong>角色名、一句话简介、身份定位、性格描述、当前场景、背景信息，以及已启用的补充规则。</li>
+        <li><strong>不影响角色表现：</strong>开场白、空字段和已停用的补充规则不会影响角色表现。</li>
+        <li><strong>规则预览：</strong>下方预览会按最终顺序展示角色配置内容，便于保存前检查一致性。</li>
       </ul>
     </div>
 
@@ -23,32 +23,32 @@
 
       <div class="field-group">
         <label for="summary">一句话简介</label>
-        <textarea id="summary" name="summary" maxlength="5000" placeholder="会进入提示词。用于一句话说明这是谁，不写废话。"><%= form?.summary || '' %></textarea>
-        <div class="mini-note">会作为 `【[角色简介]】{ ... }` 进入提示词；留空就不拼接。</div>
+        <textarea id="summary" name="summary" maxlength="5000" placeholder="用一句话说明角色定位，保持准确、简洁。"><%= form?.summary || '' %></textarea>
+        <div class="mini-note">填写后会参与角色表现；留空则跳过。</div>
       </div>
 
       <div class="field-group">
         <label for="role">角色</label>
-        <textarea id="role" name="role" maxlength="5000" placeholder="会进入提示词。写清身份、定位、和用户的关系。"><%= form?.role || '' %></textarea>
-        <div class="mini-note">会作为 `【[角色]】{ ... }` 进入提示词；留空就不拼接。</div>
+        <textarea id="role" name="role" maxlength="5000" placeholder="写清身份、定位，以及和用户之间的关系。"><%= form?.role || '' %></textarea>
+        <div class="mini-note">填写后会参与角色表现；留空则跳过。</div>
       </div>
 
       <div class="field-group large">
         <label for="traitDescription">描述角色性格</label>
-        <textarea id="traitDescription" name="traitDescription" maxlength="5000" placeholder="会进入提示词。写性格、说话方式、边界、习惯，不要写成散漫设定集。"><%= form?.traitDescription || '' %></textarea>
-        <div class="mini-note">会作为 `【[描述角色性格]】{ ... }` 进入提示词；留空就不拼接。</div>
+        <textarea id="traitDescription" name="traitDescription" maxlength="5000" placeholder="说明角色性格、表达方式、行为边界和习惯，尽量保持结构清晰。"><%= form?.traitDescription || '' %></textarea>
+        <div class="mini-note">填写后会参与角色表现；留空则跳过。</div>
       </div>
 
       <div class="field-group">
         <label for="currentScene">当前场景</label>
-        <textarea id="currentScene" name="currentScene" maxlength="5000" placeholder="会进入提示词。写此刻角色和用户所处的即时场景。"><%= form?.currentScene || '' %></textarea>
-        <div class="mini-note">会作为 `【[当前场景]】{ ... }` 进入提示词；留空就不拼接。</div>
+        <textarea id="currentScene" name="currentScene" maxlength="5000" placeholder="写此刻角色和用户正在经历的场景。"><%= form?.currentScene || '' %></textarea>
+        <div class="mini-note">填写后会参与角色表现；留空则跳过。</div>
       </div>
 
       <div class="field-group">
         <label for="currentBackground">当前背景</label>
-        <textarea id="currentBackground" name="currentBackground" maxlength="5000" placeholder="会进入提示词。写支撑当前场景的背景信息、上下文、前情。"><%= form?.currentBackground || '' %></textarea>
-        <div class="mini-note">会作为 `【[当前背景]】{ ... }` 进入提示词；留空就不拼接。</div>
+        <textarea id="currentBackground" name="currentBackground" maxlength="5000" placeholder="写支撑当前场景的背景、前情与关系变化。"><%= form?.currentBackground || '' %></textarea>
+        <div class="mini-note">填写后会参与角色表现；留空则跳过。</div>
       </div>
 
       <div class="field-group tag-field-group">
@@ -72,7 +72,7 @@
           <option value="0" <%= form?.isNsfw ? '' : 'selected' %>>否</option>
           <option value="1" <%= form?.isNsfw ? 'selected' : '' %>>是，默认不在公共角色大厅显示</option>
         </select>
-        <div class="mini-note">NSFW 过滤由后端执行；未登录用户和未开启 NSFW 显示的用户都不会收到这些公开角色。</div>
+        <div class="mini-note">NSFW 角色默认从公共列表隐藏；登录并开启显示后才会出现在公开角色中。</div>
       </div>
 
       <div class="media-upload-grid">
@@ -101,12 +101,12 @@
 
       <div class="field-group large">
         <label for="firstMessage">开场白</label>
-        <textarea id="firstMessage" name="firstMessage" maxlength="5000" placeholder="这句不会写入 system 提示词，只会在首次开始对话时作为角色发出的第一句。"><%= form?.firstMessage || '' %></textarea>
-        <div class="mini-note">不会进入提示词。仅当用户首次开始这段对话时使用：若填写了开场白，系统会先记一条用户消息 `［开始一次新的对话］`，再由角色发出这句开场白。</div>
+        <textarea id="firstMessage" name="firstMessage" maxlength="5000" placeholder="这是新对话开始时，角色主动发出的第一句话。"><%= form?.firstMessage || '' %></textarea>
+        <div class="mini-note">只在新对话开始时使用。填写后，角色会以这句话作为第一条消息。</div>
       </div>
       <div class="field-group">
-        <label>额外提示词片段</label>
-        <div class="mini-note">这里只放补充信息。支持拖动排序。空值会自动跳过，停用就不会进提示词。</div>
+        <label>补充规则</label>
+        <div class="mini-note">这里用于补充设定或特殊要求。支持拖动排序；空内容和停用项会自动忽略。</div>
         <div class="drag-tip">拖住每一块就能改顺序；下面的预览会实时更新。</div>
       </div>
 
@@ -161,7 +161,7 @@
     <% if (mode === 'edit' && character) { %>
       <section class="danger-zone">
         <h3>危险操作</h3>
-        <p>为了保护已有故事，现在只允许删除从未开始过对话的角色。已经聊过的角色会先保留，避免误删整段内容。</p>
+        <p>为保护已有会话，现在只允许删除从未开始过对话的角色。已经产生会话的角色会先保留，避免误删关联内容。</p>
         <div class="prompt-actions">
           <form method="POST" action="/characters/<%= character.id %>/delete" data-confirm-message="确认删除这个角色吗？只有从未开过对话的角色才能删除。">
             <button type="submit" class="ghost-btn danger-btn">删除这个角色</button>

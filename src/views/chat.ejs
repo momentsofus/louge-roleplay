@@ -42,7 +42,7 @@
         <% if (!view.visiblePathMessages.length) { %>
           <div class="empty-chat-state">
             <h2><%= t('开始和 {name} 对话', { name: conversation.character_name }) %></h2>
-            <p><%= t('直接输入想说的话，或者点发送让角色先开口。') %></p>
+            <p><%= t('直接输入消息，或发送空白开场请求让角色先发出开场白。') %></p>
           </div>
         <% } %>
         <% view.visiblePathMessages.forEach(message => { %>
@@ -63,13 +63,13 @@
       </form>
 
       <details class="compose-details compose-details--compact">
-        <summary><%= t('润色输入') %></summary>
+        <summary><%= t('优化输入') %></summary>
         <div class="compose-details-body">
           <form method="POST" action="/chat/<%= conversation.id %>/optimize-input" class="editor-form" id="chat-optimize-form">
             <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
-            <label for="optimizeContent"><%= t('先润色这句话') %></label>
-            <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="<%= t('把想润色的话放这里。') %>"><%= draftContent || '' %></textarea>
-            <button class="inline-btn primary" type="submit"><%= t('润色输入') %></button>
+            <label for="optimizeContent"><%= t('优化这条输入') %></label>
+            <textarea id="optimizeContent" name="content" maxlength="4000" required placeholder="<%= t('输入需要优化的消息内容。') %>"><%= draftContent || '' %></textarea>
+            <button class="inline-btn primary" type="submit"><%= t('优化输入') %></button>
           </form>
         </div>
       </details>
@@ -87,7 +87,7 @@
             <form class="inline-form" method="POST" action="/chat/<%= conversation.id %>/message">
               <input type="hidden" name="parentMessageId" value="<%= view.activeLeafId || '' %>" />
               <input type="hidden" name="content" value="<%= optimizedContent %>" />
-              <button class="inline-btn primary" type="submit"><%= t('采用并发送') %></button>
+              <button class="inline-btn primary" type="submit"><%= t('使用并发送') %></button>
             </form>
           </div>
         </div>
@@ -139,7 +139,7 @@
                     <div><strong><%= index + 1 %>. <%= option.label %></strong></div>
                     <% if (option.description) { %><div class="mini-note"><%= option.description %></div><% } %>
                     <div class="mini-note">
-                      <%= t('计费倍率') %>：<%= t('请求') %> ×<%= option.requestMultiplier %> · Token ×<%= option.tokenMultiplier %>
+                      <%= t('计费倍率') %>：<%= t('请求') %> ×<%= option.requestMultiplier %> · <%= t('文字额度') %> ×<%= option.tokenMultiplier %>
                     </div>
                   </div>
                 </label>

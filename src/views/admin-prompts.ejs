@@ -4,9 +4,9 @@
 <div class="admin-shell">
   <section class="hero-card admin-hero">
     <div class="admin-hero-copy">
-      <p class="section-kicker">Prompt</p>
-      <h1>Prompt 配置</h1>
-      <p class="muted-text">全局提示词片段、拖拽排序和最终 Prompt 预览都单独留在这页。写 Prompt 的时候，终于不用被别的配置打断了。</p>
+      <p class="section-kicker">Rules</p>
+      <h1>规则配置</h1>
+      <p class="muted-text">这里维护全局规则片段、启用状态、排序和最终预览。修改后会影响角色回复行为。</p>
     </div>
 
     <div class="metrics metrics--compact">
@@ -21,9 +21,9 @@
 
     <div class="section-heading">
       <div>
-        <p class="section-kicker">Prompting</p>
+        <p class="section-kicker">规则配置</p>
         <h2>全局片段</h2>
-        <p class="muted-text">新增片段、片段列表和最终预览都集中在这页。拖拽排序保留，搜索也留着。</p>
+        <p class="muted-text">新增、编辑、搜索和排序集中在这里。保存排序后会更新规则生效顺序。</p>
       </div>
       <div class="section-actions section-actions--stack">
         <label class="search-field">
@@ -61,7 +61,7 @@
       </details>
 
       <details class="prompt-block-card admin-fold" open>
-        <summary>最终 Prompt 预览</summary>
+        <summary>最终规则预览</summary>
         <div class="admin-fold-body">
           <p class="muted-text"><%= promptPreviewMeta.description %></p>
           <div class="prompt-preview" id="prompt-preview-output"><%= promptPreview %></div>
@@ -73,7 +73,7 @@
       <div class="toolbar-row toolbar-row--between">
         <div class="toolbar-row">
           <span class="live-badge">实时排序</span>
-          <span class="drag-tip">拖动片段后点一次“保存排序”，顺序就会写回。</span>
+          <span class="drag-tip">拖动规则后点击“保存排序”，即可更新生效顺序。</span>
         </div>
         <form method="post" action="/admin/prompt-blocks/reorder" id="prompt-blocks-reorder-form" class="toolbar-row toolbar-row--admin">
           <input type="hidden" name="blockIds" id="prompt-blocks-reorder-ids" value="<%= promptBlocks.map(b => b.id).join(',') %>" />
@@ -129,8 +129,8 @@
         </div>
       <% } else { %>
         <div class="empty-state">
-          <strong>还没有全局片段</strong>
-          <span class="muted-text">你可以先建几个常驻规则，再回来拖顺序。</span>
+          <strong>还没有全局规则</strong>
+          <span class="muted-text">可以先新增规则片段，再调整生效顺序。</span>
         </div>
       <% } %>
     </div>

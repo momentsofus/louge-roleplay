@@ -1,5 +1,5 @@
 <!-- @file src/views/admin-plans.ejs
-     @description 套餐管理页面模板。调用说明：GET /admin/plans 由 web-routes.js 渲染，POST /admin/plans/* 处理新增、编辑、删除。
+     @description 权益方案管理页面模板。调用说明：GET /admin/plans 由 web-routes.js 渲染，POST /admin/plans/* 处理新增、编辑、删除。
 -->
 <%
   const esc = typeof escapeHtml === 'function'
@@ -46,7 +46,7 @@
             </select>
           </label>
           <label>请求倍率<input type="number" name="planModelRequestMultiplier" value="${esc(item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
-          <label>Token 倍率<input type="number" name="planModelTokenMultiplier" value="${esc(item.tokenMultiplier || item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
+          <label>文字额度倍率<input type="number" name="planModelTokenMultiplier" value="${esc(item.tokenMultiplier || item.requestMultiplier || 1)}" min="0.01" step="0.01" /></label>
         </div>
         <div class="preset-model-preview" data-plan-model-preview>
           <strong data-plan-model-preview-name>${esc(label)}</strong>
@@ -73,14 +73,14 @@
   <section class="hero-card admin-hero">
     <div class="admin-hero-copy">
       <p class="section-kicker">Plans</p>
-      <h1>套餐配置</h1>
-      <p class="muted-text">现在模型先进入预设模型库，套餐里只选择预设模型并设置请求 / Token 倍率；同一模型可以复用到多个套餐。</p>
+      <h1>权益方案</h1>
+      <p class="muted-text">权益方案通过预设模型配置用户可见模型，并设置请求倍率和文字额度倍率。同一预设模型可复用到多个方案。</p>
     </div>
 
     <div class="metrics metrics--compact">
-      <div class="metric"><strong><%= overview.totalPlans %></strong><span>套餐总数</span></div>
+      <div class="metric"><strong><%= overview.totalPlans %></strong><span>方案总数</span></div>
       <div class="metric"><strong><%= overview.activeSubscriptions %></strong><span>有效订阅</span></div>
-      <div class="metric"><strong><%= overview.defaultPlans %></strong><span>默认套餐数</span></div>
+      <div class="metric"><strong><%= overview.defaultPlans %></strong><span>默认方案数</span></div>
     </div>
   </section>
 
@@ -90,19 +90,19 @@
     <div class="section-heading">
       <div>
         <p class="section-kicker">Billing</p>
-        <h2>套餐方案</h2>
-        <p class="muted-text">倍率会写入用量日志：请求套餐按请求倍率扣次数，Token 套餐按 Token 倍率扣额度；hybrid 两边都检查。</p>
+        <h2>权益方案</h2>
+        <p class="muted-text">倍率会写入用量日志：按请求计费扣减次数，按文字额度计费扣减文字额度，混合计费会同时检查两类余量。</p>
       </div>
       <div class="section-actions section-actions--stack">
         <label class="search-field">
-          <span>筛选套餐</span>
+          <span>筛选方案</span>
           <input type="search" placeholder="按名称 / code / 状态搜索" data-admin-filter data-filter-target="plans-list" />
         </label>
       </div>
     </div>
 
     <details class="admin-fold" <%= plans.length ? '' : 'open' %>>
-      <summary>新增套餐</summary>
+      <summary>新增方案</summary>
       <div class="admin-fold-body">
         <div class="provider-card provider-card--flat">
           <form method="post" action="/admin/plans/new">
@@ -110,7 +110,7 @@
               <label>Code<input type="text" name="code" placeholder="free/basic/pro" /></label>
               <label>名称<input type="text" name="name" placeholder="比如 企业版" /></label>
             </div>
-            <label>描述<input type="text" name="description" placeholder="一句话描述套餐" /></label>
+            <label>描述<input type="text" name="description" placeholder="一句话描述方案" /></label>
             <div class="inline-grid">
               <label>
                 计费方式
@@ -131,7 +131,7 @@
             </div>
             <div class="inline-grid" data-plan-quota-group>
               <label data-request-quota-field>请求额度<input type="number" name="requestQuota" value="0" min="0" /></label>
-              <label data-token-quota-field>Token 额度<input type="number" name="tokenQuota" value="0" min="0" /></label>
+              <label data-token-quota-field>文字额度<input type="number" name="tokenQuota" value="0" min="0" /></label>
             </div>
             <div class="inline-grid">
               <label>优先级<input type="number" name="priorityWeight" value="0" /></label>
@@ -141,8 +141,8 @@
               <label>最大输出 Token<input type="number" name="maxOutputTokens" value="1024" min="1" /></label>
               <label>排序<input type="number" name="sortOrder" value="0" /></label>
             </div>
-            <h3>套餐可用模型</h3>
-            <p class="mini-note">默认一个模型；需要更多模型时点「添加模型」。模型名称和描述在「预设模型」统一维护，这里只管套餐倍率。</p>
+            <h3>方案可用模型</h3>
+            <p class="mini-note">默认配置一个模型。需要更多模型时点击「添加模型」；名称和说明在预设模型中维护，这里只配置方案倍率。</p>
             <%- renderPlanModelRows([]) %>
             <div class="inline-grid">
               <label>
@@ -153,7 +153,7 @@
                 </select>
               </label>
               <label>
-                默认套餐
+                默认方案
                 <select name="isDefault">
                   <option value="0">否</option>
                   <option value="1">是</option>
@@ -161,7 +161,7 @@
               </label>
             </div>
             <div class="toolbar-row toolbar-row--admin">
-              <button type="submit">新增套餐</button>
+              <button type="submit">新增方案</button>
             </div>
           </form>
         </div>
@@ -188,7 +188,7 @@
                 <span class="meta-chip">计费 <strong><%= plan.billing_mode %></strong></span>
                 <span class="meta-chip">周期 <strong><%= plan.quota_period %></strong></span>
                 <span class="meta-chip">请求 <strong><%= plan.request_quota %></strong></span>
-                <span class="meta-chip">Token <strong><%= plan.token_quota %></strong></span>
+                <span class="meta-chip">文字额度 <strong><%= plan.token_quota %></strong></span>
                 <span class="meta-chip">模型 <strong><%= (plan.planModels || []).length %></strong></span>
                 <span class="meta-chip">并发 <strong><%= plan.concurrency_limit %></strong></span>
               </div>
@@ -219,7 +219,7 @@
                 </div>
                 <div class="inline-grid" data-plan-quota-group>
                   <label data-request-quota-field>请求额度<input type="number" name="requestQuota" value="<%= plan.request_quota %>" min="0" /></label>
-                  <label data-token-quota-field>Token 额度<input type="number" name="tokenQuota" value="<%= plan.token_quota %>" min="0" /></label>
+                  <label data-token-quota-field>文字额度<input type="number" name="tokenQuota" value="<%= plan.token_quota %>" min="0" /></label>
                 </div>
                 <div class="inline-grid">
                   <label>优先级<input type="number" name="priorityWeight" value="<%= plan.priority_weight %>" /></label>
@@ -229,8 +229,8 @@
                   <label>最大输出 Token<input type="number" name="maxOutputTokens" value="<%= plan.max_output_tokens %>" min="1" /></label>
                   <label>排序<input type="number" name="sortOrder" value="<%= plan.sort_order %>" /></label>
                 </div>
-                <h3>套餐可用模型</h3>
-                <p class="mini-note">当前用户只会看到这里选择的预设模型；模型 Key、前台名称、描述来自预设模型库，套餐只保存选择关系和倍率。</p>
+                <h3>方案可用模型</h3>
+                <p class="mini-note">用户只会看到当前方案选择的预设模型；方案保存模型选择关系和倍率。</p>
                 <%- renderPlanModelRows(plan.planModels || []) %>
                 <div class="inline-grid">
                   <label>
@@ -241,7 +241,7 @@
                     </select>
                   </label>
                   <label>
-                    默认套餐
+                    默认方案
                     <select name="isDefault">
                       <option value="0" <%= plan.is_default ? '' : 'selected' %>>否</option>
                       <option value="1" <%= plan.is_default ? 'selected' : '' %>>是</option>
@@ -249,11 +249,11 @@
                   </label>
                 </div>
                 <div class="toolbar-row toolbar-row--admin">
-                  <button type="submit">保存套餐</button>
+                  <button type="submit">保存方案</button>
                 </div>
               </form>
-              <form method="post" action="/admin/plans/<%= plan.id %>/delete" data-confirm-message="确定删除这个套餐？若已被用户订阅，将无法删除。">
-                <button class="danger-button" type="submit">删除套餐</button>
+              <form method="post" action="/admin/plans/<%= plan.id %>/delete" data-confirm-message="确定删除这个权益方案？若已有用户使用，将无法删除。">
+                <button class="danger-button" type="submit">删除方案</button>
               </form>
             </div>
           </details>
@@ -261,7 +261,7 @@
       </div>
     <% } else { %>
       <div class="empty-state">
-        <strong>还没有套餐</strong>
+        <strong>还没有权益方案</strong>
         <span class="muted-text">先展开上面的新增表单建一个。</span>
       </div>
     <% } %>

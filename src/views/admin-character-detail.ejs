@@ -96,7 +96,7 @@
   <section class="section-card admin-section">
     <div class="section-heading">
       <div>
-        <p class="section-kicker">Prompt Card</p>
+        <p class="section-kicker">规则卡</p>
         <h2><%= t('完整角色设定') %></h2>
         <p class="muted-text"><%= t('管理后台可查看完整内部设定；公开角色详情页仍只展示安全字段。') %></p>
       </div>
@@ -116,7 +116,7 @@
         <pre><%= character.first_message || '—' %></pre>
       </article>
       <article class="admin-character-detail-block">
-        <strong>Prompt Profile JSON</strong>
+        <strong>规则配置 JSON</strong>
         <% if (promptItems.length) { %>
           <div class="admin-character-prompt-list">
             <% promptItems.forEach(item => { %>

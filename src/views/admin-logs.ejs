@@ -5,7 +5,7 @@
   <%- include('partials/admin-hero', {
     kicker: 'Logs',
     title: t('日志查询'),
-    description: t('这里放运行日志、错误日志和访问日志。按天拆文件后不再全塞一个大文件，想查哪天、哪类、哪个函数，直接筛。'),
+    description: t('这里查询运行日志、错误日志和访问日志。可按日期、等级、文件、错误类型和函数名筛选。'),
     rightHtml: `<div class="metrics metrics--compact">
       <div class="metric"><strong>${logResult.total}</strong><span>${t('匹配记录')}</span></div>
       <div class="metric"><strong>${logResult.scannedFiles.length}</strong><span>${t('扫描文件')}</span></div>
@@ -20,7 +20,7 @@
       <div>
         <p class="section-kicker">Filters</p>
         <h2><%= t('筛选条件') %></h2>
-        <p class="muted-text"><%= t('等级、文件报错、类型报错、函数报错、日期都在这。留空就是不过滤。') %></p>
+        <p class="muted-text"><%= t('可按等级、文件、错误类型、函数名和日期筛选；留空则不过滤。') %></p>
       </div>
     </div>
 

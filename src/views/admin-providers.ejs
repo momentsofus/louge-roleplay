@@ -6,7 +6,7 @@
     <div class="admin-hero-copy">
       <p class="section-kicker">LLM</p>
       <h1>LLM 配置</h1>
-      <p class="muted-text">Provider 只负责接入、鉴权、模型发现、上下文、并发、超时和价格。具体给用户用哪些模型，统一到「套餐配置」里设置。</p>
+      <p class="muted-text">模型服务用于配置上游接入、鉴权、模型发现、上下文、并发、超时和价格。用户可见模型在权益方案中设置。</p>
     </div>
 
     <div class="metrics metrics--compact">
@@ -30,7 +30,7 @@
       <div>
         <p class="section-kicker">Providers</p>
         <h2>Provider 列表</h2>
-        <p class="muted-text">先看摘要，想改哪一个再展开。新增 Provider 也单独折起来了。</p>
+        <p class="muted-text">先查看摘要，需要修改时再展开对应配置。新增模型服务在单独表单中处理。</p>
       </div>
       <div class="section-actions section-actions--stack">
         <label class="search-field">
@@ -78,7 +78,7 @@
                 </select>
               </label>
             </div>
-            <p class="muted-text">保存后会自动拉取上游可用模型列表；具体前台可选模型请到「套餐配置」里添加。</p>
+            <p class="muted-text">保存后会拉取上游可用模型列表；前台可选模型请在权益方案中配置。</p>
             <div class="toolbar-row toolbar-row--admin">
               <button type="submit">创建 Provider</button>
             </div>
@@ -130,7 +130,7 @@
                   <% } else { %>
                     <p class="mini-note">还没有发现模型。勾选下方「保存时从上游重新拉取模型列表」后保存一次。</p>
                   <% } %>
-                  <small>这里不再设置标准/破限模型；请在套餐中动态添加、删除和设置倍率。</small>
+                  <small>这里仅维护上游模型列表；用户可见模型和倍率请在权益方案中配置。</small>
                 </div>
 
                 <div class="context-grid">
@@ -186,7 +186,7 @@
     <% } else { %>
       <div class="empty-state">
         <strong>还没有 Provider</strong>
-        <span class="muted-text">先展开上面的新增表单接一个网关。</span>
+        <span class="muted-text">请先新增一个模型服务配置。</span>
       </div>
     <% } %>
   </section>

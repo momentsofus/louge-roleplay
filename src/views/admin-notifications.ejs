@@ -43,7 +43,7 @@
   <%- include('partials/admin-hero', {
     kicker: 'Notification Center',
     title: t('通知中心'),
-    description: t('把“客服入口”和“站内通知”分开管理。客服是全站支持入口，通知是运营公告与规则弹窗，不再混在同一张烂表单里。')
+    description: t('客服入口和站内通知分开管理。客服用于支持资源，通知用于运营公告、维护提醒和规则提示。')
   }) %>
 
   <section class="section-card admin-section">
@@ -59,7 +59,7 @@
       <div>
         <p class="section-kicker">Support Entry</p>
         <h2><%= t('客服入口') %></h2>
-        <p class="muted-text"><%= t('这是应用的外部支持资源配置。聊天报错、错误页、用户主动求助都会调用这里；前台会把链接生成“微信扫码联系客服”的展示。') %></p>
+        <p class="muted-text"><%= t('配置应用的外部支持资源。聊天报错、错误页和用户主动求助场景会使用这里的客服入口。') %></p>
       </div>
       <div class="section-actions">
         <span class="pill <%= support.is_active ? 'pill--level-info' : 'pill--level-raw' %>"><%= support.is_active ? t('当前启用') : t('当前停用') %></span>
