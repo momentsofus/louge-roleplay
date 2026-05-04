@@ -11,63 +11,20 @@
  */
 
 const { query } = require('../lib/db');
-const { redisClient } = require('../lib/redis');
-const logger = require('../lib/logger');
 const { getActiveSubscriptionForUser, getSubscriptionModelConfig } = require('./plan-service');
 const {
   buildPathMessages,
   decoratePathMessages,
 } = require('./conversation/message-view');
+const { fetchPathMessages } = require('./conversation/path-repository');
+const { normalizeMessagePromptKind } = require('./conversation/validators');
 const {
-  fetchPathMessages,
-  invalidatePathMessagesCache,
-} = require('./conversation/path-repository');
-
-const MESSAGE_LIST_CACHE_TTL_SECONDS = 60;
-const MESSAGE_COUNT_CACHE_TTL_SECONDS = 60;
-
-function getConversationMessageCountCacheKey(conversationId) {
-  return `conversation:${conversationId}:message-count:v2`;
-}
-
-const MESSAGE_PROMPT_KIND_VALUES = new Set([
-  'normal',
-  'regenerate',
-  'branch',
-  'edit',
-  'optimized',
-  'replay',
-  'conversation-start',
-  'first-message',
-]);
-
-function normalizeMessagePromptKind(value) {
-  const raw = String(value || '').trim();
-  if (!raw || raw === 'chat') {
-    return 'normal';
-  }
-  return MESSAGE_PROMPT_KIND_VALUES.has(raw) ? raw : 'normal';
-}
-
-function getConversationMessagesCacheKey(conversationId) {
-  return `conversation:${conversationId}:messages:v2`;
-}
-
-async function invalidateConversationCache(conversationId) {
-  const cacheKey = getConversationMessagesCacheKey(conversationId);
-  const countCacheKey = getConversationMessageCountCacheKey(conversationId);
-  try {
-    await redisClient.del(cacheKey, countCacheKey);
-    await invalidatePathMessagesCache(conversationId);
-  } catch (error) {
-    logger.warn('Failed to invalidate conversation cache', {
-      conversationId,
-      cacheKey,
-      countCacheKey,
-      error: error.message,
-    });
-  }
-}
+  invalidateConversationCache,
+  readMessageListCache,
+  writeMessageListCache,
+  readMessageCountCache,
+  writeMessageCountCache,
+} = require('./conversation/cache');
 
 async function createConversation(userId, characterId, options = {}) {
   let selectedModelMode = String(options.selectedModelMode || '').trim();
@@ -180,44 +137,11 @@ async function fetchMessagesFromDatabase(conversationId, options = {}) {
 }
 
 async function listMessages(conversationId) {
-  const cacheKey = getConversationMessagesCacheKey(conversationId);
-
-  try {
-    const cached = await redisClient.get(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      logger.debug('Conversation messages cache hit', {
-        conversationId,
-        cacheKey,
-        count: Array.isArray(parsed) ? parsed.length : 0,
-      });
-      return parsed;
-    }
-    logger.debug('Conversation messages cache miss', { conversationId, cacheKey });
-  } catch (error) {
-    logger.warn('Failed to read conversation cache', {
-      conversationId,
-      cacheKey,
-      error: error.message,
-    });
-  }
+  const cached = await readMessageListCache(conversationId);
+  if (cached) return cached;
 
   const rows = await fetchMessagesFromDatabase(conversationId);
-  logger.debug('Conversation messages loaded from database', {
-    conversationId,
-    count: rows.length,
-  });
-
-  try {
-    await redisClient.setEx(cacheKey, MESSAGE_LIST_CACHE_TTL_SECONDS, JSON.stringify(rows));
-  } catch (error) {
-    logger.warn('Failed to write conversation cache', {
-      conversationId,
-      cacheKey,
-      error: error.message,
-    });
-  }
-
+  await writeMessageListCache(conversationId, rows);
   return rows;
 }
 
@@ -232,34 +156,15 @@ async function getLatestMessage(conversationId) {
 }
 
 async function getConversationMessageCount(conversationId) {
-  const cacheKey = getConversationMessageCountCacheKey(conversationId);
-  try {
-    const cached = await redisClient.get(cacheKey);
-    if (cached !== null && cached !== undefined) {
-      return Number(cached || 0);
-    }
-  } catch (error) {
-    logger.warn('Failed to read conversation message count cache', {
-      conversationId,
-      cacheKey,
-      error: error.message,
-    });
-  }
+  const cached = await readMessageCountCache(conversationId);
+  if (cached !== null) return cached;
 
   const rows = await query(
     'SELECT COUNT(*) AS messageCount FROM messages WHERE conversation_id = ? AND deleted_at IS NULL',
     [conversationId],
   );
   const count = Number(rows[0]?.messageCount || 0);
-  try {
-    await redisClient.setEx(cacheKey, MESSAGE_COUNT_CACHE_TTL_SECONDS, String(count));
-  } catch (error) {
-    logger.warn('Failed to write conversation message count cache', {
-      conversationId,
-      cacheKey,
-      error: error.message,
-    });
-  }
+  await writeMessageCountCache(conversationId, count);
   return count;
 }
 
@@ -300,15 +205,6 @@ async function addMessage(options) {
 
   await setConversationCurrentMessage(options.conversationId, result.insertId);
   await invalidateConversationCache(options.conversationId);
-  logger.debug('Conversation message added', {
-    conversationId: options.conversationId,
-    messageId: result.insertId,
-    senderType: options.senderType,
-    status: options.status || 'success',
-    parentMessageId: options.parentMessageId || null,
-    promptKind: options.promptKind || 'normal',
-    sequenceNo: nextSequence,
-  });
   return result.insertId;
 }
 

@@ -1,0 +1,37 @@
+@media (max-width: 960px) {
+  .admin-form-grid,
+  .admin-form-grid--notifications,
+  .admin-check-list {
+    grid-template-columns: 1fr;
+  }
+
+  .site-notification-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .site-notification-overlay {
+    align-items: end;
+    place-items: end center;
+    padding: 10px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  }
+
+  .site-notification-card {
+    width: 100%;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-bottom));
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .site-notification-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .site-notification-actions button,
+  .site-notification-action {
+    width: 100%;
+  }
+}

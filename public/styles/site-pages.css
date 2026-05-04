@@ -2418,6 +2418,10 @@ textarea, .bubble-rich, .rich-preview {
 /* --- end site-pages/21-admin-polish.css --- */
 /* --- begin site-pages/25-notifications.css --- */
 /* @file public/styles/site-pages/25-notifications.css
+   @description 站内通知、后台通知、客服入口、站内信与 Markdown 样式入口。 */
+
+/* --- begin site-pages/notifications/00-overlay.css --- */
+/* @file public/styles/site-pages/25-notifications.css
    @description 站内通知、强制弹窗与客服入口样式。 */
 
 .site-notification-overlay {
@@ -2560,6 +2564,8 @@ textarea, .bubble-rich, .rich-preview {
   background: rgba(124, 92, 252, 0.2);
 }
 
+/* --- end site-pages/notifications/00-overlay.css --- */
+/* --- begin site-pages/notifications/10-inline.css --- */
 .site-notification-toast {
   position: fixed;
   right: 22px;
@@ -2638,6 +2644,8 @@ textarea, .bubble-rich, .rich-preview {
   cursor: pointer;
 }
 
+/* --- end site-pages/notifications/10-inline.css --- */
+/* --- begin site-pages/notifications/20-admin-notifications.css --- */
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2749,6 +2757,8 @@ textarea, .bubble-rich, .rich-preview {
   background: rgba(249, 112, 102, 0.08);
 }
 
+/* --- end site-pages/notifications/20-admin-notifications.css --- */
+/* --- begin site-pages/notifications/25-responsive.css --- */
 @media (max-width: 960px) {
   .admin-form-grid,
   .admin-form-grid--notifications,
@@ -2787,6 +2797,8 @@ textarea, .bubble-rich, .rich-preview {
   }
 }
 
+/* --- end site-pages/notifications/25-responsive.css --- */
+/* --- begin site-pages/notifications/30-support-admin.css --- */
 .support-admin-panel {
   border-color: rgba(96, 165, 250, 0.18);
   background:
@@ -2878,6 +2890,8 @@ textarea, .bubble-rich, .rich-preview {
   font-weight: 700;
 }
 
+/* --- end site-pages/notifications/30-support-admin.css --- */
+/* --- begin site-pages/notifications/40-site-messages.css --- */
 .site-message-nav-link {
   position: relative;
   display: inline-flex;
@@ -2944,6 +2958,8 @@ textarea, .bubble-rich, .rich-preview {
   line-height: 1.75;
 }
 
+/* --- end site-pages/notifications/40-site-messages.css --- */
+/* --- begin site-pages/notifications/50-markdown-body.css --- */
 /* Markdown rendering for notifications and site mail. Raw HTML is escaped by the renderer; these styles only format allowed Markdown tags. */
 .markdown-body {
   overflow-wrap: anywhere;
@@ -3076,6 +3092,8 @@ textarea, .bubble-rich, .rich-preview {
 .site-notification-toast .markdown-body {
   display: block;
 }
+
+/* --- end site-pages/notifications/50-markdown-body.css --- */
 
 /* --- end site-pages/25-notifications.css --- */
 /* --- begin site-pages/26-admin-import.css --- */
