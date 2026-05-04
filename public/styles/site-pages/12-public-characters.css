@@ -36,13 +36,58 @@
 }
 .public-hero-meta strong { color: var(--text); }
 
-.public-filter-panel { padding: 16px; }
+.public-filter-panel { padding: 18px; }
 
 .public-filter-form {
   display: grid;
-  grid-template-columns: minmax(200px, 1.1fr) minmax(160px, 0.9fr) 130px 140px 110px auto;
+  gap: 16px;
+}
+
+.public-filter-main {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.95fr) minmax(280px, 1.35fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.public-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.9fr) minmax(150px, 1fr) minmax(116px, 0.72fr) auto;
   gap: 12px;
   align-items: end;
+}
+
+.public-filter-tag-suggestions {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.public-filter-tag-suggestions-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.public-filter-tag-suggestions-head span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.public-filter-tag-suggestions-head small {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.public-tag-suggestion-row {
+  max-height: 72px;
+  overflow: auto;
+  padding-right: 2px;
 }
 
 .public-filter-actions { display: flex; gap: 8px; align-items: center; }
@@ -240,9 +285,10 @@
 .nsfw-toggle-row { justify-content: flex-start; }
 
 @media (max-width: 900px) {
-  .public-hero-card, .public-character-detail-hero, .public-filter-form, .admin-import-grid {
+  .public-hero-card, .public-character-detail-hero, .admin-import-grid {
     grid-template-columns: 1fr;
   }
+  .public-filter-main, .public-filter-toolbar { grid-template-columns: 1fr; }
   .public-hero-actions, .public-filter-actions { width: 100%; }
   .public-filter-actions .btn-brand, .public-filter-actions .quick-link { width: 100%; justify-content: center; }
 }
