@@ -1,8 +1,6 @@
 <!-- @file src/views/profile.ejs
      @description 个人资料页模板。调用说明：GET/POST /profile 渲染与处理用户名、联系方式、密码更新。
 -->
-<link rel="stylesheet" href="/public/styles/site-pages.css" />
-
 <%
   const currentName = user?.username || '';
   const publicId = user?.public_id || '—';

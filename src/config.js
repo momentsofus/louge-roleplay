@@ -77,6 +77,7 @@ const config = {
   rateLimitFailClosed: readBool('RATE_LIMIT_FAIL_CLOSED', true),
   trustProxy: readBool('TRUST_PROXY', false),
   cookieSecure: readBool('COOKIE_SECURE', false),
+  liveReloadEnabled: readBool('LIVE_RELOAD_ENABLED', process.env.NODE_ENV !== 'production'),
   publicPhoneAuthConfig: {
     graphAuthAppId: readString('ALIYUN_PHONE_AUTH_APP_ID', ''),
     graphAuthAppKey: exposeAliyunPhoneAuthAppKey ? readString('ALIYUN_PHONE_AUTH_APP_KEY', '') : '',
@@ -90,6 +91,7 @@ const config = {
       appUrl: this.appUrl,
       trustProxy: this.trustProxy,
       cookieSecure: this.cookieSecure,
+      liveReloadEnabled: this.liveReloadEnabled,
       sessionSecretConfigured: !this.sessionSecretIsEphemeral,
       databaseConfigured: Boolean(this.databaseUrl),
       redisConfigured: Boolean(this.redisUrl),

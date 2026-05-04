@@ -23,6 +23,7 @@ const { requestContext } = require('./middleware/request-context');
 const { attachI18n } = require('./middleware/i18n');
 const { errorHandler } = require('./middleware/error-handler');
 const { renderPage } = require('./server-helpers');
+const { startLiveReloadWatcher, liveReloadSseHandler } = require('./services/live-reload-service');
 const { registerWebRoutes } = require('./routes/web-routes');
 
 const app = express();
@@ -174,6 +175,9 @@ async function bootstrap() {
   }));
 
   app.use(requestContext);
+  if (config.liveReloadEnabled) {
+    app.get('/__live-reload/events', liveReloadSseHandler);
+  }
   app.use(csrfProtection);
   app.use(attachI18n);
   app.use(helmet({
@@ -183,6 +187,7 @@ async function bootstrap() {
     },
   }));
   registerWebRoutes(app);
+  startLiveReloadWatcher();
 
   app.use((req, res) => {
     res.status(404);

@@ -109,6 +109,10 @@ async function renderPage(res, view, params = {}) {
     locale,
     title,
   });
+  const liveReloadEnabled = Boolean(config.liveReloadEnabled);
+  const liveReloadAssetVersion = liveReloadEnabled
+    ? require('../services/live-reload-service').getClientAssetVersion()
+    : '';
   const navigation = {
     adminNavItems: getAdminNavItems(t),
     adminHubItems: getAdminHubItems(t),
@@ -150,6 +154,8 @@ async function renderPage(res, view, params = {}) {
         clientNotifications,
         unreadSiteMessageCount,
         localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
+        liveReloadEnabled,
+        liveReloadAssetVersion,
       });
       resolve();
     });
