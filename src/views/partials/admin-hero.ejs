@@ -1,3 +1,7 @@
+<%# @file src/views/partials/admin-hero.ejs
+    @description 后台页面统一 hero 区块。locals: kicker/title/description/actions/extraClass/rightHtml。
+    @notes rightHtml 由后台模板传入已可信片段；不要把用户输入未经转义后拼进 rightHtml。
+%>
 <%
   const heroActions = typeof actions !== 'undefined' && Array.isArray(actions) ? actions : [];
   const heroExtraClass = typeof extraClass !== 'undefined' ? extraClass : '';

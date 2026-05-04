@@ -53,11 +53,21 @@ git tag -a v1.0.0 -m "release: v1.0.0"
 4. 运行基础检查：
 
    ```bash
+   npm run build
    npm run version:check
    npm run health:check
+   npm run smoke:test
+   npm run i18n:check
+   ```
+
+   涉及聊天、后台或模型权益时追加：
+
+   ```bash
+   npm run conversation-service:test
+   npm run admin-conversations:test
+   npm run model-entitlements:test
    npm run test:think
    npm run test:prompt-route
-   npm run admin-logs:test
    ```
 
    `npm run full-flow:test` 会真实调用外部 LLM Provider，适合发布前人工确认；模型不可用或响应慢时不作为唯一阻断项。
@@ -65,7 +75,7 @@ git tag -a v1.0.0 -m "release: v1.0.0"
 5. 提交：
 
    ```bash
-   git add package.json package-lock.json CHANGELOG.md docs/VERSIONING.md scripts/version-check.js src/config.js src/routes/web-routes.js src/server.js
+   git add package.json package-lock.json CHANGELOG.md docs scripts src public README.md LICENSE .env.example
    git commit -m "chore(release): vX.Y.Z"
    ```
 

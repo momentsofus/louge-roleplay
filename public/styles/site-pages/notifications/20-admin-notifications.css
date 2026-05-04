@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/notifications/20-admin-notifications.css
+   @description 后台通知中心列表、表单、展示范围和 audience 配置样式。 */
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

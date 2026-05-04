@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/notifications/10-inline.css
+   @description 前台内联通知、toast、banner 和客服入口基础样式。 */
+
 .site-notification-toast {
   position: fixed;
   right: 22px;

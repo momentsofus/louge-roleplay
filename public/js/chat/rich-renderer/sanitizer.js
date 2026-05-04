@@ -1,3 +1,9 @@
+/**
+ * @file public/js/chat/rich-renderer/sanitizer.js
+ * @description 聊天富文本 DOM 净化与引用高亮工具。限制模型输出可用标签、属性、URL 协议和自定义 CSS 作用域，避免把未受信内容注入页面。
+ * @notes 允许标签白名单见 ALLOWED_TAGS；链接/图片只允许 http(s)，事件属性和行内 style 会被移除，style 标签内容会被作用域化。
+ */
+
 (function () {
   window.ChatRichRenderer = window.ChatRichRenderer || {};
   const ns = window.ChatRichRenderer;
@@ -15,6 +21,13 @@
   ];
   const ALLOWED_TAGS = new Set(['p', 'br', 'pre', 'code', 'strong', 'em', 'b', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'details', 'summary', 'style', 'a', 'img']);
 
+  /**
+   * 净化模型输出中的 style 标签内容，并把普通选择器限定在当前消息 scope 内。
+   *
+   * @param {string} cssText style 标签原文。
+   * @param {string} scopeSelector 当前消息容器的 data-render-scope 选择器。
+   * @returns {string} 移除危险语法后的作用域化 CSS。
+   */
   function sanitizeCss(cssText, scopeSelector) {
     const cleaned = String(cssText || '')
       .replace(/@import[\s\S]*?;/gi, '')
@@ -59,6 +72,12 @@
     return null;
   }
 
+  /**
+   * 收集文本中的成对引号片段，用于给对白/引用加视觉高亮。
+   *
+   * @param {string} text 待扫描文本节点内容。
+   * @returns {{index:number,end:number,text:string}[]} 命中的引号范围。
+   */
   function collectQuoteMatches(text) {
     const source = String(text || '');
     const matches = [];
@@ -85,6 +104,12 @@
     return matches;
   }
 
+  /**
+   * 遍历富文本 DOM，把普通文本节点里的引号内容包成 .bubble-quote。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
   function highlightQuotesInNodeTree(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
@@ -116,6 +141,17 @@
     });
   }
 
+  /**
+   * 原地净化富文本 DOM 树。
+   *
+   * - 非白名单标签会被移除但保留子节点。
+   * - 移除事件属性、行内 style、非 http(s) 链接/图片。
+   * - 强制链接新窗口 noopener/nofollow，图片 lazy/async/no-referrer。
+   *
+   * @param {Element|DocumentFragment} root DOMParser 生成的根节点。
+   * @param {string} scopeSelector 当前消息的 CSS 作用域选择器。
+   * @returns {void}
+   */
   function sanitizeNodeTree(root, scopeSelector) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
     const toProcess = [];

@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/migrations.js
+ * @description 数据库历史迁移补丁：用户 public_id 回填、套餐模型配置迁移到 preset_models 等。由 db:init 在建表后执行。
+ */
+
 'use strict';
 
 const {

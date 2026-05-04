@@ -1,7 +1,19 @@
+/**
+ * @file public/js/chat/rich-renderer/formatting.js
+ * @description 聊天富文本 Markdown 格式化工具。负责在进入 DOM 净化前，把模型文本转换为受限 HTML：段落、标题、列表、引用、表格、代码块、链接和图片。
+ * @notes 本文件只做字符串级 Markdown 转换，不直接写 DOM；输出必须继续交给 sanitizer.js 净化后才能展示。
+ */
+
 (function () {
   window.ChatRichRenderer = window.ChatRichRenderer || {};
   const ns = window.ChatRichRenderer;
 
+  /**
+   * 转义模型原始文本中的 HTML 特殊字符。
+   *
+   * @param {unknown} value 任意待展示内容。
+   * @returns {string} 可安全参与后续 Markdown 字符串转换的文本。
+   */
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -11,6 +23,12 @@
       .replace(/'/g, '&#39;');
   }
 
+  /**
+   * 规整 Markdown 行格式，兼容 HTML 转义后的引用符和纯分隔线。
+   *
+   * @param {unknown} text 模型输出文本。
+   * @returns {string} 使用 \n 换行的标准化 Markdown 文本。
+   */
   function normalizeMarkdownLines(text) {
     return String(text || '')
       .replace(/\r\n?/g, '\n')
@@ -119,6 +137,15 @@
     };
   }
 
+  /**
+   * 将受限 Markdown 转为 HTML 字符串。
+   *
+   * 支持段落、标题、列表、引用、表格、代码块和少量 inline 格式。调用方必须继续调用
+   * `sanitizeNodeTree()`，不要直接把返回值塞入页面。
+   *
+   * @param {unknown} text 模型输出或消息文本。
+   * @returns {string} 未净化的 HTML 字符串。
+   */
   function markdownToHtml(text) {
     const normalized = normalizeMarkdownLines(text);
     const escaped = escapeHtml(normalized);
@@ -226,6 +253,12 @@
     return html;
   }
 
+  /**
+   * 为流式生成中的未闭合代码围栏补齐结尾，生成可预览 HTML。
+   *
+   * @param {unknown} text 当前已收到的流式文本。
+   * @returns {string} 未净化的 HTML 片段。
+   */
   function markdownToPartialHtml(text) {
     const normalized = normalizeMarkdownLines(text);
     const lines = normalized.split('\n');

@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/10-home.css
+   @description 首页 hero、推荐角色、首页卡片等基础布局。视觉增强放到 home polish 或主题层。 */
+
 .home-shell {
   display: grid;
   gap: 28px;

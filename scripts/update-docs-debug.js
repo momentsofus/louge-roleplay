@@ -56,14 +56,14 @@ function walk(dir, predicate = () => true) {
 function extractFileDescription(source) {
   const jsDoc = source.match(/\/\*\*[\s\S]*?\*\//);
   if (!jsDoc) return '';
-  const desc = jsDoc[0]
+  const lines = jsDoc[0]
+    .replace(/^\s*\/\*\*/, '')
+    .replace(/\*\/\s*$/, '')
     .split('\n')
     .map((line) => line.replace(/^\s*\* ?/, '').trim())
     .filter((line) => line && !line.startsWith('@file'))
-    .join(' ')
-    .replace(/@description\s*/g, '')
-    .trim();
-  return desc;
+    .map((line) => line.replace(/^@description\s*/, '').replace(/^@notes\s*/, '注意：'));
+  return lines.join(' ').trim();
 }
 
 function extractFunctions(source) {
@@ -104,7 +104,9 @@ const FILE_NOTES = {
   'src/services/aliyun-sms-service.js': '阿里云短信验证码发送封装。被 verification-service 调用。',
   'src/services/captcha-service.js': '图形验证码生成、刷新、读取与校验。依赖 Redis/内存缓存。',
   'src/services/character-service.js': '角色 CRUD 与可见性控制。被首页、dashboard、角色编辑和开聊流程调用。',
-  'src/services/conversation-service.js': '会话/消息核心服务：消息写入、当前显示链读取、编辑、重写、独立对话克隆和删除保护。聊天路由主要依赖它。',
+  'src/services/conversation-service.js': '会话/消息兼容门面：保留原导出 API，内部编排 conversation/cache、validators、message-view、path-repository 等子模块，避免旧调用方改 require 路径。',
+  'src/services/conversation/cache.js': '会话缓存封装：消息列表、消息数量缓存读写和会话显示链缓存失效；由 conversation-service 调用。',
+  'src/services/conversation/validators.js': '会话输入校验工具：规范化 messages.prompt_kind 写库值，兼容旧 chat 值并回落 normal。',
   'src/services/email-service.js': 'Resend 邮件验证码发送封装。被 verification-service 调用。',
   'src/services/font-proxy-service.js': 'Google Fonts 代理与缓存，避免页面字体资源直接失败。被 /fonts/* 路由调用。',
   'src/services/llm-gateway-service.js': 'LLM 网关核心：Provider 选择、额度校验、上下文裁剪、队列、流式解析、用量记录。',
@@ -118,11 +120,17 @@ const FILE_NOTES = {
   'src/services/user-service.js': '用户创建、登录查询、资料更新、角色更新。',
   'src/services/verification-service.js': '邮箱/手机验证码签发与验证编排。调用 email/sms/rate-limit/captcha。',
   'scripts/full-flow-e2e.js': '全流程 E2E 测试脚本：创建临时用户/角色/会话，验证当前显示链、LLM 流式、后台查询、日志和删除保护，结束后清理测试数据。',
-  'public/js/chat-page.js': '聊天页前端核心：流式 NDJSON 消费、富文本/Markdown 渲染、思考块折叠、加载历史、输入优化。',
+  'public/js/chat-page.js': '聊天页兼容入口：保留历史文件名，实际聊天逻辑已拆到 public/js/chat/ 并由 build-js 生成 chat.bundle.js。',
+  'public/js/chat/controller.js': '聊天页前端装配入口：初始化 DOM 工具、状态管理、流式 UI、表单提交、历史加载和消息操作。',
+  'public/js/chat/rich-renderer/formatting.js': '聊天富文本格式化工具：Markdown 行规整、表格解析、引用高亮和 streaming 分段。',
+  'public/js/chat/rich-renderer/sanitizer.js': '聊天富文本安全净化工具：限制 HTML 标签、属性、URL 和 CSS，避免消息内容注入危险 DOM。',
+  'public/js/chat/rich-renderer/folds.js': '聊天富文本折叠块工具：收集 think/thinking/reasoning 等可折叠内容并生成展示 DOM。',
+  'public/js/notification/markdown-renderer.js': '前台通知 Markdown 降级渲染工具：服务端 bodyHtml 优先，本模块只在缺少 bodyHtml 时兜底渲染。',
   'public/js/admin-page.js': '后台交互：套餐字段切换、Prompt 片段排序/预览、后台列表过滤。',
   'public/js/character-editor-page.js': '角色编辑器动态字段：提示词条目增删、排序、预览。',
   'public/js/register-page.js': '注册页交互：国家/地区切换、验证码刷新、邮箱/手机验证码发送。',
   'public/js/i18n-runtime.js': '浏览器端轻量 t() 翻译函数，供页面脚本复用。',
+  'public/js/notification-client.js': '前台站内通知与客服入口控制器：展示 modal/toast/banner、showOnce 记录、客服拉取，并暴露 window.LougeNotifications。',
 };
 
 const FUNCTION_NOTES = {
@@ -153,7 +161,12 @@ const FUNCTION_NOTES = {
   getCharacterById: '读取角色详情；传 userId 时限制必须归属该用户。',
   deleteCharacterSafely: '安全删除角色；已有会话时拒绝删除。',
   createConversation: '创建会话，可带父会话、来源消息、模型模式和标题。',
-  addMessage: '按 sequence_no 追加消息并失效会话消息缓存。',
+  addMessage: '按 sequence_no 追加消息、更新 current_message_id，并失效消息列表/数量/显示链缓存。',
+  invalidateConversationCache: '失效会话消息列表、消息数量和路径版本缓存；写入/删除消息后调用。',
+  readMessageListCache: '从 Redis/内存缓存读取完整消息列表；异常时返回 null 并允许回源 DB。',
+  writeMessageListCache: '写入完整消息列表短 TTL 缓存；缓存写失败只记 warning，不阻塞业务。',
+  readMessageCountCache: '读取会话消息数量短 TTL 缓存；用于聊天页轻量统计。',
+  writeMessageCountCache: '写入会话消息数量缓存；数据库统计后调用。',
   normalizeMessagePromptKind: '规范化 messages.prompt_kind 写库值；兼容旧调用传入 chat，并回落到 normal，避免 MySQL ENUM 写入截断。',
   listMessages: '读取完整消息列表，保留给克隆独立对话和诊断脚本使用；聊天页不再调用。',
   buildPathMessages: '从已加载消息列表中取当前显示链，主要给脚本/克隆逻辑复用。',
@@ -206,7 +219,16 @@ function generateProjectMap() {
   }).join('\n');
 
   const viewTable = viewFiles.map((file) => `| \`${file}\` | EJS 页面/局部模板；由 \`renderPage\` 或 \`ejs.renderFile\` 渲染，具体入口见路由表。 |`).join('\n');
-  const styleTable = styleFiles.map((file) => `| \`${file}\` | 样式资源；通过 \`public/styles/site-pages.css\` 或页面 layout 引入。 |`).join('\n');
+  const styleTable = styleFiles.map((file) => {
+    let desc = '样式资源；运行时通过 `public/styles/site-pages.css` 或独立页面样式引入。';
+    if (file === 'public/styles/site-pages.src.css') desc = 'CSS 源码入口，维护本地 @import 顺序；修改模块后运行 `npm run build:css`。';
+    else if (file === 'public/styles/site-pages.css') desc = 'CSS 构建产物，运行时由 layout 加载；不要直接手工修改。';
+    else if (file === 'public/styles/README.md') desc = '样式架构与模块拆分说明。';
+    else if (file.includes('/notifications/')) desc = '通知/客服/站内信样式子模块，由 `25-notifications.css` 聚合。';
+    else if (file.includes('/admin/')) desc = '后台样式子模块，由后台入口样式聚合。';
+    else if (file.includes('/chat-polish/')) desc = '聊天视觉增强子模块，由 chat polish 入口聚合。';
+    return `| \`${file}\` | ${desc.replace(/\|/g, '\\|')} |`;
+  }).join('\n');
 
   return `# ai-roleplay-site 项目梳理\n\n` +
 `> 本文档由 \`scripts/update-docs-debug.js\` 生成并可手工补充。目标是让后续维护者快速知道“文件在哪、谁调用谁、怎么 DEBUG”。\n\n` +
@@ -215,13 +237,13 @@ function generateProjectMap() {
 `## 2. 目录职责\n\n` +
 `| 目录/文件 | 职责 |\n|---|---|\n` +
 `| \`src/server.js\` | 应用启动壳，负责全局中间件和路由挂载。 |\n` +
-`| \`src/routes/\` | HTTP 路由编排层；目前主要集中在 \`web-routes.js\`。 |\n` +
+`| \`src/routes/\` | HTTP 路由编排层；\`web-routes.js\` 只做聚合，具体页面/接口按 domain 拆到 \`src/routes/web/\`。 |\n` +
 `| \`src/services/\` | 业务服务层；角色、会话、LLM、套餐、验证码等核心逻辑都在这里。 |\n` +
 `| \`src/lib/\` | 基础设施：数据库、Redis、日志。 |\n` +
 `| \`src/middleware/\` | Express 中间件：请求上下文、鉴权、i18n、错误处理。 |\n` +
 `| \`src/views/\` | EJS 页面和局部模板。 |\n` +
 `| \`public/js/\` | 浏览器端页面脚本。 |\n` +
-`| \`public/styles/\` | 全站样式拆分文件。 |\n` +
+`| \`public/styles/\` | 全站样式源码与构建产物；运行时加载 \`site-pages.css\`，源码入口是 \`site-pages.src.css\`。 |\n` +
 `| \`scripts/\` | 初始化、健康检查、烟测、临时 E2E/单测脚本。 |\n` +
 `| \`docs/\` | 架构、风险、调试和维护文档。 |\n` +
 `| \`data/\` | 本地 SQLite 数据库目录，生产/开发数据，不应提交。 |\n` +
@@ -230,7 +252,7 @@ function generateProjectMap() {
 `### 页面请求\n\n` +
 `\`browser -> src/server.js -> middleware(requestContext/i18n/session) -> src/routes/web-routes.js -> service -> db/redis -> renderPage(EJS layout)\`\n\n` +
 `### 聊天流式生成\n\n` +
-`\`public/js/chat-page.js -> POST /chat/:id/message/stream -> createNdjsonResponder -> streamChatReplyToNdjson -> llm-gateway-service -> provider SSE -> NDJSON -> 前端 renderRichContent\`\n\n` +
+`\`public/js/generated/chat.bundle.js -> public/js/chat/controller.js -> POST /chat/:id/message/stream -> createNdjsonResponder -> streamChatReplyToNdjson -> llm-gateway-service -> provider SSE -> NDJSON -> 前端 renderRichContent\`\n\n` +
 `### 当前显示链读取\n\n` +
 `\`renderChatPage/load history -> conversation-service.buildConversationPathView -> recursive CTE path query -> EJS/partial\`\n\n` +
 `### 注册验证码\n\n` +
@@ -296,9 +318,9 @@ function generateDebugGuide() {
 `1. 浏览器 Console 是否有 JS 报错。\n` +
 `2. Network 中 \`/chat/:id/message/stream\` 是否持续返回 \`application/x-ndjson\`。\n` +
 `3. 后端日志是否有 \`LLM provider request start\`、\`LLM provider response received\`、\`LLM gateway request failed\`。\n` +
-`4. 前端 \`window.renderRichContent\` 是否存在，\`public/js/chat-page.js\` 是否为最新版本（必要时强刷）。\n\n` +
+`4. 前端 \`window.renderRichContent\` 是否存在，\`public/js/generated/chat.bundle.js\` 是否为最新版本（必要时强刷）。\n\n` +
 `### 2. Markdown / think 折叠不显示\n\n` +
-`检查：\`public/js/chat-page.js\` 的 \`renderRichContent\`、\`collectFoldBlocks\`、\`markdownToHtml\`，以及 \`public/styles/site-pages/52-rich-content.css\` 是否加载。\n\n` +
+`检查：\`public/js/generated/chat.bundle.js\` 是否加载，以及源模块 \`public/js/chat/rich-renderer.js\`、\`public/js/chat/rich-renderer/formatting.js\`、\`public/js/chat/rich-renderer/folds.js\`、\`public/styles/site-pages/52-rich-content.css\` 是否同步构建。\n\n` +
 `### 3. 登录/注册失败\n\n` +
 `看日志中的 \`Register validation failed\`、\`Register succeeded\`、\`Login failed\`、\`Login succeeded\`。日志会脱敏邮箱/手机。\n\n` +
 `### 4. 数据库异常\n\n` +

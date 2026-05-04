@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- 新增专有授权 `LICENSE`，明确未经书面授权不得复制、修改、二次开发、商用、私自部署、私自使用、转售、分发或提供托管服务。
+- 新增交付级维护文档：部署、环境变量、测试、安全、后台操作、Tavern 导入、数据库结构、前端架构与 CSS 架构说明。
+
+### Changed
+
+- 更新 README、自动生成的项目地图/函数索引/DEBUG 文档和样式说明，修正聊天前端 bundle、通知 bundle、CSS 构建产物、路由拆分和会话服务拆分等过时描述。
+- `package.json` 标记为私有专有项目（`private: true`、`license: UNLICENSED`），并补充项目描述、作者、仓库与关键词。
+- 补充聊天富文本 renderer、live reload、db:init 子模块和后台 partial 的文件头/关键函数说明，强调富文本净化与开发热刷新安全边界。
+
 ## [1.4.1] - 2026-05-04
 
 ### Changed

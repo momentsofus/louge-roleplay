@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/utils.js
+ * @description db:init 专用工具函数：数据库名解析、标识符转义、API Key 脱敏、模型 key/label 规整与随机数字生成。
+ */
+
 'use strict';
 
 const crypto = require('node:crypto');

@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/50-chat.css
+   @description 聊天页基础布局、消息列表、输入区、侧栏和操作入口。富文本细节放 52-rich-content.css。 */
+
 .chat-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;

@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/seeds.js
+ * @description 默认种子数据写入：初始套餐、旧 OpenAI-compatible Provider 兜底配置与套餐模型 JSON 回填。
+ */
+
 'use strict';
 
 const { buildLegacyPlanModelsJson, maskApiKey } = require('./utils');

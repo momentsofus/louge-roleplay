@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/00-core.css
+   @description 全站设计变量、基础元素、导航、通用卡片/按钮与页面容器。不要放页面专属的大块布局。 */
+
 :root {
   --bg: #08080e;
   --bg-elevated: #0e0e16;

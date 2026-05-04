@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/43-dashboard-responsive.css
+   @description 控制台移动端与窄屏响应式覆盖。 */
+
 @media (max-width: 1120px) {
   .dashboard-command-grid, .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid, .dashboard-hero-card { grid-template-columns: 1fr; }

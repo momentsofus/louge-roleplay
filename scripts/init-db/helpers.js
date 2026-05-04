@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/helpers.js
+ * @description MySQL schema 维护辅助函数，封装 ensureColumn/ensureIndex/ensureUniqueIndex 等幂等 ALTER 操作。
+ */
+
 'use strict';
 
 function createSchemaHelpers(connection) {

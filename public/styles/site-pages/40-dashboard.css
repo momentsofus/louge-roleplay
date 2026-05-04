@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/40-dashboard.css
+   @description 用户控制台基础布局：角色、会话、套餐、额度快照等区域。 */
+
 .dashboard-shell {
   display: grid;
   gap: 20px;
