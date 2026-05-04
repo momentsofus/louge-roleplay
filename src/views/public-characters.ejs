@@ -1,8 +1,6 @@
 <!-- @file src/views/public-characters.ejs
      @description 公开角色专页。调用说明：GET /characters/public 支持 q、sort、page、pageSize 查询参数。
 -->
-<link rel="stylesheet" href="/public/styles/site-pages.css" />
-
 <%
   const characterList = Array.isArray(characters) ? characters : [];
   const pager = pagination || { page: 1, pageSize: 12, total: characterList.length, totalPages: 1, hasPrev: false, hasNext: false };

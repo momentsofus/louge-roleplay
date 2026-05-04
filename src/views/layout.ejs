@@ -51,9 +51,19 @@
   <link rel="manifest" href="/public/icons/site.webmanifest" />
   <meta name="theme-color" content="#0b3f45" />
   <link rel="preload" href="/fonts/google.css?v=latin-v2" as="style" />
-  <link rel="preload" href="/public/styles/site-pages.css" as="style" />
+  <link rel="preload" href="/public/styles/site-pages.css?v=ui-ob-gallery-20260504-2" as="style" />
   <link rel="stylesheet" href="/fonts/google.css?v=latin-v2" />
-  <link rel="stylesheet" href="/public/styles/site-pages.css" />
+  <link rel="stylesheet" href="/public/styles/site-pages.css?v=ui-ob-gallery-20260504-2" />
+  <% if (liveReloadEnabled) { %>
+    <script nonce="<%= cspNonce || '' %>">
+      window.LOUGE_LIVE_RELOAD = {
+        enabled: true,
+        endpoint: '/__live-reload/events',
+        cssVersion: 'ui-ob-gallery-20260504-2',
+        reloadVersion: '<%- esc(liveReloadAssetVersion || '') %>'
+      };
+    </script>
+  <% } %>
   <script id="app-bootstrap-data" type="application/json" nonce="<%= cspNonce || '' %>"><%- JSON.stringify({
     i18n: { locale: locale || 'zh-CN', messages: clientI18nMessages || {} },
     notifications: { items: clientNotifications || [] },
@@ -68,6 +78,9 @@
   <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js" defer></script>
   <script nonce="<%= cspNonce || '' %>" src="/public/js/notification-client.js" defer></script>
   <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js" defer></script>
+  <% if (liveReloadEnabled) { %>
+    <script nonce="<%= cspNonce || '' %>" src="/public/js/live-reload-client.js?v=<%- encodeURIComponent(liveReloadAssetVersion || '') %>" defer></script>
+  <% } %>
 </head>
 <body>
   <div class="container">

@@ -1,8 +1,6 @@
 <!-- @file src/views/dashboard.ejs
      @description 用户工作台模板。调用说明：GET /dashboard 渲染，展示角色、会话、额度和后台入口。
 -->
-<link rel="stylesheet" href="/public/styles/site-pages.css" />
-
 <%
   const characterList = Array.isArray(characters) ? characters : [];
   const conversationList = Array.isArray(conversations) ? conversations : [];
