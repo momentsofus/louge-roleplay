@@ -74,7 +74,7 @@
             <small><%= t('点击标签可加入筛选') %></small>
           </div>
           <div class="tag-suggestion-row public-tag-suggestion-row">
-            <% tagOptions.slice(0, 16).forEach(tag => { %>
+            <% tagOptions.slice(0, 32).forEach(tag => { %>
               <button class="tag-suggestion-chip" type="button" data-tag-suggestion="<%= tag.name %>">#<%= tag.name %><% if (tag.usage_count) { %><span><%= tag.usage_count %></span><% } %></button>
             <% }) %>
           </div>
