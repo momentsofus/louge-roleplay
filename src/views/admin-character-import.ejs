@@ -14,7 +14,7 @@
     <div class="admin-hero-copy">
       <p class="section-kicker">Tavern Card Import</p>
       <h1>批量导入酒馆卡</h1>
-      <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。开场白、示例对话、世界书与 Tavern 占位符会在这里先解析成楼阁可用的提示词片段。</p>
+      <p>支持 SillyTavern / TavernAI 导出的 PNG 角色卡和 JSON。上传后先预览，不会直接写库；确认页里可以逐个设置标签、NSFW 与公开状态。开场白、示例对话、世界书与 Tavern 占位符会先转换为楼阁可用的补充规则。</p>
     </div>
   </section>
 
@@ -80,7 +80,7 @@
         <div>
           <p class="section-kicker">Preview</p>
           <h2>逐个确认导入</h2>
-          <p class="muted-text">世界书已被压平成“世界书 / 背景资料”提示词片段，同时保留原始 JSON，方便以后迁移到真正的世界书系统。</p>
+          <p class="muted-text">世界书会转换为“世界书 / 背景资料”补充规则，并保留原始 JSON，便于后续迁移。</p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@
                     </div>
                   <% } %>
                   <details class="admin-fold import-json-fold">
-                    <summary>查看解析摘要与提示词片段</summary>
+                    <summary>查看解析摘要与补充规则</summary>
                     <div class="admin-fold-body">
                       <pre class="preview-box"><%= JSON.stringify({ promptStats: item.parsed.promptStats, promptItems: item.parsed.promptProfileItems, worldBookTextLength: (item.parsed.flattenedWorldBookText || '').length }, null, 2) %></pre>
                     </div>

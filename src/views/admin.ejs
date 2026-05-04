@@ -24,12 +24,12 @@
     <div class="admin-hero-copy">
       <p class="section-kicker">Admin Console</p>
       <h1>管理员后台</h1>
-      <p class="muted-text">配置类内容我已经从总后台里拆开了。这里保留总览和用户权限，LLM、套餐、Prompt 都去各自单独页面，终于不挤成一锅了。</p>
+      <p class="muted-text">管理后台用于查看系统概览、用户权限、权益方案、模型服务、规则配置、通知和日志。高风险操作请先确认影响范围。</p>
     </div>
 
     <div class="metrics">
       <div class="metric"><strong><%= overview.totalUsers %></strong><span>用户总数</span></div>
-      <div class="metric"><strong><%= overview.activeSubscriptions %></strong><span>有效套餐</span></div>
+      <div class="metric"><strong><%= overview.activeSubscriptions %></strong><span>有效权益</span></div>
       <div class="metric"><strong><%= overview.activeProviders %> / <%= overview.totalProviders %></strong><span>Provider 状态</span></div>
       <div class="metric">
         <strong><%= overview.queuedJobs %></strong>
@@ -47,7 +47,7 @@
       <div>
         <p class="section-kicker">Workspace</p>
         <h2>配置分区</h2>
-        <p class="muted-text">三个重配置模块都单独拆页了。你想改哪块，就直接进对应页面，不用在一页里来回找。</p>
+        <p class="muted-text">常用管理模块已拆分为独立页面，进入对应分区即可维护配置。</p>
       </div>
     </div>
 
@@ -69,12 +69,12 @@
       <div>
         <p class="section-kicker">Users & Access</p>
         <h2>用户与权限</h2>
-        <p class="muted-text"><%= t('用户当前套餐、请求余量、Token 余量和关键限制都收进卡片里；后台不用再来回翻日志确认余额。') %></p>
+        <p class="muted-text"><%= t('用户当前权益、请求余量、文字额度和关键限制集中展示，便于快速核对账号状态。') %></p>
       </div>
       <div class="section-actions section-actions--stack">
         <label class="search-field search-field--large">
           <span>筛选用户</span>
-          <input type="search" placeholder="用户名 / 昵称 / 邮箱 / 手机 / 套餐" data-admin-filter data-filter-target="users-list" />
+          <input type="search" placeholder="用户名 / 昵称 / 邮箱 / 手机 / 权益" data-admin-filter data-filter-target="users-list" />
         </label>
       </div>
     </div>
@@ -91,9 +91,9 @@
         <small>状态为 active</small>
       </div>
       <div class="admin-users-summary-card">
-        <span>已绑定套餐</span>
+        <span>已开通权益</span>
         <strong><%= planBoundCount %></strong>
-        <small>当前有有效套餐关系</small>
+        <small>当前有有效权益关系</small>
       </div>
       <div class="admin-users-summary-card">
         <span>非正常状态</span>
@@ -108,7 +108,7 @@
         <h3>权限调整前确认</h3>
         <ul>
           <li>授予管理员会开放后台入口，请确认账号归属。</li>
-          <li><%= t('切换套餐会立即影响模型可见范围、倍率和额度；卡片内余量按当前套餐周期实时计算。') %></li>
+          <li><%= t('切换权益会立即影响模型可见范围、倍率和额度；卡片内余量按当前权益周期实时计算。') %></li>
           <li>联系方式为空时，优先用用户名或公开 ID 识别用户。</li>
           <li><%= t('禁用会阻止账号继续登录；删除会级联移除该用户角色、会话、订阅和用量日志。') %></li>
         </ul>
@@ -157,13 +157,13 @@
                 <small><%= t('用户 ID') %>：<%= u.id %></small>
               </section>
               <section class="user-info-panel user-plan-panel">
-                <span class="user-info-label">当前套餐</span>
+                <span class="user-info-label">当前权益</span>
                 <% if (u.plan_name) { %>
                   <strong><%= u.plan_name %> <span class="muted-text">(<%= u.plan_code %>)</span></strong>
                   <small><%= billingModeLabel(u.billing_mode) %><%= t('· 刷新 ·') %><%= quotaPeriodLabel(u.quota_period) %> · <%= '优先级' %> <%= u.priority_weight %> · <%= '并发' %> <%= u.concurrency_limit %></small>
                   <% if (u.plan_description) { %><small class="user-plan-description"><%= u.plan_description %></small><% } %>
                 <% } else { %>
-                  <strong>未绑定套餐</strong>
+                  <strong>未开通权益</strong>
                   <small>该用户可能无法正常使用付费模型。</small>
                 <% } %>
               </section>
@@ -171,10 +171,10 @@
 
             <% if (u.quota_snapshot) { %>
               <% const tone = quotaTone(u.quota_state); %>
-              <section class="user-quota-panel user-quota-panel--<%= tone %>" aria-label="<%= t('用户套餐余量') %>">
+              <section class="user-quota-panel user-quota-panel--<%= tone %>" aria-label="<%= t('用户权益余量') %>">
                 <div class="user-quota-heading">
                   <div>
-                    <span class="user-info-label"><%= t('套餐余量') %></span>
+                    <span class="user-info-label"><%= t('权益余量') %></span>
                     <strong><%= quotaPeriodLabel(u.quota_period) %>额度快照</strong>
                   </div>
                   <span class="quota-health-pill quota-health-pill--<%= tone %>"><%= tone === 'danger' ? t('接近耗尽') : (tone === 'warn' ? t('使用较高') : t('余量正常')) %></span>
@@ -193,7 +193,7 @@
                   </div>
                   <div class="user-quota-meter">
                     <div class="quota-row-head">
-                      <span><%= t('Token 余量') %></span>
+                      <span><%= t('文字额度余量') %></span>
                       <strong><%= formatNum(u.remaining_tokens) %> / <%= formatNum(u.token_quota) %></strong>
                     </div>
                     <div class="quota-bar quota-bar--admin"><span data-width="<%= u.token_usage_percent %>"></span></div>
@@ -212,15 +212,15 @@
                 </dl>
               </section>
             <% } else { %>
-              <section class="user-quota-panel user-quota-panel--empty" aria-label="<%= t('用户套餐余量') %>">
+              <section class="user-quota-panel user-quota-panel--empty" aria-label="<%= t('用户权益余量') %>">
                 <div class="user-quota-heading">
                   <div>
-                    <span class="user-info-label"><%= t('套餐余量') %></span>
-                    <strong><%= t('暂无有效套餐') %></strong>
+                    <span class="user-info-label"><%= t('权益余量') %></span>
+                    <strong><%= t('暂无有效权益') %></strong>
                   </div>
                   <span class="quota-health-pill quota-health-pill--danger"><%= t('不可用') %></span>
                 </div>
-                <p class="muted-text"><%= t('为该用户切换到有效套餐后，这里会显示请求和 Token 的实时剩余额度。') %></p>
+                <p class="muted-text"><%= t('为该用户切换到有效权益后，这里会显示请求和文字额度的实时剩余额度。') %></p>
               </section>
             <% } %>
 
@@ -238,7 +238,7 @@
 
               <form class="compact-admin-form" method="post" action="/admin/users/<%= u.id %>/plan">
                 <label>
-                  <span>用户套餐</span>
+                  <span>用户权益</span>
                   <select name="planId">
                     <% plans.forEach(plan => { %>
                       <option value="<%= plan.id %>" <%= plan.code === u.plan_code ? 'selected' : '' %>>
@@ -247,7 +247,7 @@
                     <% }) %>
                   </select>
                 </label>
-                <button type="submit">切换套餐</button>
+                <button type="submit">切换权益</button>
               </form>
 
               <form class="compact-admin-form" method="post" action="/admin/users/<%= u.id %>/status">
@@ -270,7 +270,7 @@
         <% }) %>
         <div class="empty-state admin-filter-empty">
           <strong>没有匹配的用户</strong>
-          <span>换个用户名、邮箱、手机或套餐关键词试试。</span>
+          <span>换个用户名、邮箱、手机或权益关键词试试。</span>
         </div>
       </div>
     </div>

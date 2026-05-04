@@ -32,7 +32,7 @@
     <div class="dashboard-welcome">
       <div class="section-kicker">Dashboard</div>
       <h1><%= t('欢迎回来，{username}', { username: user.username }) %></h1>
-      <p>你的角色、会话、额度和账号状态都在这里。先看总览，再继续创作或回到最近的故事里。</p>
+      <p>这里汇总你的角色、会话、站内信、额度和账号状态。查看总览后，可以继续最近会话或创建新角色。</p>
       <div class="dashboard-actions">
         <a class="quick-link" href="/characters/new"><%= t('创建新角色') %></a>
         <% if (latestConversation) { %>
@@ -61,7 +61,7 @@
     <a class="command-card command-card--primary" href="/characters/new">
       <span>New</span>
       <strong>创建角色</strong>
-      <small>写设定、补人格、开始新的故事。</small>
+      <small>填写设定、完善行为规则，并创建新的会话。</small>
     </a>
     <a class="command-card" href="/characters/public">
       <span>Explore</span>
@@ -77,15 +77,15 @@
     <% } else { %>
       <a class="command-card" href="/characters/new">
         <span>Start</span>
-        <strong>开始第一段会话</strong>
-        <small>先创建角色，再让故事开口。</small>
+        <strong>开始首次对话</strong>
+        <small>先创建角色，再开始第一段独立会话。</small>
       </a>
     <% } %>
     <% if (isAdmin) { %>
       <a class="command-card" href="/admin">
         <span>Admin</span>
         <strong>管理后台</strong>
-        <small>用户、套餐、日志和供应商配置。</small>
+        <small>管理用户、权益、日志和模型服务配置。</small>
       </a>
     <% } else { %>
       <a class="command-card" href="/profile">
@@ -113,12 +113,12 @@
       <small><%= unreadSiteMessages > 0 ? t('有新的站内信待查看') : t('暂无未读站内信') %></small>
     </article>
     <article class="stat-card stat-card--plan">
-      <span>当前套餐</span>
+      <span>当前权益</span>
       <strong><%= hasSubscription ? subscription.plan_name : t('未配置') %></strong>
       <% if (subscriptionDescription) { %>
         <small class="stat-card-description"><%= subscriptionDescription %></small>
       <% } %>
-      <small><%= hasSubscription ? t('计费方式：{billingMode}', { billingMode: subscription.billing_mode }) : t('需要管理员先给你绑定套餐') %></small>
+      <small><%= hasSubscription ? t('计费方式：{billingMode}', { billingMode: subscription.billing_mode }) : t('需要管理员先为你开通权益') %></small>
     </article>
     <article class="stat-card">
       <span>请求使用率</span>
@@ -134,7 +134,7 @@
           <div>
             <div class="section-kicker">Conversations</div>
             <h2>最近会话</h2>
-            <p>从最近更新的地方继续，少一点翻找，多一点进入状态。</p>
+            <p>按最近更新时间展示会话，便于快速回到上一次对话。</p>
           </div>
           <% if (latestConversation) { %>
             <a class="quick-link" href="/chat/<%= latestConversation.id %>"><%= t('继续最新会话') %></a>
@@ -183,17 +183,17 @@
           <div>
             <div class="section-kicker">Characters</div>
             <h2>我的角色</h2>
-            <p>公开、私有、编辑和开聊入口放在一起，整理起来更顺手。</p>
+            <p>公开状态、编辑入口和开聊操作集中展示，便于维护角色。</p>
           </div>
           <a class="quick-link" href="/characters/new">新建角色</a>
         </div>
 
         <% if (characterList.length === 0) { %>
           <div class="empty-panel dashboard-empty-state">
-            你还没有创建角色。先去写一个有灵魂的名字，再慢慢把设定补完整。
+            你还没有创建角色。可以先创建一个私有角色，确认设定后再决定是否公开。
             <div class="dashboard-empty-actions">
               <a class="quick-link" href="/characters/new">现在创建</a>
-              <a class="quick-link" href="/characters/public">先看看别人公开的角色</a>
+              <a class="quick-link" href="/characters/public">浏览公开角色</a>
             </div>
           </div>
         <% } else { %>
@@ -235,8 +235,8 @@
         <div class="section-heading dashboard-section-heading">
           <div>
             <div class="section-kicker">Account</div>
-            <h2>账号与套餐</h2>
-            <p>权限、套餐和关键限制都收在这里。</p>
+            <h2>账号与权益</h2>
+            <p>权限、权益方案和关键限制集中展示。</p>
           </div>
         </div>
 
@@ -263,11 +263,11 @@
             <ul class="feature-list dashboard-feature-list">
               <li><span>并发保障</span><strong><%= formatNum(subscription.concurrency_limit) %></strong></li>
               <li><span>请求额度</span><strong><%= formatNum(subscription.request_quota) %></strong></li>
-              <li><span>Token 额度</span><strong><%= formatNum(subscription.token_quota) %></strong></li>
+              <li><span>文字额度</span><strong><%= formatNum(subscription.token_quota) %></strong></li>
               <li><span>最大输出</span><strong><%= formatNum(subscription.max_output_tokens) %></strong></li>
             </ul>
           <% } else { %>
-            <div class="empty-panel">这个账号还没有绑定有效套餐。要继续正常调用模型，得先在后台给你配上。</div>
+            <div class="empty-panel">这个账号还没有可用权益。要继续使用模型，请联系管理员开通。</div>
           <% } %>
         </div>
       </section>
@@ -277,7 +277,7 @@
           <div>
             <div class="section-kicker">Quota</div>
             <h2>额度快照</h2>
-            <p>请求和 Token 分开看，剩余量一眼就能确认。</p>
+            <p>请求次数和文字额度分开展示，便于确认剩余量。</p>
           </div>
         </div>
 
@@ -297,18 +297,18 @@
 
             <div class="quota-row">
               <div class="quota-row-head">
-                <span><%= t('Token 额度') %></span>
+                <span><%= t('文字额度') %></span>
                 <strong><%= formatNum(quota.usage.usedTokens) %> / <%= formatNum(tokenQuotaTotal) %></strong>
               </div>
               <div class="quota-bar"><span data-width="<%= tokenUsagePercent %>"></span></div>
               <div class="dashboard-item-meta">
-                <span><%= t('剩余 Token：{count}', { count: formatNum(quota.remainingTokens) }) %></span>
+                <span><%= t('剩余文字额度：{count}', { count: formatNum(quota.remainingTokens) }) %></span>
                 <span><%= t('已用占比：{percent}%', { percent: tokenUsagePercent }) %></span>
               </div>
             </div>
           </div>
         <% } else { %>
-          <div class="empty-panel">当前没有可展示的配额快照。通常是因为账号还没绑定有效套餐。</div>
+          <div class="empty-panel">当前没有可展示的额度概览。通常是因为账号尚未开通可用权益。</div>
         <% } %>
       </section>
 
