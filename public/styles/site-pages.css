@@ -820,7 +820,7 @@ textarea, .bubble-rich, .rich-preview {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(280px, 1fr) minmax(280px, 0.9fr);
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .public-filter-form .field-group { margin-bottom: 0; }
@@ -829,6 +829,7 @@ textarea, .bubble-rich, .rich-preview {
   display: grid;
   gap: 12px;
   min-width: 0;
+  height: 100%;
 }
 
 .public-filter-toolbar {
@@ -836,8 +837,9 @@ textarea, .bubble-rich, .rich-preview {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
-  justify-self: end;
-  width: min(100%, 340px);
+  align-content: start;
+  justify-self: stretch;
+  width: 100%;
   min-width: 0;
 }
 
@@ -845,8 +847,10 @@ textarea, .bubble-rich, .rich-preview {
 
 .public-filter-tag-suggestions {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 8px;
   min-width: 0;
+  height: 100%;
   padding: 10px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -872,9 +876,10 @@ textarea, .bubble-rich, .rich-preview {
 }
 
 .public-tag-suggestion-row {
-  max-height: 90px;
+  max-height: 118px;
   overflow: auto;
   overscroll-behavior: contain;
+  align-content: start;
   padding-right: 2px;
 }
 
