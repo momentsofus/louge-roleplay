@@ -97,10 +97,14 @@
 }
 
 .public-tag-suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   max-height: 104px;
   overflow: auto;
   overscroll-behavior: contain;
-  align-content: start;
+  align-content: flex-start;
+  margin: 0;
   padding-right: 2px;
 }
 
