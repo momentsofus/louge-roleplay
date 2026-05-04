@@ -126,7 +126,7 @@
   document.addEventListener('click', (event) => {
     const button = event.target && event.target.closest ? event.target.closest('[data-tag-suggestion]') : null;
     if (!button) return;
-    const scope = button.closest('.field-group') || document;
+    const scope = button.closest('.public-filter-main') || button.closest('.field-group') || document;
     const input = scope.querySelector('[data-tag-input]');
     if (!input?.__lougeTagInput) return;
     event.preventDefault();

@@ -54,52 +54,64 @@
 
   <section class="panel public-filter-panel">
     <form method="GET" action="/characters/public" class="public-filter-form">
-      <div class="field-group">
-        <label for="publicCharacterKeyword">搜索角色</label>
-        <input id="publicCharacterKeyword" name="q" value="<%= currentFilters.keyword || '' %>" maxlength="80" placeholder="搜索角色名、简介或创建者" />
-      </div>
-      <div class="field-group tag-field-group public-tag-filter-field">
-        <label for="publicCharacterTags">标签</label>
-        <input id="publicCharacterTags" name="tags" data-tag-input data-tag-placeholder="输入标签后按回车筛选" value="<%= activeTagsText %>" maxlength="160" placeholder="输入标签后按回车筛选" list="publicCharacterTagOptions" />
-        <datalist id="publicCharacterTagOptions">
-          <% tagOptions.forEach(tag => { %><option value="<%= tag.name %>"><% }) %>
-        </datalist>
+      <div class="public-filter-main">
+        <div class="public-filter-fields-row">
+          <div class="field-group">
+            <label for="publicCharacterKeyword">搜索角色</label>
+            <input id="publicCharacterKeyword" name="q" value="<%= currentFilters.keyword || '' %>" maxlength="80" placeholder="搜索角色名、简介或创建者" />
+          </div>
+          <div class="field-group tag-field-group public-tag-filter-field">
+            <label for="publicCharacterTags">标签</label>
+            <input id="publicCharacterTags" name="tags" data-tag-input data-tag-placeholder="输入标签后按回车筛选" value="<%= activeTagsText %>" maxlength="160" placeholder="输入标签后按回车筛选" list="publicCharacterTagOptions" />
+            <datalist id="publicCharacterTagOptions">
+              <% tagOptions.forEach(tag => { %><option value="<%= tag.name %>"><% }) %>
+            </datalist>
+          </div>
+        </div>
         <% if (tagOptions.length) { %>
-          <div class="tag-suggestion-row" aria-label="常用标签">
-            <% tagOptions.slice(0, 16).forEach(tag => { %>
-              <button class="tag-suggestion-chip" type="button" data-tag-suggestion="<%= tag.name %>">#<%= tag.name %><% if (tag.usage_count) { %><span><%= tag.usage_count %></span><% } %></button>
-            <% }) %>
+          <div class="public-filter-tag-suggestions" aria-label="常用标签">
+            <div class="public-filter-tag-suggestions-head">
+              <span><%= t('热门标签') %></span>
+              <small><%= t('点击标签可加入筛选') %></small>
+            </div>
+            <div class="public-tag-suggestion-row">
+              <% tagOptions.slice(0, 32).forEach(tag => { %>
+                <button class="tag-suggestion-chip" type="button" data-tag-suggestion="<%= tag.name %>">#<%= tag.name %><% if (tag.usage_count) { %><span><%= tag.usage_count %></span><% } %></button>
+              <% }) %>
+            </div>
           </div>
         <% } %>
       </div>
-      <div class="field-group">
-        <label for="publicCharacterTagMode">标签模式</label>
-        <select id="publicCharacterTagMode" name="tagMode">
-          <option value="or" <%= currentFilters.tagMode !== 'and' ? 'selected' : '' %>>包含任一</option>
-          <option value="and" <%= currentFilters.tagMode === 'and' ? 'selected' : '' %>>包含全部</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="publicCharacterSort">排序</label>
-        <select id="publicCharacterSort" name="sort">
-          <% sortOptions.forEach(([value, label]) => { %>
-            <option value="<%= value %>" <%= currentFilters.sort === value ? 'selected' : '' %>><%= label %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="publicCharacterPageSize">每页数量</label>
-        <select id="publicCharacterPageSize" name="pageSize">
-          <% [12, 24, 36, 48].forEach(size => { %>
-            <option value="<%= size %>" <%= Number(pager.pageSize) === size ? 'selected' : '' %>><%= size %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="public-filter-actions">
-        <button class="btn-brand" type="submit">筛选</button>
-        <% if (currentFilters.keyword || activeTagsText || currentFilters.tagMode === 'and' || currentFilters.sort !== 'heat' || Number(pager.pageSize) !== 12) { %>
-          <a class="quick-link" href="/characters/public">清空</a>
-        <% } %>
+      <div class="public-filter-toolbar">
+        <div class="field-group">
+          <label for="publicCharacterTagMode">标签模式</label>
+          <select id="publicCharacterTagMode" name="tagMode">
+            <option value="or" <%= currentFilters.tagMode !== 'and' ? 'selected' : '' %>>包含任一</option>
+            <option value="and" <%= currentFilters.tagMode === 'and' ? 'selected' : '' %>>包含全部</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="publicCharacterSort">排序</label>
+          <select id="publicCharacterSort" name="sort">
+            <% sortOptions.forEach(([value, label]) => { %>
+              <option value="<%= value %>" <%= currentFilters.sort === value ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="publicCharacterPageSize">每页数量</label>
+          <select id="publicCharacterPageSize" name="pageSize">
+            <% [12, 24, 36, 48].forEach(size => { %>
+              <option value="<%= size %>" <%= Number(pager.pageSize) === size ? 'selected' : '' %>><%= size %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="public-filter-actions">
+          <button class="btn-brand" type="submit">筛选</button>
+          <% if (currentFilters.keyword || activeTagsText || currentFilters.tagMode === 'and' || currentFilters.sort !== 'heat' || Number(pager.pageSize) !== 12) { %>
+            <a class="quick-link" href="/characters/public">清空</a>
+          <% } %>
+        </div>
       </div>
     </form>
   </section>
@@ -136,10 +148,10 @@
             </div>
           <% } %>
           <div class="public-character-stats">
-            <span>🔥 热度 <strong><%= character.heat_score || 0 %></strong></span>
-            <span>♥ 点赞 <strong><%= character.like_count || 0 %></strong></span>
-            <span>💬 评论 <strong><%= character.comment_count || 0 %></strong></span>
-            <span>↗ 使用 <strong><%= character.usage_count || 0 %></strong></span>
+            <span>热度 <strong><%= character.heat_score || 0 %></strong></span>
+            <span>赞 <strong><%= character.like_count || 0 %></strong></span>
+            <span>评论 <strong><%= character.comment_count || 0 %></strong></span>
+            <span>使用 <strong><%= character.usage_count || 0 %></strong></span>
           </div>
           <div class="public-character-meta">
             <span class="meta-pill">公开</span>

@@ -1,269 +1,131 @@
-/* Source: src/views/dashboard.ejs — header, command cards, stats, layout */
 .dashboard-shell {
   display: grid;
-  gap: 22px;
-  animation: fadeIn var(--duration-slow) var(--ease-out) both;
+  gap: 20px;
 }
 
 .dashboard-hero-card {
-  position: relative;
-  overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  gap: 20px;
   align-items: stretch;
-  padding: clamp(22px, 4vw, 34px);
+  padding: clamp(22px, 4vw, 36px);
   border-radius: var(--radius-2xl);
-  border: 1px solid rgba(155, 124, 255, 0.2);
-  background:
-    radial-gradient(circle at 8% 8%, rgba(155, 124, 255, 0.2), transparent 34%),
-    radial-gradient(circle at 82% 20%, rgba(96, 165, 250, 0.15), transparent 32%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
-  box-shadow: var(--shadow-md);
-}
-
-.dashboard-hero-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -12% -62% 28%;
-  height: 240px;
-  background: radial-gradient(circle, rgba(124, 92, 252, 0.16), transparent 64%);
-  pointer-events: none;
-}
-
-.dashboard-hero-card > * {
-  position: relative;
-  z-index: 1;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
 }
 
 .dashboard-welcome {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   align-content: center;
 }
-
-.dashboard-welcome h1 {
-  font-size: clamp(30px, 4.3vw, 46px);
-  margin: 0;
-}
-
-.dashboard-welcome p,
-.command-card small,
-.dashboard-section-heading p,
-.timeline-card p,
-.character-dashboard-card p {
+.dashboard-welcome h1 { font-size: clamp(24px, 3.5vw, 36px); margin: 0; }
+.dashboard-welcome p, .command-card small, .dashboard-section-heading p,
+.timeline-card p, .character-dashboard-card p {
   margin: 0;
   color: var(--text-secondary);
-  line-height: 1.75;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.dashboard-actions,
-.dashboard-actions-row,
-.dashboard-empty-actions {
+.dashboard-actions, .dashboard-actions-row, .dashboard-empty-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.dashboard-actions {
-  margin-top: 4px;
 }
 
 .dashboard-account-card {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 12px;
-  min-height: 190px;
-  padding: 22px;
+  gap: 10px;
+  padding: 20px;
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(10, 14, 26, 0.46);
-  backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
   text-align: center;
 }
 
-.dashboard-avatar,
-.mini-avatar {
+.dashboard-avatar, .mini-avatar {
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(135deg, rgba(155, 124, 255, 0.9), rgba(96, 165, 250, 0.65));
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(135deg, var(--brand), var(--accent-blue));
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 18px 44px rgba(124, 92, 252, 0.22);
 }
+.dashboard-avatar { width: 56px; height: 56px; border-radius: var(--radius-xl); font-size: 24px; }
 
-.dashboard-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 26px;
-  font-size: 30px;
-}
-
-.dashboard-account-card strong {
-  display: block;
-  color: var(--text);
-  font-size: 20px;
-}
-
-.dashboard-account-card span {
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
+.dashboard-account-card strong { display: block; color: var(--text); font-size: 18px; }
+.dashboard-account-card span { color: var(--text-tertiary); font-size: 13px; }
 
 .dashboard-account-pills {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.status-pill {
-  width: fit-content;
-  font-style: normal;
-  font-size: 12px;
-  line-height: 1;
-  padding: 6px 9px;
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.status-pill--ok {
-  color: #a7f3d0;
-  border-color: rgba(52, 211, 153, 0.22);
-  background: rgba(52, 211, 153, 0.08);
-}
-
-.status-pill--warn {
-  color: #fed7aa;
-  border-color: rgba(251, 146, 60, 0.26);
-  background: rgba(251, 146, 60, 0.09);
-}
-
-.status-pill--admin {
-  color: #d8ccff;
-  border-color: rgba(155, 124, 255, 0.26);
-  background: rgba(155, 124, 255, 0.1);
-}
-
-.status-pill--muted {
-  color: var(--text-tertiary);
-  background: rgba(255, 255, 255, 0.04);
-}
-
 .dashboard-command-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 .command-card {
   display: grid;
-  gap: 7px;
-  min-height: 108px;
-  padding: 18px;
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.085);
-  background: rgba(255, 255, 255, 0.035);
-  color: inherit;
-  text-decoration: none;
-  transition: transform var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), background var(--duration-normal) var(--ease-out);
-}
-
-.command-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(155, 124, 255, 0.28);
-  background: rgba(255, 255, 255, 0.055);
-}
-
-.command-card--primary {
-  background: linear-gradient(135deg, rgba(124, 92, 252, 0.18), rgba(96, 165, 250, 0.08));
-  border-color: rgba(155, 124, 255, 0.24);
-}
-
-.command-card span {
-  color: #d8ccff;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.command-card strong {
-  color: var(--text);
-  font-size: 18px;
-}
-
-.dashboard-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.stat-card {
-  display: grid;
-  gap: 7px;
-  min-width: 0;
+  gap: 6px;
+  min-height: 100px;
   padding: 18px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.command-card:hover { transform: translateY(-1px); border-color: var(--border-hover); }
+.command-card--primary { border-color: rgba(124, 107, 240, 0.2); background: var(--brand-subtle); }
+.command-card span { color: var(--brand-hover); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.command-card strong { color: var(--text); font-size: 16px; }
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
 }
 
-.stat-card span,
-.stat-card small {
-  color: var(--text-tertiary);
-  font-size: 13px;
-  line-height: 1.55;
+.stat-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
-
+.stat-card span, .stat-card small { color: var(--text-tertiary); font-size: 13px; }
 .stat-card strong {
   color: var(--text);
-  font-size: clamp(24px, 3vw, 32px);
+  font-size: clamp(22px, 3vw, 30px);
   line-height: 1.1;
-  overflow-wrap: anywhere;
 }
-
-.stat-card-description {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
+.stat-card-description { color: var(--text-secondary); font-size: 13px; }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(290px, 0.85fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
   gap: 20px;
   align-items: start;
 }
 
-.dashboard-main-column,
-.dashboard-side-column {
+.dashboard-main-column, .dashboard-side-column {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
 }
+.dashboard-side-column { position: sticky; top: 80px; }
 
-.dashboard-side-column {
-  position: sticky;
-  top: 96px;
-}
-
-.dashboard-section {
-  display: grid;
-  gap: 20px;
-  padding: 24px;
-}
-
-.compact-section {
-  gap: 18px;
-}
-
-.dashboard-section--featured {
-  border-color: rgba(155, 124, 255, 0.18);
-}
-
-.dashboard-section-heading {
-  align-items: flex-start;
-}
+.dashboard-section { display: grid; gap: 16px; padding: 20px; }
+.compact-section { gap: 14px; }
+.dashboard-section-heading { align-items: flex-start; }

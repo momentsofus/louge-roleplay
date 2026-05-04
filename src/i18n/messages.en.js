@@ -1210,6 +1210,10 @@ const EN_MESSAGES = {
   '需要帮忙？': 'Need help?',
   '如果这个问题反复出现，可以微信扫码联系客服处理。': 'If this keeps happening, scan the WeChat code to contact support.',
   '如果这个问题反复出现，可以微信扫码联系客服，并把请求编号一并发给工作人员。': 'If this keeps happening, scan the WeChat code to contact support and include the request ID.',
+  '热门标签': 'Popular tags',
+  '点击标签可加入筛选': 'Click a tag to add it to the filter',
+  '热度': 'Heat',
+  '赞': 'Likes',
 };
 
 module.exports = { EN_MESSAGES };

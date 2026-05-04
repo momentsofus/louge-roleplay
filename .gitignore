@@ -7,3 +7,4 @@ data/
 .continue/prompts
 public/uploads/characters/*
 !public/uploads/characters/.gitkeep
+backups/
