@@ -1,3 +1,6 @@
+<%# @file src/views/partials/admin-subnav.ejs
+    @description 后台二级导航。依赖 navigation.adminNavItems 与 activeAdminNav，新增后台页面时同步 nav key。
+%>
 <%
   const navItems = (typeof navigation !== 'undefined' && navigation.adminNavItems) || [];
 %>

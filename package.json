@@ -1,7 +1,21 @@
 {
   "name": "ai-roleplay-site",
   "version": "1.4.1",
-  "description": "Minimal multi-user AI roleplay website",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "薛中泽",
+  "description": "楼阁：多用户 AI 角色对话网站，含角色、聊天、后台、套餐、Provider 管理与 Tavern 卡导入",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/XueJourney/louge-roleplay.git"
+  },
+  "keywords": [
+    "louge",
+    "ai-roleplay",
+    "express",
+    "ejs",
+    "private-software"
+  ],
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

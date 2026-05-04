@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/notifications/40-site-messages.css
+   @description 站内信收件箱、后台发送记录、未读标记和撤回状态样式。 */
+
 .site-message-nav-link {
   position: relative;
   display: inline-flex;

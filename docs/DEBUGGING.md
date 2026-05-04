@@ -42,11 +42,11 @@ journalctl -u ai-roleplay-site.service --since '30 min ago' | grep '<requestId>'
 1. 浏览器 Console 是否有 JS 报错。
 2. Network 中 `/chat/:id/message/stream` 是否持续返回 `application/x-ndjson`。
 3. 后端日志是否有 `LLM provider request start`、`LLM provider response received`、`LLM gateway request failed`。
-4. 前端 `window.renderRichContent` 是否存在，`public/js/chat-page.js` 是否为最新版本（必要时强刷）。
+4. 前端 `window.renderRichContent` 是否存在，`public/js/generated/chat.bundle.js` 是否为最新版本（必要时强刷）。
 
 ### 2. Markdown / think 折叠不显示
 
-检查：`public/js/chat-page.js` 的 `renderRichContent`、`collectFoldBlocks`、`markdownToHtml`，以及 `public/styles/site-pages/52-rich-content.css` 是否加载。
+检查：`public/js/generated/chat.bundle.js` 是否加载，以及源模块 `public/js/chat/rich-renderer.js`、`public/js/chat/rich-renderer/formatting.js`、`public/js/chat/rich-renderer/folds.js`、`public/styles/site-pages/52-rich-content.css` 是否同步构建。
 
 ### 3. 登录/注册失败
 

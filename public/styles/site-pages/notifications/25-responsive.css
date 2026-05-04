@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/notifications/25-responsive.css
+   @description 通知/客服/站内信相关组件的移动端响应式覆盖。 */
+
 @media (max-width: 960px) {
   .admin-form-grid,
   .admin-form-grid--notifications,

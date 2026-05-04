@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/character-chat-schema.js
+ * @description MySQL 角色、标签、Tavern 导入、会话与消息相关表结构初始化。函数均为幂等补表/补列/补索引工具，由 scripts/init-db.js 调用。
+ */
+
 'use strict';
 
 async function ensureCharacterSchema(connection, helpers) {

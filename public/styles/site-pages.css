@@ -14,6 +14,9 @@
  */
 
 /* --- begin site-pages/00-core.css --- */
+/* @file public/styles/site-pages/00-core.css
+   @description 全站设计变量、基础元素、导航、通用卡片/按钮与页面容器。不要放页面专属的大块布局。 */
+
 :root {
   --bg: #08080e;
   --bg-elevated: #0e0e16;
@@ -493,6 +496,9 @@ code, pre {
 
 /* --- end site-pages/00-core.css --- */
 /* --- begin site-pages/01-typography.css --- */
+/* @file public/styles/site-pages/01-typography.css
+   @description 字体、标题、段落、muted 文案等基础排版规则。 */
+
 :root {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -560,6 +566,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/01-typography.css --- */
 /* --- begin site-pages/10-home.css --- */
+/* @file public/styles/site-pages/10-home.css
+   @description 首页 hero、推荐角色、首页卡片等基础布局。视觉增强放到 home polish 或主题层。 */
+
 .home-shell {
   display: grid;
   gap: 28px;
@@ -776,6 +785,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/11-home-polish.css --- */
 /* --- begin site-pages/12-public-characters.css --- */
+/* @file public/styles/site-pages/12-public-characters.css
+   @description 公共角色大厅、角色详情、标签筛选、公开评论和 NSFW 提示样式。 */
+
 .public-characters-shell {
   display: grid;
   gap: 20px;
@@ -2566,6 +2578,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/notifications/00-overlay.css --- */
 /* --- begin site-pages/notifications/10-inline.css --- */
+/* @file public/styles/site-pages/notifications/10-inline.css
+   @description 前台内联通知、toast、banner 和客服入口基础样式。 */
+
 .site-notification-toast {
   position: fixed;
   right: 22px;
@@ -2646,6 +2661,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/notifications/10-inline.css --- */
 /* --- begin site-pages/notifications/20-admin-notifications.css --- */
+/* @file public/styles/site-pages/notifications/20-admin-notifications.css
+   @description 后台通知中心列表、表单、展示范围和 audience 配置样式。 */
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2759,6 +2777,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/notifications/20-admin-notifications.css --- */
 /* --- begin site-pages/notifications/25-responsive.css --- */
+/* @file public/styles/site-pages/notifications/25-responsive.css
+   @description 通知/客服/站内信相关组件的移动端响应式覆盖。 */
+
 @media (max-width: 960px) {
   .admin-form-grid,
   .admin-form-grid--notifications,
@@ -2799,6 +2820,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/notifications/25-responsive.css --- */
 /* --- begin site-pages/notifications/30-support-admin.css --- */
+/* @file public/styles/site-pages/notifications/30-support-admin.css
+   @description 后台客服入口配置与预览样式。 */
+
 .support-admin-panel {
   border-color: rgba(96, 165, 250, 0.18);
   background:
@@ -2892,6 +2916,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/notifications/30-support-admin.css --- */
 /* --- begin site-pages/notifications/40-site-messages.css --- */
+/* @file public/styles/site-pages/notifications/40-site-messages.css
+   @description 站内信收件箱、后台发送记录、未读标记和撤回状态样式。 */
+
 .site-message-nav-link {
   position: relative;
   display: inline-flex;
@@ -3489,6 +3516,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/27-tags.css --- */
 /* --- begin site-pages/30-character-editor.css --- */
+/* @file public/styles/site-pages/30-character-editor.css
+   @description 角色创建/编辑表单、提示词条目、预览和媒体字段样式。 */
+
 .editor-shell {
   max-width: 920px;
   margin: 0 auto;
@@ -3661,6 +3691,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/31-character-polish.css --- */
 /* --- begin site-pages/40-dashboard.css --- */
+/* @file public/styles/site-pages/40-dashboard.css
+   @description 用户控制台基础布局：角色、会话、套餐、额度快照等区域。 */
+
 .dashboard-shell {
   display: grid;
   gap: 20px;
@@ -3855,6 +3888,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/41-dashboard-polish.css --- */
 /* --- begin site-pages/42-dashboard-sections.css --- */
+/* @file public/styles/site-pages/42-dashboard-sections.css
+   @description 控制台分区模块样式，承接 dashboard 主文件拆分后的列表/卡片区域。 */
+
 .conversation-timeline { display: grid; gap: 0; }
 
 .timeline-item {
@@ -4032,6 +4068,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/42-dashboard-sections.css --- */
 /* --- begin site-pages/43-dashboard-responsive.css --- */
+/* @file public/styles/site-pages/43-dashboard-responsive.css
+   @description 控制台移动端与窄屏响应式覆盖。 */
+
 @media (max-width: 1120px) {
   .dashboard-command-grid, .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid, .dashboard-hero-card { grid-template-columns: 1fr; }
@@ -4056,6 +4095,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/43-dashboard-responsive.css --- */
 /* --- begin site-pages/50-chat.css --- */
+/* @file public/styles/site-pages/50-chat.css
+   @description 聊天页基础布局、消息列表、输入区、侧栏和操作入口。富文本细节放 52-rich-content.css。 */
+
 .chat-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
@@ -4445,6 +4487,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/chat-polish/30-header-menu-compose.css --- */
 /* --- begin site-pages/chat-polish/40-responsive-toast.css --- */
+/* @file public/styles/site-pages/chat-polish/40-responsive-toast.css
+   @description 聊天页窄屏 polish 与 toast/临时提示覆盖。 */
+
 @media (max-width: 980px) {
   .chat-shell--linear { grid-template-columns: 1fr; }
 }
@@ -4847,6 +4892,9 @@ textarea, .bubble-rich, .rich-preview {
 
 /* --- end site-pages/80-chat-polish.css --- */
 /* --- begin site-pages/90-profile.css --- */
+/* @file public/styles/site-pages/90-profile.css
+   @description 个人资料页、账号信息、偏好设置与套餐摘要基础样式。 */
+
 .profile-shell {
   display: grid;
   gap: 20px;

@@ -5,10 +5,22 @@
 
 ;
 /* public/js/chat/rich-renderer/formatting.js */
+/**
+ * @file public/js/chat/rich-renderer/formatting.js
+ * @description 聊天富文本 Markdown 格式化工具。负责在进入 DOM 净化前，把模型文本转换为受限 HTML：段落、标题、列表、引用、表格、代码块、链接和图片。
+ * @notes 本文件只做字符串级 Markdown 转换，不直接写 DOM；输出必须继续交给 sanitizer.js 净化后才能展示。
+ */
+
 (function () {
   window.ChatRichRenderer = window.ChatRichRenderer || {};
   const ns = window.ChatRichRenderer;
 
+  /**
+   * 转义模型原始文本中的 HTML 特殊字符。
+   *
+   * @param {unknown} value 任意待展示内容。
+   * @returns {string} 可安全参与后续 Markdown 字符串转换的文本。
+   */
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -18,6 +30,12 @@
       .replace(/'/g, '&#39;');
   }
 
+  /**
+   * 规整 Markdown 行格式，兼容 HTML 转义后的引用符和纯分隔线。
+   *
+   * @param {unknown} text 模型输出文本。
+   * @returns {string} 使用 \n 换行的标准化 Markdown 文本。
+   */
   function normalizeMarkdownLines(text) {
     return String(text || '')
       .replace(/\r\n?/g, '\n')
@@ -126,6 +144,15 @@
     };
   }
 
+  /**
+   * 将受限 Markdown 转为 HTML 字符串。
+   *
+   * 支持段落、标题、列表、引用、表格、代码块和少量 inline 格式。调用方必须继续调用
+   * `sanitizeNodeTree()`，不要直接把返回值塞入页面。
+   *
+   * @param {unknown} text 模型输出或消息文本。
+   * @returns {string} 未净化的 HTML 字符串。
+   */
   function markdownToHtml(text) {
     const normalized = normalizeMarkdownLines(text);
     const escaped = escapeHtml(normalized);
@@ -233,6 +260,12 @@
     return html;
   }
 
+  /**
+   * 为流式生成中的未闭合代码围栏补齐结尾，生成可预览 HTML。
+   *
+   * @param {unknown} text 当前已收到的流式文本。
+   * @returns {string} 未净化的 HTML 片段。
+   */
   function markdownToPartialHtml(text) {
     const normalized = normalizeMarkdownLines(text);
     const lines = normalized.split('\n');
@@ -257,6 +290,12 @@
 
 ;
 /* public/js/chat/rich-renderer/sanitizer.js */
+/**
+ * @file public/js/chat/rich-renderer/sanitizer.js
+ * @description 聊天富文本 DOM 净化与引用高亮工具。限制模型输出可用标签、属性、URL 协议和自定义 CSS 作用域，避免把未受信内容注入页面。
+ * @notes 允许标签白名单见 ALLOWED_TAGS；链接/图片只允许 http(s)，事件属性和行内 style 会被移除，style 标签内容会被作用域化。
+ */
+
 (function () {
   window.ChatRichRenderer = window.ChatRichRenderer || {};
   const ns = window.ChatRichRenderer;
@@ -274,6 +313,13 @@
   ];
   const ALLOWED_TAGS = new Set(['p', 'br', 'pre', 'code', 'strong', 'em', 'b', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'details', 'summary', 'style', 'a', 'img']);
 
+  /**
+   * 净化模型输出中的 style 标签内容，并把普通选择器限定在当前消息 scope 内。
+   *
+   * @param {string} cssText style 标签原文。
+   * @param {string} scopeSelector 当前消息容器的 data-render-scope 选择器。
+   * @returns {string} 移除危险语法后的作用域化 CSS。
+   */
   function sanitizeCss(cssText, scopeSelector) {
     const cleaned = String(cssText || '')
       .replace(/@import[\s\S]*?;/gi, '')
@@ -318,6 +364,12 @@
     return null;
   }
 
+  /**
+   * 收集文本中的成对引号片段，用于给对白/引用加视觉高亮。
+   *
+   * @param {string} text 待扫描文本节点内容。
+   * @returns {{index:number,end:number,text:string}[]} 命中的引号范围。
+   */
   function collectQuoteMatches(text) {
     const source = String(text || '');
     const matches = [];
@@ -344,6 +396,12 @@
     return matches;
   }
 
+  /**
+   * 遍历富文本 DOM，把普通文本节点里的引号内容包成 .bubble-quote。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
   function highlightQuotesInNodeTree(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
@@ -375,6 +433,17 @@
     });
   }
 
+  /**
+   * 原地净化富文本 DOM 树。
+   *
+   * - 非白名单标签会被移除但保留子节点。
+   * - 移除事件属性、行内 style、非 http(s) 链接/图片。
+   * - 强制链接新窗口 noopener/nofollow，图片 lazy/async/no-referrer。
+   *
+   * @param {Element|DocumentFragment} root DOMParser 生成的根节点。
+   * @param {string} scopeSelector 当前消息的 CSS 作用域选择器。
+   * @returns {void}
+   */
   function sanitizeNodeTree(root, scopeSelector) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
     const toProcess = [];
@@ -428,6 +497,12 @@
 
 ;
 /* public/js/chat/rich-renderer/folds.js */
+/**
+ * @file public/js/chat/rich-renderer/folds.js
+ * @description 聊天富文本折叠块工具。提取 `<think>`/`<thinking>` 以及模型输出中的非富文本自定义标签，转成可折叠详情块。
+ * @notes 流式生成阶段默认隐藏折叠内容，最终态再展示，避免未闭合标签导致页面跳动。
+ */
+
 (function () {
   window.ChatRichRenderer = window.ChatRichRenderer || {};
   const ns = window.ChatRichRenderer;
@@ -444,6 +519,14 @@
   const GENERIC_FOLD_TAG_RE = /<([a-z][\w:-]*)\b[^>]*>([\s\S]*?)<\/\1>/gi;
   const RICH_TAGS = new Set(['p', 'br', 'pre', 'code', 'strong', 'em', 'b', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'span', 'details', 'summary', 'style', 'a', 'img', 'think', 'thinking']);
 
+  /**
+   * 创建一个聊天气泡内的折叠详情块。
+   *
+   * @param {string} title summary 标题。
+   * @param {string} body 折叠正文，作为纯文本写入，避免标签注入。
+   * @param {boolean} openByDefault 是否默认展开。
+   * @returns {HTMLDetailsElement} 可直接插入消息 DOM 的 details 节点。
+   */
   function buildFold(title, body, openByDefault) {
     const details = document.createElement('details');
     details.className = 'bubble-fold';
@@ -461,6 +544,13 @@
     return details;
   }
 
+  /**
+   * 从模型原文中提取思考块和自定义标签块。
+   *
+   * @param {string} raw 模型原始输出。
+   * @param {{hideFolds?: boolean}=} options hideFolds 为 true 时移除折叠块内容，常用于 streaming preview。
+   * @returns {{text:string,folds:Array<{key:string,title:string,body:string,open:boolean,kind:string}>}} 替换占位后的正文与折叠块列表。
+   */
   function collectFoldBlocks(raw, options) {
     const mode = Object.assign({ hideFolds: false }, options || {});
     const folds = [];

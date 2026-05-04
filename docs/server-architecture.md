@@ -103,7 +103,9 @@
 - `src/routes/web/auth-routes.js` 已拆为认证聚合器，具体实现位于 `src/routes/web/auth/`。
 - `public/js/chat/controller.js` 已改为聊天页前端装配入口，conversation state / streaming UI / compose submit / optimize submit / action stream submit / history loader 已拆成独立脚本。
 - `src/services/plan-service.js` 已改为兼容门面，CRUD、订阅/配额、normalizer、hydration、usage-window 已拆入 `src/services/plan/`。
-- `src/services/conversation-service.js` 已拆出 `src/services/conversation/message-view.js` 与 `path-repository.js`。
-- `src/lib/db-sqlite-schema.js` 已拆为 SQLite schema 聚合入口，具体表结构和种子数据位于 `src/lib/sqlite-schema/`。
+- `src/services/conversation-service.js` 已继续拆出 `src/services/conversation/cache.js`、`validators.js`、`message-view.js` 与 `path-repository.js`，原文件保留兼容门面。
+- `scripts/init-db.js` 已拆成轻量入口，MySQL 表结构、迁移、种子与工具函数位于 `scripts/init-db/`。
+- `public/styles/site-pages.src.css` 是 CSS 源码入口，`public/styles/site-pages.css` 是构建产物；后台、聊天 polish 与通知样式已继续拆入子目录。
+- 前台通知脚本已新增 `public/js/generated/notification.bundle.js`，由 Markdown 降级渲染模块和通知客户端构建而来。
 
 后续如继续瘦身，建议只在新增业务时顺手拆对应领域，避免为了“更小”而打散已有稳定边界。

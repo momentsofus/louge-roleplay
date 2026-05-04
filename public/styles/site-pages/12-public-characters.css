@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/12-public-characters.css
+   @description 公共角色大厅、角色详情、标签筛选、公开评论和 NSFW 提示样式。 */
+
 .public-characters-shell {
   display: grid;
   gap: 20px;

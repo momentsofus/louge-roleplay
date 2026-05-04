@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/90-profile.css
+   @description 个人资料页、账号信息、偏好设置与套餐摘要基础样式。 */
+
 .profile-shell {
   display: grid;
   gap: 20px;

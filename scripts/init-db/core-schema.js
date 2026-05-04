@@ -1,3 +1,8 @@
+/**
+ * @file scripts/init-db/core-schema.js
+ * @description MySQL 用户、套餐、Provider、通知、站内信等核心表结构初始化。新增核心业务字段时优先同步本文件。
+ */
+
 'use strict';
 
 async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {

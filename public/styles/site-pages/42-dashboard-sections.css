@@ -1,3 +1,6 @@
+/* @file public/styles/site-pages/42-dashboard-sections.css
+   @description 控制台分区模块样式，承接 dashboard 主文件拆分后的列表/卡片区域。 */
+
 .conversation-timeline { display: grid; gap: 0; }
 
 .timeline-item {
