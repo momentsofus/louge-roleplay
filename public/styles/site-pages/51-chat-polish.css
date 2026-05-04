@@ -1,6 +1,4 @@
-/* @file public/styles/site-pages/51-chat-polish.css
- * Chat page structural polish entrypoint. Detailed rules live in ./chat-polish/.
- */
+/* Chat polish entrypoint - kept for build compatibility */
 @import url("./chat-polish/00-base.css");
 @import url("./chat-polish/10-linear-layout.css");
 @import url("./chat-polish/20-message-actions.css");

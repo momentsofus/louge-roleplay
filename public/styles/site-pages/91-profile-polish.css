@@ -1,17 +1,10 @@
-/*
- * Profile page refinements.
- */
+/* Profile polish — minimal */
 
 .profile-summary-item {
-  transition: transform var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+  transition: border-color var(--duration-fast) ease;
 }
-
 .profile-summary-item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(155, 124, 255, 0.22);
-  background: rgba(155, 124, 255, 0.07);
+  border-color: var(--border-hover);
 }
 
-.profile-card form {
-  margin-top: 4px;
-}
+.profile-card form { margin-top: 4px; }

@@ -1,83 +1,67 @@
-/*
- * Rich message / Markdown rendering styles.
- */
+/* Markdown / rich content rendering */
 
 .bubble-rich {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   color: var(--text-secondary);
-  line-height: 1.82;
+  line-height: 1.7;
 }
 
-.bubble-rich > :first-child {
-  margin-top: 0;
-}
+.bubble-rich > :first-child { margin-top: 0; }
+.bubble-rich > :last-child { margin-bottom: 0; }
 
-.bubble-rich > :last-child {
-  margin-bottom: 0;
-}
-
-.bubble-rich p,
-.bubble-rich ul,
-.bubble-rich ol,
-.bubble-rich blockquote,
-.bubble-rich pre,
-.bubble-rich table,
-.bubble-rich details {
+.bubble-rich p, .bubble-rich ul, .bubble-rich ol,
+.bubble-rich blockquote, .bubble-rich pre,
+.bubble-rich table, .bubble-rich details {
   margin: 0;
 }
 
-.bubble-rich h1,
-.bubble-rich h2,
-.bubble-rich h3,
-.bubble-rich h4,
-.bubble-rich h5,
-.bubble-rich h6 {
+.bubble-rich h1, .bubble-rich h2, .bubble-rich h3,
+.bubble-rich h4, .bubble-rich h5, .bubble-rich h6 {
   margin: 4px 0 0;
   color: var(--text);
 }
 
-.bubble-rich ul,
-.bubble-rich ol {
-  padding-left: 1.35rem;
+.bubble-rich ul, .bubble-rich ol {
+  padding-left: 1.25rem;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
-.bubble-rich li::marker {
-  color: var(--brand-hover);
-}
+.bubble-rich li::marker { color: var(--brand-hover); }
 
 .bubble-rich blockquote {
-  padding: 12px 14px;
-  border-left: 3px solid rgba(155, 124, 255, 0.58);
+  padding: 10px 14px;
+  border-left: 3px solid var(--brand);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  background: rgba(155, 124, 255, 0.08);
+  background: var(--brand-subtle);
   color: var(--text-soft);
 }
 
 .bubble-rich hr {
   width: 100%;
   border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  border-top: 1px solid var(--border);
 }
 
 .bubble-rich pre {
   max-width: 100%;
   overflow: auto;
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  background: rgba(3, 6, 18, 0.62);
-  color: #d8e2ff;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text-soft);
   white-space: pre-wrap;
+  font-size: 13px;
 }
 
 .bubble-rich code {
   padding: 2px 6px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.065);
-  color: #e6ddff;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.9em;
 }
 
 .bubble-rich pre code {
@@ -87,97 +71,68 @@
 }
 
 .bubble-rich a {
-  color: #aad4ff;
+  color: var(--accent-blue);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 2px;
 }
 
 .bubble-rich img {
   max-width: 100%;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
 .bubble-rich .bubble-table-wrap {
   max-width: 100%;
   overflow-x: auto;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
 }
 
 .bubble-rich table {
   width: 100%;
   min-width: max-content;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
-.bubble-rich th,
-.bubble-rich td {
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
+.bubble-rich th, .bubble-rich td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
   vertical-align: top;
 }
 
-.bubble-rich th {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-}
+.bubble-rich th { background: rgba(255, 255, 255, 0.04); color: var(--text); }
 
-.bubble-rich .align-center {
-  text-align: center;
-}
+.bubble-rich .align-center { text-align: center; }
+.bubble-rich .align-right { text-align: right; }
 
-.bubble-rich .align-right {
-  text-align: right;
-}
-
-.bubble-folds {
-  display: grid;
-  gap: 10px;
-}
+.bubble-folds { display: grid; gap: 8px; }
 
 .bubble-fold {
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(155, 124, 255, 0.18);
-  background: rgba(155, 124, 255, 0.065);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
   overflow: hidden;
 }
 
 .bubble-fold summary {
   cursor: pointer;
-  padding: 10px 13px;
-  color: #d9ceff;
-  font-weight: 700;
+  padding: 8px 12px;
+  color: var(--text-soft);
+  font-weight: 500;
+  font-size: 13px;
 }
 
 .bubble-fold-body {
-  padding: 0 13px 13px;
+  padding: 0 12px 10px;
   color: var(--text-tertiary);
+  font-size: 13px;
   white-space: pre-wrap;
 }
 
-.bubble-quote {
-  color: #eadfff;
-}
+.bubble-quote { color: var(--text-soft); }
 
-/* Streaming UX refinements */
+/* Streaming UX */
 .bubble[data-streaming="true"] .bubble-folds,
-.bubble[data-streaming="true"] .bubble-fold {
-  display: none;
-}
-
-.bubble[data-streaming="true"] .bubble-rich {
-  gap: 8px;
-}
-
-.bubble[data-streaming="true"] .bubble-rich p,
-.bubble[data-streaming="true"] .bubble-rich ul,
-.bubble[data-streaming="true"] .bubble-rich ol,
-.bubble[data-streaming="true"] .bubble-rich blockquote,
-.bubble[data-streaming="true"] .bubble-rich pre {
-  animation: streamFadeIn 120ms ease-out;
-}
-
-@keyframes streamFadeIn {
-  from { opacity: 0.72; transform: translateY(1px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.bubble[data-streaming="true"] .bubble-fold { display: none; }
+.bubble[data-streaming="true"] .bubble-rich { gap: 6px; }

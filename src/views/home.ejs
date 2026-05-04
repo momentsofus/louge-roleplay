@@ -55,10 +55,9 @@
             <h3><a href="/characters/public/<%= character.id %>"><%= character.name %></a></h3>
             <p class="character-summary character-summary--clamped"><%= character.summary || '这个角色还没有写简介。' %></p>
             <div class="character-card-stats">
-              <span>🔥 <%= character.heat_score || 0 %></span>
-              <span>♥ <%= character.like_count || 0 %></span>
-              <span>💬 <%= character.comment_count || 0 %></span>
-              <span>↗ <%= character.usage_count || 0 %></span>
+              <span><%= character.heat_score || 0 %> 热度</span>
+              <span><%= character.like_count || 0 %> 赞</span>
+              <span><%= character.comment_count || 0 %> 评论</span>
             </div>
             <a class="quick-link" href="/characters/public/<%= character.id %>">查看详情</a>
           </article>
