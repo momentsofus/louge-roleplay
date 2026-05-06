@@ -46,6 +46,20 @@ function isDuplicateIndexError(error) {
   return /duplicate key|already exists/i.test(String(error?.message || ''));
 }
 
+function isDeadlockOrLockWaitError(error) {
+  const message = String(error?.message || '');
+  return error?.code === 'ER_LOCK_DEADLOCK'
+    || error?.errno === 1213
+    || /deadlock found when trying to get lock/i.test(message)
+    || error?.code === 'ER_LOCK_WAIT_TIMEOUT'
+    || error?.errno === 1205
+    || /lock wait timeout exceeded/i.test(message);
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function normalizeUserIdList(value) {
   const source = Array.isArray(value) ? value : String(value || '').split(/[\s,，;；]+/);
   return Array.from(new Set(source
@@ -304,23 +318,35 @@ async function ensureGlobalMessagesForUser(userId) {
   if (!globalMessages.length) return;
 
   const dbType = getDbType();
-  await withTransaction(async (conn) => {
-    for (const message of globalMessages) {
+  const values = globalMessages.map((message) => [Number(message.id), normalizedUserId, message.created_at]);
+  const mysqlPlaceholders = values.map(() => '(?, ?, 0, ?)').join(', ');
+  const mysqlParams = values.flat();
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
       if (dbType === 'mysql') {
-        await conn.execute(
+        await query(
           `INSERT IGNORE INTO site_message_recipients (message_id, user_id, is_read, created_at)
-           VALUES (?, ?, 0, ?)`,
-          [Number(message.id), normalizedUserId, message.created_at],
+           VALUES ${mysqlPlaceholders}`,
+          mysqlParams,
         );
       } else {
-        await conn.execute(
-          `INSERT OR IGNORE INTO site_message_recipients (message_id, user_id, is_read, created_at)
-           VALUES (?, ?, 0, ?)`,
-          [Number(message.id), normalizedUserId, message.created_at],
-        );
+        for (const value of values) {
+          await query(
+            `INSERT OR IGNORE INTO site_message_recipients (message_id, user_id, is_read, created_at)
+             VALUES (?, ?, 0, ?)`,
+            value,
+          );
+        }
       }
+      return;
+    } catch (error) {
+      if (dbType !== 'mysql' || !isDeadlockOrLockWaitError(error) || attempt >= 3) {
+        throw error;
+      }
+      await delay(25 * attempt);
     }
-  });
+  }
 }
 
 async function listInboxMessagesForUser(userId, { unreadOnly = false, limit = 50 } = {}) {

@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-05-06
+
+### Fixed
+
+- 修复聊天页切换回应风格时 `normalizeModelKey` 未注入导致的 500。
+- 修复全局错误页直接套用 layout 时缺少 live reload locals 导致的二次渲染报错。
+- 优化全体站内信补投逻辑，MySQL 下改为批量 `INSERT IGNORE` 并对 deadlock / lock wait 做短重试，降低轮询接口锁竞争。
+
+### Changed
+
+- 全站 CSS 与 JS 静态资源引用统一追加 `v1.4.3-20260506` 版本参数，覆盖 immutable 强缓存，确保新版本发布后浏览器及时加载最新样式与脚本。
+
 ## [1.4.2] - 2026-05-04
 
 ### Added
