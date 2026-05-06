@@ -13,6 +13,8 @@ function registerChatToolRoutes(app, ctx) {
     cloneConversationBranch,
     optimizeUserInputViaGateway,
     getChatModelSelector,
+    DEFAULT_MODEL_KEY,
+    normalizeModelKey,
     renderPage,
     parseIntegerField,
     parseIdParam,

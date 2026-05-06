@@ -43,6 +43,10 @@ async function renderErrorWithLayout(res, statusCode, title, message, errorCode)
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;'),
       localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
+      liveReloadEnabled: Boolean(config.liveReloadEnabled),
+      liveReloadAssetVersion: config.liveReloadEnabled
+        ? require('../services/live-reload-service').getClientAssetVersion()
+        : '',
     });
   });
 }
