@@ -40,6 +40,7 @@ function registerAuthProfileRoutes(app, ctx) {
         ctx.listActiveFonts ? ctx.listActiveFonts() : [],
         createCaptcha(),
       ]);
+      const profileFontStylesheetUrls = [...new Set(fonts.map((font) => font.stylesheet_url).filter(Boolean))];
       renderPage(res, 'profile', {
         title: '个人资料',
         user,
@@ -47,6 +48,7 @@ function registerAuthProfileRoutes(app, ctx) {
         captcha: nextCaptcha,
         formMessage: '',
         formStatus: '',
+        fontStylesheetUrls: profileFontStylesheetUrls,
       });
     } catch (error) {
       next(error);
@@ -62,14 +64,19 @@ function registerAuthProfileRoutes(app, ctx) {
         return req.session.destroy(() => res.redirect('/login'));
       }
 
-      const renderProfileMessage = async (message, status = 'error', targetUser = user) => renderPage(res, 'profile', {
-        title: '个人资料',
-        user: targetUser,
-        fonts: ctx.listActiveFonts ? await ctx.listActiveFonts() : [],
-        captcha: await createCaptcha(),
-        formMessage: message,
-        formStatus: status,
-      });
+      const renderProfileMessage = async (message, status = 'error', targetUser = user) => {
+        const profileFonts = ctx.listActiveFonts ? await ctx.listActiveFonts() : [];
+        const profileFontStylesheetUrls = [...new Set(profileFonts.map((font) => font.stylesheet_url).filter(Boolean))];
+        return renderPage(res, 'profile', {
+          title: '个人资料',
+          user: targetUser,
+          fonts: profileFonts,
+          captcha: await createCaptcha(),
+          formMessage: message,
+          formStatus: status,
+          fontStylesheetUrls: profileFontStylesheetUrls,
+        });
+      };
 
       if (action === 'username') {
         const username = String(req.body.username || '').trim();

@@ -278,17 +278,17 @@
             <div class="profile-font-preview-list">
               <label class="profile-font-option <%= selectedChatFontId === 0 ? 'active' : '' %>">
                 <input type="radio" name="chatFontId" value="0" <%= selectedChatFontId === 0 ? 'checked' : '' %> />
-                <span>
+                <span class="profile-font-option-copy">
                   <strong>默认字体 · 跟随站点</strong>
-                  <em>楼阁里的一段对话，应该读起来安静、清楚，也有一点余温。</em>
+                  <em class="profile-font-preview-text">楼阁里的一段对话，应该读起来安静、清楚，也有一点余温。</em>
                 </span>
               </label>
               <% availableChatFonts.forEach(font => { %>
                 <label class="profile-font-option <%= selectedChatFontId === Number(font.id) ? 'active' : '' %>">
                   <input type="radio" name="chatFontId" value="<%= font.id %>" <%= selectedChatFontId === Number(font.id) ? 'checked' : '' %> />
-                  <span>
+                  <span class="profile-font-option-copy">
                     <strong><%= font.name %></strong>
-                    <em style="--chat-display-font: <%- font.css_declaration || font.css_stack %>;"><%= font.preview_text %></em>
+                    <em class="profile-font-preview-text" style="font-family: <%- font.css_declaration || font.css_stack %>;"><%= font.preview_text %></em>
                   </span>
                 </label>
               <% }) %>
