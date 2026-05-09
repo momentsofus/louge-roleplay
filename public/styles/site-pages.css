@@ -170,23 +170,7 @@ a:hover { color: var(--text); }
 }
 .nav-support-button::after { display: none; }
 
-.nav-link-button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: color var(--duration-fast) ease, background var(--duration-fast) ease;
-}
-.nav-link-button:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
-}
+/* .nav-link-button visual baseline lives in 97-button-system.css. */
 
 .nav-locale-switch {
   display: inline-flex;
@@ -320,52 +304,7 @@ button:hover {
 }
 .btn-danger:hover { opacity: 0.9; }
 
-.inline-btn, .quick-link, .ghost-btn, .btn-soft, .chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: auto;
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration-fast) ease;
-  box-shadow: none;
-}
-.inline-btn:hover, .quick-link:hover, .ghost-btn:hover, .btn-soft:hover, .chip:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-.inline-btn::before, .quick-link::before, .btn-soft::before { display: none; }
-
-.inline-btn.primary {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.24);
-  color: var(--brand-hover);
-}
-.inline-btn.danger {
-  background: var(--danger-subtle);
-  border-color: rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-}
-
-.text-danger-btn {
-  background: transparent;
-  border: 1px solid rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  cursor: pointer;
-}
+/* Button primitives are normalized in 97-button-system.css. */
 
 /* --- Utilities --- */
 code, pre {
@@ -1225,11 +1164,7 @@ textarea, .bubble-rich, .rich-preview {
 .admin-hub-card p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 
 .admin-subnav { display: flex; flex-wrap: wrap; gap: 8px; }
-.quick-link.is-active {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.2);
-  color: var(--brand-hover);
-}
+/* .quick-link.is-active visual baseline lives in 97-button-system.css. */
 
 .metrics--compact { grid-template-columns: repeat(3, 1fr); }
 .metrics {
@@ -1303,22 +1238,7 @@ textarea, .bubble-rich, .rich-preview {
 }
 
 .order-controls { display: inline-flex; gap: 6px; align-items: center; }
-.order-button {
-  width: auto;
-  min-width: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-soft);
-  border: 1px solid var(--border);
-  box-shadow: none;
-  font-size: 12px;
-}
-.order-button:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-hover);
-  box-shadow: none;
-}
+/* .order-button visual baseline lives in 97-button-system.css. */
 
 .pill, .meta-chip {
   display: inline-flex;
@@ -1489,27 +1409,7 @@ textarea, .bubble-rich, .rich-preview {
     margin: 0;
   }
 
-  .danger-button {
-    background: rgba(249, 112, 102, 0.1);
-    color: #fca5a0;
-    border: 1px solid rgba(249, 112, 102, 0.2);
-  }
-
-  .danger-button:hover {
-    background: rgba(249, 112, 102, 0.15);
-    box-shadow: none;
-  }
-
-  .danger-button--small {
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-
-  .secondary-button {
-    border: 1px solid rgba(125, 211, 252, 0.26);
-    background: rgba(125, 211, 252, 0.08);
-    color: #bae6fd;
-  }
+  /* .danger-button / .secondary-button visual baselines live in 97-button-system.css. */
 
   .hidden-field {
     display: none;
@@ -3668,16 +3568,7 @@ textarea, .bubble-rich, .rich-preview {
 .danger-zone h3 { color: var(--danger); font-size: 15px; margin-bottom: 6px; }
 .danger-zone-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
-.text-danger-btn {
-  background: transparent;
-  border: 1px solid rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  cursor: pointer;
-}
-.text-danger-btn:hover { background: var(--danger-subtle); }
+/* .text-danger-btn visual baseline lives in 97-button-system.css. */
 
 @media (max-width: 768px) {
   .editor-card { padding: 20px; }
@@ -3989,11 +3880,7 @@ textarea, .bubble-rich, .rich-preview {
 .character-dashboard-card { align-content: start; }
 .character-actions { margin-top: auto; }
 
-.inline-btn.is-danger {
-  background: var(--danger-subtle);
-  color: var(--danger);
-  border-color: rgba(239, 96, 96, 0.2);
-}
+/* .inline-btn.is-danger visual baseline lives in 97-button-system.css. */
 
 .dashboard-empty-state { display: grid; gap: 10px; }
 
@@ -4094,6 +3981,65 @@ textarea, .bubble-rich, .rich-preview {
 }
 
 /* --- end site-pages/43-dashboard-responsive.css --- */
+/* --- begin site-pages/44-conversation-management.css --- */
+/* @file public/styles/site-pages/44-conversation-management.css
+   @description 用户会话管理页专属布局、筛选列表和批量操作样式。 */
+
+.conversation-manager-shell { gap: 18px; }
+.conversation-manager-hero { grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); }
+.conversation-manager-summary strong { font-size: clamp(28px, 5vw, 42px); }
+.conversation-manager-notice {
+  color: var(--accent-green);
+  border-color: rgba(52, 211, 153, 0.24);
+  background: rgba(52, 211, 153, 0.08);
+}
+.conversation-manager-panel { display: grid; gap: 18px; }
+.conversation-filter-form { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.conversation-list-heading { align-items: flex-start; }
+.conversation-bulk-actions { justify-content: flex-end; }
+.conversation-select-all { color: var(--text-secondary); }
+.conversation-manager-list { display: grid; gap: 12px; }
+.conversation-manager-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+}
+.conversation-card-check {
+  display: grid;
+  place-items: start center;
+  padding-top: 6px;
+}
+.conversation-card-check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.conversation-card-body { display: grid; gap: 12px; min-width: 0; }
+.conversation-card-summary h3 { margin: 8px 0 4px; color: var(--text); font-size: 18px; }
+.conversation-card-summary p { margin: 0; color: var(--text-secondary); }
+.conversation-card-meta { gap: 6px; }
+.conversation-card-preview { overflow-wrap: anywhere; }
+.conversation-card-actions { justify-content: flex-end; }
+.conversation-pagination { margin-top: 16px; }
+
+@media (max-width: 1120px) {
+  .conversation-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .conversation-manager-hero { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .conversation-filter-form { grid-template-columns: 1fr; }
+  .conversation-list-heading, .conversation-card-summary { flex-direction: column; }
+  .conversation-bulk-actions, .conversation-card-actions { justify-content: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .conversation-manager-card { grid-template-columns: 1fr; }
+  .conversation-card-check { place-items: start; padding-top: 0; }
+  .conversation-bulk-actions .inline-btn, .conversation-bulk-actions .secondary-button { width: 100%; justify-content: center; }
+}
+
+/* --- end site-pages/44-conversation-management.css --- */
 /* --- begin site-pages/50-chat.css --- */
 /* @file public/styles/site-pages/50-chat.css
    @description 聊天页基础布局、消息列表、输入区、侧栏和操作入口。富文本细节放 52-rich-content.css。 */
@@ -5389,59 +5335,7 @@ a:hover { color: var(--text); }
 }
 .section-head h2, .section-heading h2 { margin-bottom: 6px; }
 
-/* --- Buttons (override to flat style) --- */
-button, .submit-btn, .btn-brand, .feedback-submit-btn {
-  min-height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  box-shadow: none;
-}
-button:hover, .submit-btn:hover, .btn-brand:hover, .feedback-submit-btn:hover {
-  background: var(--brand-hover);
-  transform: translateY(-1px);
-  box-shadow: none;
-  filter: none;
-}
-button:active, .submit-btn:active, .btn-brand:active {
-  transform: translateY(0);
-}
-
-button::before, .submit-btn::before, .btn-brand::before,
-.feedback-submit-btn::before, .inline-btn::before,
-.quick-link::before, .ghost-btn::before, .btn-soft::before {
-  display: none;
-}
-
-.inline-btn, .quick-link, .ghost-btn, .btn-soft, .btn-ghost,
-.chip, .tag-chip {
-  min-height: 34px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: none;
-}
-.inline-btn:hover, .quick-link:hover, .ghost-btn:hover,
-.btn-soft:hover, .chip:hover, .tag-chip:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-
-.inline-btn.primary, .chip.active, .quick-link.is-active {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.2);
-  color: var(--brand-hover);
-}
-
-.inline-btn.danger, .danger-btn, .inline-btn.is-danger,
+/* --- Buttons are normalized in 97-button-system.css. Keep page theme free of button resets. */
 .message-menu-item.danger, .meta-pill--danger {
   color: var(--danger);
   background: var(--danger-subtle);
@@ -5856,3 +5750,206 @@ code, pre {
 }
 
 /* --- end site-pages/96-warm-deepspace-ui.css --- */
+/* --- begin site-pages/97-button-system.css --- */
+/* @file public/styles/site-pages/97-button-system.css
+   @description 全站共用按钮系统：统一 button、anchor 按钮和旧按钮类的视觉基线。 */
+
+/*
+ * Button normalization lives late in the CSS import order so old page-level
+ * declarations cannot make adjacent <a> / <button> controls look different.
+ */
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+) {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 15px;
+  border: 1px solid var(--button-border, var(--border-strong));
+  border-radius: var(--radius-full);
+  background: var(--button-bg, rgba(255, 255, 255, 0.035));
+  color: var(--button-color, var(--text-soft));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-shadow: none;
+  filter: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+)::before {
+  display: none;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+):hover {
+  border-color: var(--button-hover-border, var(--border-hover));
+  background: var(--button-hover-bg, rgba(255, 255, 255, 0.06));
+  color: var(--button-hover-color, var(--text));
+  transform: translateY(-1px);
+  box-shadow: none;
+  filter: none;
+  text-decoration: none;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+):active {
+  transform: translateY(0);
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+):disabled,
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+)[disabled],
+.quick-link.is-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:where(button, .submit-btn, .btn-brand, .feedback-submit-btn, .inline-btn.primary, .quick-link.is-active, .nav-support-button) {
+  --button-border: rgba(124, 107, 240, 0.28);
+  --button-bg: linear-gradient(135deg, var(--brand), var(--brand-hover));
+  --button-color: #fff;
+  --button-hover-border: rgba(124, 107, 240, 0.36);
+  --button-hover-bg: linear-gradient(135deg, var(--brand-hover), var(--accent-blue));
+  --button-hover-color: #fff;
+}
+
+:where(.secondary-button, .quick-link, .inline-btn, .ghost-btn, .ghost-button, .btn-soft, .btn-ghost, .order-button, .nav-link-button) {
+  --button-border: var(--border-strong);
+  --button-bg: rgba(255, 255, 255, 0.035);
+  --button-color: var(--text-soft);
+}
+
+:where(.inline-btn.danger, .danger-btn, .inline-btn.is-danger, .danger-button, .text-danger-btn, .btn-danger) {
+  --button-border: rgba(239, 96, 96, 0.24);
+  --button-bg: rgba(239, 96, 96, 0.10);
+  --button-color: #fca5a5;
+  --button-hover-border: rgba(239, 96, 96, 0.34);
+  --button-hover-bg: rgba(239, 96, 96, 0.15);
+  --button-hover-color: #fecaca;
+}
+
+:where(.button-sm, .danger-button--small, .order-button) {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+:where(.toolbar-row, .dashboard-actions, .dashboard-actions-row, .admin-log-filter-actions, .conversation-bulk-actions) > :where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button
+) {
+  align-self: center;
+}
+
+/* --- end site-pages/97-button-system.css --- */

@@ -1,0 +1,52 @@
+<section class="panel dashboard-section conversation-manager-panel">
+    <div class="section-heading dashboard-section-heading">
+      <div>
+        <div class="section-kicker">Filter</div>
+        <h2><%= t('筛选与搜索') %></h2>
+        <p><%= t('标题、角色名支持模糊搜索；默认只展示进行中的会话。') %></p>
+      </div>
+    </div>
+    <form class="admin-log-filter conversation-filter-form" method="get" action="/conversations">
+      <label>
+        <span><%= t('关键词') %></span>
+        <input type="search" name="q" value="<%= currentFilters.search || '' %>" placeholder="<%= t('搜索标题或角色名') %>" />
+      </label>
+      <label>
+        <span><%= t('角色') %></span>
+        <select name="characterId">
+          <option value=""><%= t('全部角色') %></option>
+          <% characterOptions.forEach((character) => { %>
+            <option value="<%= character.id %>" <%= Number(currentFilters.characterId || 0) === Number(character.id) ? 'selected' : '' %>><%= character.label %>（<%= character.count %>）</option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <span><%= t('状态') %></span>
+        <select name="status">
+          <% [['active', t('进行中')], ['archived', t('已归档')], ['deleted', t('已删除')], ['all', t('全部状态')]].forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= currentFilters.status === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <span><%= t('排序') %></span>
+        <select name="sort">
+          <% [['updated_desc', t('最近更新优先')], ['created_desc', t('最近创建优先')], ['message_desc', t('消息最多优先')], ['title_asc', t('标题 A-Z')]].forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= currentFilters.sort === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <span><%= t('每页') %></span>
+        <select name="pageSize">
+          <% [12, 24, 36, 50].forEach((size) => { %>
+            <option value="<%= size %>" <%= Number(result.pageSize || 12) === size ? 'selected' : '' %>><%= size %> <%= t('条') %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="toolbar-row toolbar-row--admin admin-log-filter-actions">
+        <button class="inline-btn" type="submit"><%= t('应用筛选') %></button>
+        <a class="secondary-button" href="/conversations"><%= t('重置') %></a>
+      </div>
+    </form>
+  </section>

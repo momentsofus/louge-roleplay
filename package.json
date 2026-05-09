@@ -1,6 +1,6 @@
 {
   "name": "ai-roleplay-site",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "private": true,
   "license": "UNLICENSED",
   "author": "薛中泽",
@@ -47,7 +47,8 @@
     "prompt-template:test": "node scripts/test-prompt-template.js",
     "backfill:character-stats": "node scripts/backfill-character-stats.js",
     "build:js": "node scripts/build-js.js",
-    "build": "npm run build:css && npm run build:js"
+    "build": "npm run build:css && npm run build:js",
+    "conversation-management:test": "node scripts/test-user-conversation-management.js"
   },
   "dependencies": {
     "@alicloud/dypnsapi20170525": "^2.0.0",

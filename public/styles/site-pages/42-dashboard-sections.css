@@ -99,11 +99,7 @@
 .character-dashboard-card { align-content: start; }
 .character-actions { margin-top: auto; }
 
-.inline-btn.is-danger {
-  background: var(--danger-subtle);
-  color: var(--danger);
-  border-color: rgba(239, 96, 96, 0.2);
-}
+/* .inline-btn.is-danger visual baseline lives in 97-button-system.css. */
 
 .dashboard-empty-state { display: grid; gap: 10px; }
 

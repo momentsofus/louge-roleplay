@@ -51,15 +51,15 @@
   <link rel="manifest" href="/public/icons/site.webmanifest" />
   <meta name="theme-color" content="#0b3f45" />
   <link rel="preload" href="/fonts/google.css?v=latin-v2" as="style" />
-  <link rel="preload" href="/public/styles/site-pages.css?v=v1.4.3-20260506" as="style" />
+  <link rel="preload" href="/public/styles/site-pages.css?v=v1.5.0-20260508" as="style" />
   <link rel="stylesheet" href="/fonts/google.css?v=latin-v2" />
-  <link rel="stylesheet" href="/public/styles/site-pages.css?v=v1.4.3-20260506" />
+  <link rel="stylesheet" href="/public/styles/site-pages.css?v=v1.5.0-20260508" />
   <% if (liveReloadEnabled) { %>
     <script nonce="<%= cspNonce || '' %>">
       window.LOUGE_LIVE_RELOAD = {
         enabled: true,
         endpoint: '/__live-reload/events',
-        cssVersion: 'v1.4.3-20260506',
+        cssVersion: 'v1.5.0-20260508',
         reloadVersion: '<%- esc(liveReloadAssetVersion || '') %>'
       };
     </script>
@@ -71,13 +71,13 @@
     currentUser: currentUser ? { id: currentUser.id, username: currentUser.username, role: currentUser.role } : null,
     csrfToken: csrfToken || ''
   }) %></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/generated/notification.bundle.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js?v=v1.4.3-20260506" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/generated/notification.bundle.js?v=v1.5.0-20260508" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js?v=v1.5.0-20260508" defer></script>
   <% if (liveReloadEnabled) { %>
     <script nonce="<%= cspNonce || '' %>" src="/public/js/live-reload-client.js?v=<%- encodeURIComponent(liveReloadAssetVersion || '') %>" defer></script>
   <% } %>

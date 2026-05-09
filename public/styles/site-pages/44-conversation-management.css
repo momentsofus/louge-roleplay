@@ -1,0 +1,56 @@
+/* @file public/styles/site-pages/44-conversation-management.css
+   @description 用户会话管理页专属布局、筛选列表和批量操作样式。 */
+
+.conversation-manager-shell { gap: 18px; }
+.conversation-manager-hero { grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); }
+.conversation-manager-summary strong { font-size: clamp(28px, 5vw, 42px); }
+.conversation-manager-notice {
+  color: var(--accent-green);
+  border-color: rgba(52, 211, 153, 0.24);
+  background: rgba(52, 211, 153, 0.08);
+}
+.conversation-manager-panel { display: grid; gap: 18px; }
+.conversation-filter-form { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.conversation-list-heading { align-items: flex-start; }
+.conversation-bulk-actions { justify-content: flex-end; }
+.conversation-select-all { color: var(--text-secondary); }
+.conversation-manager-list { display: grid; gap: 12px; }
+.conversation-manager-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+}
+.conversation-card-check {
+  display: grid;
+  place-items: start center;
+  padding-top: 6px;
+}
+.conversation-card-check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.conversation-card-body { display: grid; gap: 12px; min-width: 0; }
+.conversation-card-summary h3 { margin: 8px 0 4px; color: var(--text); font-size: 18px; }
+.conversation-card-summary p { margin: 0; color: var(--text-secondary); }
+.conversation-card-meta { gap: 6px; }
+.conversation-card-preview { overflow-wrap: anywhere; }
+.conversation-card-actions { justify-content: flex-end; }
+.conversation-pagination { margin-top: 16px; }
+
+@media (max-width: 1120px) {
+  .conversation-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .conversation-manager-hero { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .conversation-filter-form { grid-template-columns: 1fr; }
+  .conversation-list-heading, .conversation-card-summary { flex-direction: column; }
+  .conversation-bulk-actions, .conversation-card-actions { justify-content: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .conversation-manager-card { grid-template-columns: 1fr; }
+  .conversation-card-check { place-items: start; padding-top: 0; }
+  .conversation-bulk-actions .inline-btn, .conversation-bulk-actions .secondary-button { width: 100%; justify-content: center; }
+}

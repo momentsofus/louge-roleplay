@@ -149,59 +149,7 @@ a:hover { color: var(--text); }
 }
 .section-head h2, .section-heading h2 { margin-bottom: 6px; }
 
-/* --- Buttons (override to flat style) --- */
-button, .submit-btn, .btn-brand, .feedback-submit-btn {
-  min-height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  box-shadow: none;
-}
-button:hover, .submit-btn:hover, .btn-brand:hover, .feedback-submit-btn:hover {
-  background: var(--brand-hover);
-  transform: translateY(-1px);
-  box-shadow: none;
-  filter: none;
-}
-button:active, .submit-btn:active, .btn-brand:active {
-  transform: translateY(0);
-}
-
-button::before, .submit-btn::before, .btn-brand::before,
-.feedback-submit-btn::before, .inline-btn::before,
-.quick-link::before, .ghost-btn::before, .btn-soft::before {
-  display: none;
-}
-
-.inline-btn, .quick-link, .ghost-btn, .btn-soft, .btn-ghost,
-.chip, .tag-chip {
-  min-height: 34px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: none;
-}
-.inline-btn:hover, .quick-link:hover, .ghost-btn:hover,
-.btn-soft:hover, .chip:hover, .tag-chip:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-
-.inline-btn.primary, .chip.active, .quick-link.is-active {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.2);
-  color: var(--brand-hover);
-}
-
-.inline-btn.danger, .danger-btn, .inline-btn.is-danger,
+/* --- Buttons are normalized in 97-button-system.css. Keep page theme free of button resets. */
 .message-menu-item.danger, .meta-pill--danger {
   color: var(--danger);
   background: var(--danger-subtle);

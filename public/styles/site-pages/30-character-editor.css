@@ -150,16 +150,7 @@
 .danger-zone h3 { color: var(--danger); font-size: 15px; margin-bottom: 6px; }
 .danger-zone-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
-.text-danger-btn {
-  background: transparent;
-  border: 1px solid rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  cursor: pointer;
-}
-.text-danger-btn:hover { background: var(--danger-subtle); }
+/* .text-danger-btn visual baseline lives in 97-button-system.css. */
 
 @media (max-width: 768px) {
   .editor-card { padding: 20px; }

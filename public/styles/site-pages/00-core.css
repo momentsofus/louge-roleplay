@@ -154,23 +154,7 @@ a:hover { color: var(--text); }
 }
 .nav-support-button::after { display: none; }
 
-.nav-link-button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: color var(--duration-fast) ease, background var(--duration-fast) ease;
-}
-.nav-link-button:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
-}
+/* .nav-link-button visual baseline lives in 97-button-system.css. */
 
 .nav-locale-switch {
   display: inline-flex;
@@ -304,52 +288,7 @@ button:hover {
 }
 .btn-danger:hover { opacity: 0.9; }
 
-.inline-btn, .quick-link, .ghost-btn, .btn-soft, .chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: auto;
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--duration-fast) ease;
-  box-shadow: none;
-}
-.inline-btn:hover, .quick-link:hover, .ghost-btn:hover, .btn-soft:hover, .chip:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-.inline-btn::before, .quick-link::before, .btn-soft::before { display: none; }
-
-.inline-btn.primary {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.24);
-  color: var(--brand-hover);
-}
-.inline-btn.danger {
-  background: var(--danger-subtle);
-  border-color: rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-}
-
-.text-danger-btn {
-  background: transparent;
-  border: 1px solid rgba(239, 96, 96, 0.2);
-  color: var(--danger);
-  padding: 7px 14px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  cursor: pointer;
-}
+/* Button primitives are normalized in 97-button-system.css. */
 
 /* --- Utilities --- */
 code, pre {

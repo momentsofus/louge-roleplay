@@ -23,6 +23,7 @@ const LAYOUT_NAV_ITEMS = [
   { key: 'home', href: '/', label: '首页', auth: 'any' },
   { key: 'dashboard', href: '/dashboard', label: '控制台', auth: 'user' },
   { key: 'profile', href: '/profile', label: '个人资料', auth: 'user' },
+  { key: 'conversations', href: '/conversations', label: '会话管理', auth: 'user' },
   { key: 'messages', href: '/messages', label: '站内信', auth: 'user', badge: 'siteMessages' },
   { key: 'admin', href: '/admin', label: '管理后台', auth: 'admin' },
   { key: 'character-new', href: '/characters/new', label: '创建角色', auth: 'user' },

@@ -146,27 +146,7 @@
     margin: 0;
   }
 
-  .danger-button {
-    background: rgba(249, 112, 102, 0.1);
-    color: #fca5a0;
-    border: 1px solid rgba(249, 112, 102, 0.2);
-  }
-
-  .danger-button:hover {
-    background: rgba(249, 112, 102, 0.15);
-    box-shadow: none;
-  }
-
-  .danger-button--small {
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-
-  .secondary-button {
-    border: 1px solid rgba(125, 211, 252, 0.26);
-    background: rgba(125, 211, 252, 0.08);
-    color: #bae6fd;
-  }
+  /* .danger-button / .secondary-button visual baselines live in 97-button-system.css. */
 
   .hidden-field {
     display: none;
