@@ -7,6 +7,7 @@ const logger = require('../lib/logger');
 const config = require('../config');
 const { translate } = require('../i18n');
 const { getClientNotificationBootstrap } = require('../services/notification-service');
+const { assetUrl, assetVersion } = require('../server-helpers/assets');
 
 /**
  * 将错误视图渲染到 layout 中，保证错误页拥有完整的导航与样式。
@@ -35,6 +36,8 @@ async function renderErrorWithLayout(res, statusCode, title, message, errorCode)
       clientI18nMessages: res.locals.clientI18nMessages || {},
       clientNotifications,
       unreadSiteMessageCount: 0,
+      assetUrl,
+      assetVersion,
       meta: {},
       escapeHtml: (value) => String(value ?? '')
         .replace(/&/g, '&amp;')

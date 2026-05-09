@@ -78,6 +78,7 @@ const config = {
   trustProxy: readBool('TRUST_PROXY', false),
   cookieSecure: readBool('COOKIE_SECURE', false),
   liveReloadEnabled: readBool('LIVE_RELOAD_ENABLED', process.env.NODE_ENV !== 'production'),
+  assetVersion: readString('ASSET_VERSION', ''),
   publicPhoneAuthConfig: {
     graphAuthAppId: readString('ALIYUN_PHONE_AUTH_APP_ID', ''),
     graphAuthAppKey: exposeAliyunPhoneAuthAppKey ? readString('ALIYUN_PHONE_AUTH_APP_KEY', '') : '',
@@ -92,6 +93,7 @@ const config = {
       trustProxy: this.trustProxy,
       cookieSecure: this.cookieSecure,
       liveReloadEnabled: this.liveReloadEnabled,
+      assetVersionConfigured: Boolean(this.assetVersion),
       sessionSecretConfigured: !this.sessionSecretIsEphemeral,
       databaseConfigured: Boolean(this.databaseUrl),
       redisConfigured: Boolean(this.redisUrl),

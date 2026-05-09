@@ -9,6 +9,7 @@ const { translate } = require('../i18n');
 const { findUserById, normalizeReplyLengthPreference, normalizeChatVisibleMessageCount } = require('../services/user-service');
 const { getActiveFontById } = require('../services/font-service');
 const { getClientNotificationBootstrap } = require('../services/notification-service');
+const { assetUrl, assetVersion } = require('../server-helpers/assets');
 
 async function hydrateSessionUser(sessionUser, user) {
   const chatFontId = Number(user.chat_font_id || 0) || null;
@@ -86,6 +87,8 @@ async function requireAdmin(req, res, next) {
         clientNotifications: [],
         unreadSiteMessageCount: 0,
         fontStylesheetUrls: [],
+        assetUrl,
+        assetVersion,
         meta: {},
         escapeHtml: (value) => String(value ?? '')
           .replace(/&/g, '&amp;')

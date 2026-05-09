@@ -11,6 +11,7 @@ const { getUnreadSiteMessageCount } = require('../services/site-message-service'
 const { redisClient } = require('../lib/redis');
 const viewModel = require('./view-models');
 const { getAdminNavItems, getAdminHubItems, getLayoutNavItems } = require('./navigation');
+const { assetUrl, assetVersion } = require('./assets');
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -129,7 +130,7 @@ async function renderPage(res, view, params = {}) {
   ]);
 
   return new Promise((resolve) => {
-    res.render(view, { ...params, viewModel, navigation }, (viewError, html) => {
+    res.render(view, { ...params, viewModel, navigation, assetUrl, assetVersion }, (viewError, html) => {
       if (viewError) {
         logger.error('[renderPage] View 渲染失败', { view, error: viewError.message });
         res.status(500).type('text').send(t('页面渲染失败，请稍后重试。'));
@@ -155,6 +156,8 @@ async function renderPage(res, view, params = {}) {
         clientNotifications,
         unreadSiteMessageCount,
         fontStylesheetUrls,
+        assetUrl,
+        assetVersion,
         localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
         liveReloadEnabled,
         liveReloadAssetVersion,
