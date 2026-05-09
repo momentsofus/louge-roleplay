@@ -52,9 +52,9 @@
   <meta name="theme-color" content="#0b3f45" />
   <link rel="preconnect" href="https://fonts.xuejourney.xin" crossorigin />
   <link rel="preload" href="<%= assetUrl('/public/styles/site-pages.css') %>" as="style" />
-  <link rel="stylesheet" href="https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&xuejourney=woff2&display=swap" />
   <% ((typeof fontStylesheetUrls !== 'undefined' && fontStylesheetUrls) || []).forEach((fontStylesheetUrl) => { %>
-    <% if (fontStylesheetUrl && fontStylesheetUrl !== 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap') { %>
+    <% if (fontStylesheetUrl && fontStylesheetUrl !== 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&xuejourney=woff2&display=swap') { %>
       <link rel="stylesheet" href="<%= fontStylesheetUrl %>" />
     <% } %>
   <% }) %>
