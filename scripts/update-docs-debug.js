@@ -108,7 +108,6 @@ const FILE_NOTES = {
   'src/services/conversation/cache.js': '会话缓存封装：消息列表、消息数量缓存读写和会话显示链缓存失效；由 conversation-service 调用。',
   'src/services/conversation/validators.js': '会话输入校验工具：规范化 messages.prompt_kind 写库值，兼容旧 chat 值并回落 normal。',
   'src/services/email-service.js': 'Resend 邮件验证码发送封装。被 verification-service 调用。',
-  'src/services/font-proxy-service.js': 'Google Fonts 代理与缓存，避免页面字体资源直接失败。被 /fonts/* 路由调用。',
   'src/services/llm-gateway-service.js': 'LLM 网关核心：Provider 选择、额度校验、上下文裁剪、队列、流式解析、用量记录。',
   'src/services/llm-provider-service.js': '后台 Provider 管理、模型列表拉取、模型模式配置校验。',
   'src/services/llm-usage-service.js': 'LLM job 与 usage log 写入。被网关成功/失败收尾逻辑调用。',

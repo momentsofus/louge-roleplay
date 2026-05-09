@@ -69,7 +69,6 @@ const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = req
 const { hashPassword, verifyPassword } = require('../services/password-service');
 const { verifyDomesticPhoneIdentity } = require('../services/phone-auth-service');
 const { hitLimit } = require('../services/rate-limit-service');
-const { CSS_CACHE_TTL_MS, FONT_CACHE_TTL_MS, getGoogleFontCss, getFontFile, logFontProxyError } = require('../services/font-proxy-service');
 const { uploadCharacterImages, getUploadedCharacterImagePaths, cleanupUploadedCharacterFiles, deleteStoredImageIfOwned } = require('../services/upload-service');
 const logger = require('../lib/logger');
 const config = require('../config');
@@ -288,11 +287,6 @@ function registerWebRoutes(app) {
     verifyPassword,
     verifyDomesticPhoneIdentity,
     hitLimit,
-    CSS_CACHE_TTL_MS,
-    FONT_CACHE_TTL_MS,
-    getGoogleFontCss,
-    getFontFile,
-    logFontProxyError,
     uploadCharacterImages,
     getUploadedCharacterImagePaths,
     cleanupUploadedCharacterFiles,

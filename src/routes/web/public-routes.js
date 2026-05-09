@@ -15,11 +15,6 @@ function registerPublicRoutes(app, ctx) {
     toggleCharacterLike,
     addCharacterComment,
     listCharacterComments,
-    CSS_CACHE_TTL_MS,
-    FONT_CACHE_TTL_MS,
-    getGoogleFontCss,
-    getFontFile,
-    logFontProxyError,
     logger,
     config,
     query,
@@ -48,33 +43,6 @@ function registerPublicRoutes(app, ctx) {
   function canShowNsfw(req) {
     return Boolean(req.session?.user?.id && Number(req.session.user.show_nsfw || 0) === 1);
   }
-
-  app.get('/fonts/google.css', async (req, res) => {
-    try {
-      const css = await getGoogleFontCss();
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      res.setHeader('Cache-Control', `public, max-age=${Math.floor(CSS_CACHE_TTL_MS / 1000)}, stale-while-revalidate=86400`);
-      return res.send(css);
-    } catch (error) {
-      logFontProxyError(error, { route: '/fonts/google.css' });
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=300');
-      return res.status(200).send('/* Google Fonts proxy unavailable; system fonts fallback is active. */');
-    }
-  });
-
-  app.get('/fonts/google/file', async (req, res) => {
-    try {
-      const rawUrl = String(req.query.url || '').trim();
-      const fontFile = await getFontFile(rawUrl);
-      res.setHeader('Content-Type', fontFile.contentType);
-      res.setHeader('Cache-Control', `public, max-age=${Math.floor(FONT_CACHE_TTL_MS / 1000)}, immutable`);
-      return res.send(fontFile.buffer);
-    } catch (error) {
-      logFontProxyError(error, { route: '/fonts/google/file' });
-      return res.status(error.statusCode || 502).send('font unavailable');
-    }
-  });
 
   app.get('/', async (req, res, next) => {
     try {

@@ -31,7 +31,7 @@
 - Tavern / SillyTavern PNG/JSON 角色卡批量导入。
 - Redis Session、验证码/限流/会话缓存；开发未配置 Redis 时可内存降级。
 - MySQL 优先；开发未配置数据库时可 SQLite 本地降级。
-- Google Fonts 代理与缓存兜底。
+- Google Fonts 通过独立资源代理服务 `https://fonts.xuejourney.xin` 加载，站点内不再维护同源字体代理。
 - 结构化日志、requestId、健康检查、冒烟测试和文档生成脚本。
 
 ## 快速启动
