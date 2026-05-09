@@ -17,6 +17,8 @@
     ? String(user.reply_length_preference)
     : 'medium';
   const chatVisibleMessageCount = Math.max(4, Math.min(80, Number.parseInt(String(user?.chat_visible_message_count || '8'), 10) || 8));
+  const availableChatFonts = Array.isArray(typeof fonts !== 'undefined' ? fonts : []) ? fonts : [];
+  const selectedChatFontId = Number(user?.chat_font_id || 0) || 0;
 %>
 
 <div class="profile-shell">
@@ -257,6 +259,44 @@
           </div>
           <div class="settings-form-actions">
             <button class="submit-btn" type="submit"><%= t('保存聊天显示数量') %></button>
+          </div>
+        </form>
+      </section>
+
+      <section class="settings-section panel">
+        <div class="settings-section-head">
+          <div>
+            <div class="section-kicker">Chat Typeface</div>
+            <h2>对话字体</h2>
+            <p>只影响聊天页面内消息正文的显示字体，不改变导航、按钮和代码块字体。</p>
+          </div>
+        </div>
+        <form method="POST" action="/profile" class="settings-form">
+          <input type="hidden" name="action" value="chatFont" />
+          <div class="field-group">
+            <label>选择对话显示字体</label>
+            <div class="profile-font-preview-list">
+              <label class="profile-font-option <%= selectedChatFontId === 0 ? 'active' : '' %>">
+                <input type="radio" name="chatFontId" value="0" <%= selectedChatFontId === 0 ? 'checked' : '' %> />
+                <span>
+                  <strong>默认字体 · 跟随站点</strong>
+                  <em>楼阁里的一段对话，应该读起来安静、清楚，也有一点余温。</em>
+                </span>
+              </label>
+              <% availableChatFonts.forEach(font => { %>
+                <label class="profile-font-option <%= selectedChatFontId === Number(font.id) ? 'active' : '' %>">
+                  <input type="radio" name="chatFontId" value="<%= font.id %>" <%= selectedChatFontId === Number(font.id) ? 'checked' : '' %> />
+                  <span>
+                    <strong><%= font.name %></strong>
+                    <em style="--chat-display-font: <%- font.css_declaration || font.css_stack %>;"><%= font.preview_text %></em>
+                  </span>
+                </label>
+              <% }) %>
+            </div>
+            <div class="mini-note">管理员可在管理中心维护可选字体；停用或删除后会自动回到默认字体。</div>
+          </div>
+          <div class="settings-form-actions">
+            <button class="submit-btn" type="submit">保存对话字体</button>
           </div>
         </form>
       </section>

@@ -14,7 +14,8 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone, updateUserNsfwPreference, updateUserReplyLengthPreference, updateUserChatVisibleMessageCount } = require('../services/user-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone, updateUserNsfwPreference, updateUserReplyLengthPreference, updateUserChatVisibleMessageCount, updateUserChatFontPreference } = require('../services/user-service');
+const { listFontsForAdmin, listActiveFonts, createFont, updateFont, deleteFont, getActiveFontStylesheetUrls } = require('../services/font-service');
 const { createCharacter, updateCharacter, listPublicCharacters, listFeaturedPublicCharacters, getPublicCharacterDetail, listUserCharacters, getCharacterById, deleteCharacterSafely, ensureCharacterImageColumns } = require('../services/character-service');
 const { toggleCharacterLike, addCharacterComment, listCharacterComments, markCharacterUsed } = require('../services/character-social-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
@@ -173,6 +174,13 @@ function registerWebRoutes(app) {
     updateUserNsfwPreference,
     updateUserReplyLengthPreference,
     updateUserChatVisibleMessageCount,
+    updateUserChatFontPreference,
+    listFontsForAdmin,
+    listActiveFonts,
+    createFont,
+    updateFont,
+    deleteFont,
+    getActiveFontStylesheetUrls,
     ensureCharacterImageColumns,
     createCharacter,
     updateCharacter,

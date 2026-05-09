@@ -7,7 +7,8 @@
   </div>
 <% } %>
 <% const safeChatBackground = typeof escapeHtml === 'function' ? escapeHtml(conversation.background_image_path || '') : String(conversation.background_image_path || '').replace(/'/g, '%27'); %>
-<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path) { %>style="--chat-bg-image: url('<%- safeChatBackground %>');"<% } %>>
+<% const chatDisplayFontStyle = currentUser?.chat_font_css_stack ? `--chat-display-font: ${currentUser.chat_font_css_stack};` : ''; %>
+<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path || chatDisplayFontStyle) { %>style="<% if (conversation.background_image_path) { %>--chat-bg-image: url('<%- safeChatBackground %>');<% } %><% if (chatDisplayFontStyle) { %> <%= chatDisplayFontStyle %><% } %>"<% } %>>
   <div class="chat-main">
     <section class="chat-head chat-head--clean">
       <% if (conversation.avatar_image_path) { %>
@@ -162,4 +163,4 @@
     </section>
   </aside>
 </div>
-<script nonce="<%= cspNonce || '' %>" src="/public/js/generated/chat.bundle.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
+<script nonce="<%= cspNonce || '' %>" src="/public/js/generated/chat.bundle.js?v=v1.5.0-20260509-font-management" defer></script>

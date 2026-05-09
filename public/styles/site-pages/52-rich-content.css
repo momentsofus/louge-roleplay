@@ -5,6 +5,19 @@
   gap: 10px;
   color: #fff7e8;
   line-height: 1.78;
+  font-family: var(--chat-display-font, var(--font-sans));
+}
+
+.bubble-text,
+.rich-preview {
+  font-family: var(--chat-display-font, var(--font-sans));
+}
+
+.bubble-rich code,
+.bubble-rich pre,
+.bubble-code,
+.bubble-code-block {
+  font-family: var(--font-mono);
 }
 
 .bubble-rich > :first-child { margin-top: 0; }

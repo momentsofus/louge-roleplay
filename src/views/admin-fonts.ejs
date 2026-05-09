@@ -1,0 +1,159 @@
+<!-- @file src/views/admin-fonts.ejs
+     @description 管理中心字体管理页。调用说明：GET /admin/fonts 渲染，支持新增、编辑、删除聊天显示字体。
+-->
+<%
+  const adminFonts = Array.isArray(fonts) ? fonts : [];
+  const messageClass = formMessage ? `form-message form-message--${formMessage.type || 'info'}` : 'form-message';
+%>
+<div class="admin-shell admin-font-shell">
+  <section class="hero-card admin-hero">
+    <div class="admin-hero-copy">
+      <p class="section-kicker">Typography</p>
+      <h1>字体管理</h1>
+      <p class="muted-text">维护聊天页可选的对话显示字体。远程字体样式地址只允许使用共享字体代理，避免重新把字体代理逻辑塞回楼阁。</p>
+    </div>
+    <div class="metrics">
+      <div class="metric"><strong><%= adminFonts.length %></strong><span>字体总数</span></div>
+      <div class="metric"><strong><%= adminFonts.filter(font => font.status === 'active').length %></strong><span>启用字体</span></div>
+    </div>
+  </section>
+
+  <section class="section-card admin-section">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">Workspace</p>
+        <h2>字体配置</h2>
+        <p class="muted-text">CSS 栈会写入聊天区变量；样式地址用于加载 Web Font CSS。删除字体时，已选择它的用户会自动回到默认字体。</p>
+      </div>
+    </div>
+
+    <%- include('partials/admin-subnav', { activeAdminNav: 'fonts' }) %>
+
+    <% if (formMessage) { %>
+      <div class="<%= messageClass %>"><%= formMessage.text %></div>
+    <% } %>
+
+    <div class="font-admin-layout">
+      <section class="panel font-admin-create-card">
+        <div class="settings-section-head">
+          <div>
+            <div class="section-kicker">New Font</div>
+            <h2>新增字体</h2>
+            <p>适合先添加一组中文友好的字体栈，再按需要接入代理字体 CSS。</p>
+          </div>
+        </div>
+        <form class="settings-form" method="POST" action="/admin/fonts/new">
+          <div class="field-group">
+            <label for="newFontName">字体名称</label>
+            <input id="newFontName" name="name" maxlength="80" required placeholder="例：霞鹜文楷 · 阅读" />
+          </div>
+          <div class="field-group">
+            <label for="newFontCode">字体标识</label>
+            <input id="newFontCode" name="code" maxlength="80" placeholder="例：lxgw-wenkai" />
+            <div class="mini-note">留空会根据名称自动生成；保存后建议不要频繁改。</div>
+          </div>
+          <div class="field-group">
+            <label for="newFontStack">CSS 字体栈</label>
+            <textarea id="newFontStack" name="cssStack" rows="3" maxlength="500" required placeholder='"LXGW WenKai", "PingFang SC", "Microsoft YaHei", sans-serif'></textarea>
+          </div>
+          <div class="field-group">
+            <label for="newFontStylesheet">字体 CSS 地址</label>
+            <input id="newFontStylesheet" name="stylesheetUrl" maxlength="1000" placeholder="https://fonts.xuejourney.xin/css2?family=..." />
+            <div class="mini-note">只能填写 https://fonts.xuejourney.xin/css...，系统字体可留空。</div>
+          </div>
+          <div class="field-group">
+            <label for="newFontPreview">预览文案</label>
+            <input id="newFontPreview" name="previewText" maxlength="200" value="楼阁里的一段对话，应该读起来安静、清楚，也有一点余温。" />
+          </div>
+          <div class="inline-row profile-inline-row">
+            <div class="field-group">
+              <label for="newFontStatus">状态</label>
+              <select id="newFontStatus" name="status">
+                <option value="active">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="newFontSort">排序</label>
+              <input id="newFontSort" name="sortOrder" type="number" step="1" value="50" />
+            </div>
+          </div>
+          <div class="settings-form-actions">
+            <button class="submit-btn" type="submit">新增字体</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="font-admin-list">
+        <% if (!adminFonts.length) { %>
+          <div class="empty-state">
+            <strong>还没有字体配置</strong>
+            <span>新增一个字体后，用户就能在个人资料页选择。</span>
+          </div>
+        <% } %>
+
+        <% adminFonts.forEach(font => { %>
+          <article class="panel font-admin-card">
+            <div class="font-admin-card-head">
+              <div>
+                <span class="pill <%= font.status === 'active' ? 'pill--success' : 'pill--level-warn' %>"><%= font.status === 'active' ? '启用' : '停用' %></span>
+                <h3><%= font.name %></h3>
+                <p class="muted-text"><%= font.code %> · 排序 <%= font.sort_order %></p>
+              </div>
+            </div>
+
+            <div class="font-preview-card" style="--chat-display-font: <%- font.css_declaration || font.css_stack %>;">
+              <span>预览</span>
+              <p><%= font.preview_text %></p>
+            </div>
+
+            <form class="settings-form" method="POST" action="/admin/fonts/<%= font.id %>">
+              <div class="field-grid field-grid--two">
+                <div class="field-group">
+                  <label for="fontName<%= font.id %>">字体名称</label>
+                  <input id="fontName<%= font.id %>" name="name" maxlength="80" required value="<%= font.name %>" />
+                </div>
+                <div class="field-group">
+                  <label for="fontCode<%= font.id %>">字体标识</label>
+                  <input id="fontCode<%= font.id %>" name="code" maxlength="80" required value="<%= font.code %>" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="fontStack<%= font.id %>">CSS 字体栈</label>
+                <textarea id="fontStack<%= font.id %>" name="cssStack" rows="2" maxlength="500" required><%= font.css_stack %></textarea>
+              </div>
+              <div class="field-group">
+                <label for="fontStylesheet<%= font.id %>">字体 CSS 地址</label>
+                <input id="fontStylesheet<%= font.id %>" name="stylesheetUrl" maxlength="1000" value="<%= font.stylesheet_url || '' %>" />
+              </div>
+              <div class="field-group">
+                <label for="fontPreview<%= font.id %>">预览文案</label>
+                <input id="fontPreview<%= font.id %>" name="previewText" maxlength="200" value="<%= font.preview_text %>" />
+              </div>
+              <div class="inline-row profile-inline-row">
+                <div class="field-group">
+                  <label for="fontStatus<%= font.id %>">状态</label>
+                  <select id="fontStatus<%= font.id %>" name="status">
+                    <option value="active" <%= font.status === 'active' ? 'selected' : '' %>>启用</option>
+                    <option value="disabled" <%= font.status === 'disabled' ? 'selected' : '' %>>停用</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="fontSort<%= font.id %>">排序</label>
+                  <input id="fontSort<%= font.id %>" name="sortOrder" type="number" step="1" value="<%= font.sort_order %>" />
+                </div>
+              </div>
+              <div class="settings-form-actions settings-form-actions--split">
+                <button class="submit-btn" type="submit">保存字体</button>
+              </div>
+            </form>
+            <form class="profile-danger-form" method="POST" action="/admin/fonts/<%= font.id %>/delete" data-confirm-message="确定删除这个字体？已选择它的用户会回到默认字体。">
+              <button class="text-danger-btn" type="submit">删除字体</button>
+            </form>
+          </article>
+        <% }) %>
+      </section>
+    </div>
+  </section>
+</div>
+<script nonce="<%= cspNonce || '' %>" src="/public/js/generated/admin.bundle.js?v=v1.5.0-20260509-font-management"></script>

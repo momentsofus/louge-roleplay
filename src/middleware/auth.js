@@ -7,7 +7,24 @@ const logger = require('../lib/logger');
 const config = require('../config');
 const { translate } = require('../i18n');
 const { findUserById, normalizeReplyLengthPreference, normalizeChatVisibleMessageCount } = require('../services/user-service');
+const { getActiveFontById } = require('../services/font-service');
 const { getClientNotificationBootstrap } = require('../services/notification-service');
+
+async function hydrateSessionUser(sessionUser, user) {
+  const chatFontId = Number(user.chat_font_id || 0) || null;
+  const chatFont = chatFontId ? await getActiveFontById(chatFontId).catch(() => null) : null;
+  return {
+    ...sessionUser,
+    username: user.username,
+    role: user.role || 'user',
+    status: user.status || 'active',
+    show_nsfw: Number(user.show_nsfw || 0),
+    reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference),
+    chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count),
+    chat_font_id: chatFont ? chatFont.id : null,
+    chat_font_css_stack: chatFont ? chatFont.css_stack : null,
+  };
+}
 
 async function requireAuth(req, res, next) {
   if (!req.session || !req.session.user) {
@@ -18,7 +35,7 @@ async function requireAuth(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference), chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count) };
+  req.session.user = await hydrateSessionUser(req.session.user, user);
   res.locals.currentUser = req.session.user;
   return next();
 }
@@ -32,7 +49,7 @@ async function requireAdmin(req, res, next) {
     req.session.destroy(() => res.redirect('/login'));
     return undefined;
   }
-  req.session.user = { ...req.session.user, username: user.username, role: user.role || 'user', status: user.status || 'active', show_nsfw: Number(user.show_nsfw || 0), reply_length_preference: normalizeReplyLengthPreference(user.reply_length_preference), chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count) };
+  req.session.user = await hydrateSessionUser(req.session.user, user);
   res.locals.currentUser = req.session.user;
   if (req.session.user.role !== 'admin') {
     logger.warn('Forbidden admin access attempt', {
@@ -68,6 +85,7 @@ async function requireAdmin(req, res, next) {
         clientI18nMessages: res.locals.clientI18nMessages || {},
         clientNotifications: [],
         unreadSiteMessageCount: 0,
+        fontStylesheetUrls: [],
         meta: {},
         escapeHtml: (value) => String(value ?? '')
           .replace(/&/g, '&amp;')

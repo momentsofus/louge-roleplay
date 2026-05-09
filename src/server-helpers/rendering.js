@@ -119,12 +119,13 @@ async function renderPage(res, view, params = {}) {
     layoutNavItems: getLayoutNavItems(res.locals.currentUser, t),
   };
 
-  const [clientNotifications, unreadSiteMessageCount] = await Promise.all([
+  const [clientNotifications, unreadSiteMessageCount, fontStylesheetUrls] = await Promise.all([
     getCachedClientNotificationBootstrap(res.locals.currentUser || null, {
       method: res.req?.method || 'GET',
       pageScope: params.notificationPageScope || inferNotificationPageScope(view),
     }),
     res.locals.currentUser?.id ? getCachedUnreadSiteMessageCount(res.locals.currentUser.id, res.req?.method || 'GET') : 0,
+    require('../services/font-service').getActiveFontStylesheetUrls().catch(() => []),
   ]);
 
   return new Promise((resolve) => {
@@ -153,6 +154,7 @@ async function renderPage(res, view, params = {}) {
         navigation,
         clientNotifications,
         unreadSiteMessageCount,
+        fontStylesheetUrls,
         localeSwitchLinks: res.locals.localeSwitchLinks || { 'zh-TW': '?lang=zh-TW', 'zh-CN': '?lang=zh-CN', en: '?lang=en' },
         liveReloadEnabled,
         liveReloadAssetVersion,

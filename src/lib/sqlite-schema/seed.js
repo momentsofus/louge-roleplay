@@ -192,6 +192,25 @@ function seedSqliteDefaults(db) {
   }
 
   migratePresetModelsFromPlansSqlite(db);
+  seedSqliteFonts(db);
+}
+
+function seedSqliteFonts(db) {
+  const defaults = [
+    ['inter-ui', 'Inter · 默认界面字体', '"Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif', 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&display=swap', 'Inter 适合清楚、现代的对话阅读。', 10],
+    ['system-sans-cn', '系统黑体 · 中文优先', '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif', null, '系统中文黑体更稳，加载也更轻。', 20],
+    ['system-serif-cn', '系统宋体 · 叙事阅读', '"Songti SC", "SimSun", "Noto Serif CJK SC", serif', null, '系统宋体更像小说正文，适合慢慢读。', 30],
+    ['jetbrains-mono', 'JetBrains Mono · 等宽风格', '"JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace', 'https://fonts.xuejourney.xin/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap', 'JetBrains Mono 会让对话带一点终端和手稿感。', 40],
+  ];
+  const exists = db.prepare('SELECT id FROM fonts WHERE code = ? LIMIT 1');
+  const insert = db.prepare(`
+    INSERT INTO fonts (code, name, css_stack, stylesheet_url, preview_text, status, sort_order, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, 'active', ?, NOW(), NOW())
+  `);
+  defaults.forEach((item) => {
+    if (exists.get(item[0])) return;
+    insert.run(...item);
+  });
 }
 
 module.exports = { seedSqliteDefaults };

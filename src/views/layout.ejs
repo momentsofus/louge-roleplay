@@ -51,15 +51,20 @@
   <link rel="manifest" href="/public/icons/site.webmanifest" />
   <meta name="theme-color" content="#0b3f45" />
   <link rel="preconnect" href="https://fonts.xuejourney.xin" crossorigin />
-  <link rel="preload" href="/public/styles/site-pages.css?v=v1.5.0-20260509-fold-clean-final" as="style" />
+  <link rel="preload" href="/public/styles/site-pages.css?v=v1.5.0-20260509-font-management" as="style" />
   <link rel="stylesheet" href="https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="/public/styles/site-pages.css?v=v1.5.0-20260509-fold-clean-final" />
+  <% ((typeof fontStylesheetUrls !== 'undefined' && fontStylesheetUrls) || []).forEach((fontStylesheetUrl) => { %>
+    <% if (fontStylesheetUrl && fontStylesheetUrl !== 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap') { %>
+      <link rel="stylesheet" href="<%= fontStylesheetUrl %>" />
+    <% } %>
+  <% }) %>
+  <link rel="stylesheet" href="/public/styles/site-pages.css?v=v1.5.0-20260509-font-management" />
   <% if (liveReloadEnabled) { %>
     <script nonce="<%= cspNonce || '' %>">
       window.LOUGE_LIVE_RELOAD = {
         enabled: true,
         endpoint: '/__live-reload/events',
-        cssVersion: 'v1.5.0-20260509-fold-clean-final',
+        cssVersion: 'v1.5.0-20260509-font-management',
         reloadVersion: '<%- esc(liveReloadAssetVersion || '') %>'
       };
     </script>
@@ -71,13 +76,13 @@
     currentUser: currentUser ? { id: currentUser.id, username: currentUser.username, role: currentUser.role } : null,
     csrfToken: csrfToken || ''
   }) %></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/generated/notification.bundle.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js?v=v1.5.0-20260509-fold-clean-final" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/generated/notification.bundle.js?v=v1.5.0-20260509-font-management" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js?v=v1.5.0-20260509-font-management" defer></script>
   <% if (liveReloadEnabled) { %>
     <script nonce="<%= cspNonce || '' %>" src="/public/js/live-reload-client.js?v=<%- encodeURIComponent(liveReloadAssetVersion || '') %>" defer></script>
   <% } %>

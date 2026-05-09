@@ -36,10 +36,14 @@ function registerAuthProfileRoutes(app, ctx) {
       if (!user) {
         return req.session.destroy(() => res.redirect('/login'));
       }
-      const nextCaptcha = await createCaptcha();
+      const [fonts, nextCaptcha] = await Promise.all([
+        ctx.listActiveFonts ? ctx.listActiveFonts() : [],
+        createCaptcha(),
+      ]);
       renderPage(res, 'profile', {
         title: '个人资料',
         user,
+        fonts,
         captcha: nextCaptcha,
         formMessage: '',
         formStatus: '',
@@ -61,6 +65,7 @@ function registerAuthProfileRoutes(app, ctx) {
       const renderProfileMessage = async (message, status = 'error', targetUser = user) => renderPage(res, 'profile', {
         title: '个人资料',
         user: targetUser,
+        fonts: ctx.listActiveFonts ? await ctx.listActiveFonts() : [],
         captcha: await createCaptcha(),
         formMessage: message,
         formStatus: status,
@@ -189,6 +194,14 @@ function registerAuthProfileRoutes(app, ctx) {
         req.session.user.chat_visible_message_count = Math.max(4, Math.min(80, parsedCount));
         const refreshedUser = await findUserById(userId);
         return await renderProfileMessage(`聊天页默认显示最新 ${req.session.user.chat_visible_message_count} 条消息。`, 'success', refreshedUser);
+      }
+
+      if (action === 'chatFont') {
+        const fontId = Number.parseInt(String(req.body.chatFontId || '0'), 10) || null;
+        await ctx.updateUserChatFontPreference(userId, fontId);
+        req.session.user.chat_font_id = fontId || null;
+        const refreshedUser = await findUserById(userId);
+        return await renderProfileMessage(fontId ? '聊天对话字体已经保存。' : '聊天对话字体已恢复默认。', 'success', refreshedUser);
       }
 
       if (action === 'password') {

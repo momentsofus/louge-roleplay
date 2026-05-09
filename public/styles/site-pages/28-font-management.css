@@ -1,0 +1,117 @@
+/* @file public/styles/site-pages/28-font-management.css
+   @description 管理中心字体管理与个人资料字体选择样式。 */
+
+.font-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.35fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.font-admin-create-card,
+.font-admin-card {
+  padding: 18px;
+}
+
+.font-admin-list {
+  display: grid;
+  gap: 14px;
+}
+
+.font-admin-card {
+  display: grid;
+  gap: 14px;
+}
+
+.font-admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.font-admin-card-head h3 {
+  margin: 8px 0 4px;
+  font-size: 18px;
+}
+
+.font-preview-card {
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(185, 139, 78, 0.26);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(232, 173, 93, 0.12), transparent 34%),
+    rgba(42, 31, 24, 0.55);
+}
+
+.font-preview-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.font-preview-card p {
+  margin: 0;
+  color: #fff7e8;
+  font-family: var(--chat-display-font, var(--font-sans));
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.field-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-font-preview-list {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-font-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+}
+
+.profile-font-option.active {
+  border-color: rgba(232, 173, 93, 0.45);
+  background: rgba(232, 173, 93, 0.08);
+}
+
+.profile-font-option span {
+  display: grid;
+  gap: 5px;
+}
+
+.profile-font-option strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.profile-font-option em {
+  color: #fff7e8;
+  font-family: var(--chat-display-font, var(--font-sans));
+  font-size: 16px;
+  line-height: 1.7;
+  font-style: normal;
+}
+
+@media (max-width: 900px) {
+  .font-admin-layout,
+  .field-grid--two {
+    grid-template-columns: 1fr;
+  }
+}
