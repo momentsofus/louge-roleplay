@@ -105,6 +105,69 @@
   }
 
   /**
+   * 给富文本内各种语义节点补上专用类，避免后续样式依赖大范围共用选择器。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
+  function applyChatRichSemanticClasses(root) {
+    const classMap = {
+      P: 'bubble-copy',
+      EM: 'bubble-italic',
+      I: 'bubble-italic',
+      STRONG: 'bubble-strong',
+      B: 'bubble-strong',
+      BLOCKQUOTE: 'bubble-blockquote',
+      CODE: 'bubble-code',
+      PRE: 'bubble-code-block',
+      A: 'bubble-link',
+      UL: 'bubble-list bubble-list--unordered',
+      OL: 'bubble-list bubble-list--ordered',
+      LI: 'bubble-list-item',
+      TABLE: 'bubble-table',
+      TH: 'bubble-table-head-cell',
+      TD: 'bubble-table-cell',
+      HR: 'bubble-divider',
+    };
+    root.querySelectorAll(Object.keys(classMap).map((tag) => tag.toLowerCase()).join(',')).forEach((node) => {
+      String(classMap[node.tagName] || '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .forEach((className) => node.classList.add(className));
+    });
+  }
+
+  /**
+   * 删除正文里的折叠块内部占位符。真实折叠内容会在 bubble-folds 中单独渲染。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
+  function removeFoldPlaceholdersInNodeTree(root) {
+    const placeholderRe = /__FOLD_BLOCK_\d+__/g;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || parent.closest('pre, code, style, a')) return NodeFilter.FILTER_REJECT;
+        return placeholderRe.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      },
+    });
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach((node) => {
+      const nextText = String(node.nodeValue || '').replace(placeholderRe, '').replace(/\n{3,}/g, '\n\n').trim();
+      if (nextText) {
+        node.nodeValue = nextText;
+      } else {
+        const parent = node.parentElement;
+        node.remove();
+        if (parent && parent.matches('p') && !parent.textContent.trim() && !parent.querySelector('img, br, code, a')) parent.remove();
+      }
+    });
+  }
+
+  /**
    * 遍历富文本 DOM，把普通文本节点里的引号内容包成 .bubble-quote。
    *
    * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
@@ -199,5 +262,7 @@
 
   ns.sanitizeNodeTree = sanitizeNodeTree;
   ns.collectQuoteMatches = collectQuoteMatches;
+  ns.applyChatRichSemanticClasses = applyChatRichSemanticClasses;
+  ns.removeFoldPlaceholdersInNodeTree = removeFoldPlaceholdersInNodeTree;
   ns.highlightQuotesInNodeTree = highlightQuotesInNodeTree;
 }());

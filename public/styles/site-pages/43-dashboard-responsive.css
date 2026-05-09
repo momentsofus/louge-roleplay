@@ -18,7 +18,14 @@
 @media (max-width: 640px) {
   .dashboard-hero-card, .dashboard-section { padding: 16px; }
   .dashboard-command-grid, .dashboard-stats { grid-template-columns: 1fr; }
-  .dashboard-actions-row .quick-link, .dashboard-actions-row .inline-btn,
-  .dashboard-actions-row form { width: 100%; }
+  .dashboard-actions-row:not(.dashboard-heading-actions):not(.character-actions) .quick-link,
+  .dashboard-actions-row:not(.dashboard-heading-actions):not(.character-actions) .secondary-button,
+  .dashboard-actions-row:not(.dashboard-heading-actions):not(.character-actions) .inline-btn,
+  .dashboard-actions-row:not(.dashboard-heading-actions):not(.character-actions) form { width: 100%; }
   .dashboard-actions-row .inline-btn { justify-content: center; }
+  .character-actions > form { width: auto; }
+  .dashboard-heading-actions {
+    justify-content: flex-start;
+    max-width: 100%;
+  }
 }

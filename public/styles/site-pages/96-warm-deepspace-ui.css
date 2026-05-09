@@ -372,14 +372,10 @@ label { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
   font-size: 12px;
 }
 
-.bubble-user .bubble-rich, .bubble-user .bubble-text,
-.bubble-user .bubble-header { color: #fff; }
-.bubble-user .bubble-header { opacity: 0.8; }
-
-.bubble-rich, .rich-preview, .bubble-text {
-  color: inherit;
-  line-height: 1.7;
+.bubble-user .bubble-rich, .bubble-user .bubble-text {
+  color: #fff7e8;
 }
+.bubble-user .bubble-header { color: #fff; opacity: 0.8; }
 
 .message-action-trigger {
   border-color: var(--border);
@@ -480,7 +476,7 @@ code, pre {
 }
 
 /* --- Rich content --- */
-.markdown-body, .bubble-rich, .rich-preview,
+.markdown-body, .rich-preview,
 .prompt-preview, .admin-log-pre, .preview-box {
   color: var(--text-secondary);
 }

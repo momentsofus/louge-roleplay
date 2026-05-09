@@ -138,7 +138,7 @@
             <h2>最近会话</h2>
             <p><%= t('只展示最近 3 个会话；更多对话可以进入会话管理页筛选和批量处理。') %></p>
           </div>
-          <div class="dashboard-actions-row">
+          <div class="dashboard-actions-row dashboard-heading-actions">
             <% if (latestConversation) { %>
               <a class="quick-link" href="/chat/<%= latestConversation.id %>"><%= t('继续最新会话') %></a>
             <% } %>
