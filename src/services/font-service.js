@@ -197,6 +197,46 @@ async function seedDefaultFonts() {
       previewText: 'JetBrains Mono 会让对话带一点终端和手稿感。',
       sortOrder: 40,
     },
+    {
+      code: 'ma-shan-zheng',
+      name: 'Ma Shan Zheng · 马善政',
+      cssStack: '"Ma Shan Zheng", "STKaiti", "KaiTi", cursive',
+      stylesheetUrl: 'https://fonts.xuejourney.xin/css2?family=Ma+Shan+Zheng&display=swap',
+      previewText: '马善政带着题字和手写感，适合更有江湖气的对白。',
+      sortOrder: 50,
+    },
+    {
+      code: 'zcool-xiaowei',
+      name: 'ZCOOL XiaoWei · 站酷小薇',
+      cssStack: '"ZCOOL XiaoWei", "Songti SC", "SimSun", serif',
+      stylesheetUrl: 'https://fonts.xuejourney.xin/css2?family=ZCOOL+XiaoWei&display=swap',
+      previewText: '站酷小薇像旧书标题，也适合温雅一点的叙事。',
+      sortOrder: 60,
+    },
+    {
+      code: 'zhi-mang-xing',
+      name: 'Zhi Mang Xing · 志莽行',
+      cssStack: '"Zhi Mang Xing", "STKaiti", "KaiTi", cursive',
+      stylesheetUrl: 'https://fonts.xuejourney.xin/css2?family=Zhi+Mang+Xing&display=swap',
+      previewText: '志莽行更潇洒，像把一句话写在风里。',
+      sortOrder: 70,
+    },
+    {
+      code: 'zcool-qingke-huangyou',
+      name: 'ZCOOL QingKe HuangYou · 站酷庆科黄油体',
+      cssStack: '"ZCOOL QingKe HuangYou", "PingFang SC", "Microsoft YaHei", sans-serif',
+      stylesheetUrl: 'https://fonts.xuejourney.xin/css2?family=ZCOOL+QingKe+HuangYou&display=swap',
+      previewText: '庆科黄油体轻快醒目，适合更活泼的聊天氛围。',
+      sortOrder: 80,
+    },
+    {
+      code: 'long-cang',
+      name: 'Long Cang · 龙藏体',
+      cssStack: '"Long Cang", "STKaiti", "KaiTi", cursive',
+      stylesheetUrl: 'https://fonts.xuejourney.xin/css2?family=Long+Cang&display=swap',
+      previewText: '龙藏体笔意更散，适合古风、梦境和带余韵的角色。',
+      sortOrder: 90,
+    },
   ];
 
   for (const item of defaults) {
