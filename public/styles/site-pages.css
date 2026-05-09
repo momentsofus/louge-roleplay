@@ -4841,11 +4841,23 @@ textarea, .bubble-rich, .rich-preview {
 /* --- end site-pages/53-mobile-chat.css --- */
 /* --- begin site-pages/54-message-action-modal.css --- */
 /* @file public/styles/site-pages/54-message-action-modal.css
-   @description 聊天消息操作菜单的页面级居中蒙层。 */
+   @description 页面级居中操作菜单：聊天消息与会话管理共用。 */
 
 .message-action-trigger {
+  width: 36px;
+  height: 36px;
+  padding: 0;
   opacity: 1;
-  overflow: hidden;
+  overflow: visible;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.message-action-trigger::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 16px;
 }
 
 .message-action-trigger span {
@@ -4857,6 +4869,7 @@ textarea, .bubble-rich, .rich-preview {
   line-height: 1;
   letter-spacing: 0.08em;
   transform: translateY(-1px);
+  pointer-events: none;
 }
 
 .bubble-user .message-action-trigger {
@@ -4875,11 +4888,13 @@ textarea, .bubble-rich, .rich-preview {
   content: none;
 }
 
-body.has-message-actions-modal {
+body.has-message-actions-modal,
+body.has-conversation-actions-modal {
   overflow: hidden;
 }
 
-.message-actions-modal {
+.message-actions-modal,
+.conversation-actions-modal {
   position: fixed;
   inset: 0;
   z-index: 1200;
@@ -4891,7 +4906,8 @@ body.has-message-actions-modal {
   animation: messageActionFadeIn 140ms ease-out both;
 }
 
-.message-actions-modal .message-actions-card {
+.message-actions-modal .message-actions-card,
+.conversation-actions-modal .conversation-actions-card {
   width: min(520px, calc(100vw - 32px));
   max-height: min(78vh, 680px);
   overflow: auto;
@@ -4903,62 +4919,92 @@ body.has-message-actions-modal {
   animation: messageActionCardIn 160ms ease-out both;
 }
 
-.message-actions-modal .message-actions-head {
+.message-actions-modal .message-actions-head,
+.conversation-actions-modal .conversation-actions-head {
+  display: flex;
+  align-items: center;
   gap: 16px;
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.message-actions-modal .message-actions-head span {
+.message-actions-modal .message-actions-head span,
+.conversation-actions-modal .conversation-actions-head span {
   color: var(--text-tertiary);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
-.message-actions-modal .message-actions-head strong {
+.message-actions-modal .message-actions-head strong,
+.conversation-actions-modal .conversation-actions-head strong {
   margin-left: auto;
   text-align: right;
   font-size: 14px;
 }
 
-.message-actions-modal .message-actions-close {
+.message-actions-modal .message-actions-close,
+.conversation-actions-modal .conversation-actions-close {
   flex: 0 0 auto;
   width: 34px;
   height: 34px;
+  display: grid;
+  place-items: center;
   border-radius: 12px;
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
 }
 
-.message-actions-modal .message-actions-close span::before {
+.message-actions-modal .message-actions-close span::before,
+.conversation-actions-modal .conversation-actions-close span::before {
   content: '×';
   color: var(--text-secondary);
   font-size: 20px;
   line-height: 1;
 }
 
-.message-actions-modal .message-actions-body {
+.message-actions-modal .message-actions-body,
+.conversation-actions-modal .conversation-actions-body {
+  display: grid;
   gap: 8px;
 }
 
-.message-actions-modal .message-menu-item {
+.message-actions-modal .message-menu-item,
+.conversation-actions-modal .conversation-actions-item {
   min-height: 42px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 100%;
+  padding: 8px 10px;
   border-radius: 14px;
+  border: none;
   background: rgba(255, 255, 255, 0.035);
+  color: var(--text-secondary);
   font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
-.message-actions-modal .message-menu-item:hover {
+.message-actions-modal .message-menu-item:hover,
+.conversation-actions-modal .conversation-actions-item:hover {
+  color: var(--text);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.message-actions-modal .message-menu-item.danger {
+.message-actions-modal .message-menu-item.danger,
+.conversation-actions-modal .conversation-actions-item.danger {
+  color: var(--danger);
   background: rgba(239, 68, 68, 0.12);
 }
 
-.message-actions-modal .message-menu-item.danger:hover {
+.message-actions-modal .message-menu-item.danger:hover,
+.conversation-actions-modal .conversation-actions-item.danger:hover {
   background: rgba(239, 68, 68, 0.18);
 }
 
@@ -4972,6 +5018,14 @@ body.has-message-actions-modal {
 
 .message-actions-modal .editor-form {
   min-width: 0;
+}
+
+.conversation-more-trigger {
+  min-width: 42px;
+}
+
+.conversation-more-trigger span {
+  pointer-events: none;
 }
 
 @keyframes messageActionFadeIn {
@@ -4991,12 +5045,14 @@ body.has-message-actions-modal {
 }
 
 @media (max-width: 640px) {
-  .message-actions-modal {
+  .message-actions-modal,
+  .conversation-actions-modal {
     align-items: end;
     padding: 12px;
   }
 
-  .message-actions-modal .message-actions-card {
+  .message-actions-modal .message-actions-card,
+  .conversation-actions-modal .conversation-actions-card {
     width: 100%;
     max-height: 84vh;
     border-radius: 22px;

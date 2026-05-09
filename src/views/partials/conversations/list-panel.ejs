@@ -1,5 +1,5 @@
 <section class="panel dashboard-section conversation-manager-panel">
-  <form method="post" action="/conversations/bulk" data-conversation-bulk-form>
+  <form id="conversationBulkForm" method="post" action="/conversations/bulk" data-conversation-bulk-form>
     <input type="hidden" name="returnTo" value="<%= currentUrl %>" />
     <div class="section-heading dashboard-section-heading conversation-list-heading">
       <div>
@@ -45,9 +45,29 @@
                   <p><%= conversation.character_name %></p>
                 </div>
                 <div class="toolbar-row toolbar-row--admin conversation-card-actions">
-                  <% if (conversation.status !== 'deleted') { %>
-                    <a class="quick-link" href="/chat/<%= conversation.id %>"><%= t('进入对话') %></a>
-                  <% } %>
+                  <button class="inline-btn conversation-more-trigger" type="button" data-conversation-actions-trigger aria-label="<%= t('会话操作') %>"><span aria-hidden="true">⋯</span></button>
+                  <template data-conversation-actions-template data-conversation-id="<%= conversation.id %>">
+                    <div class="conversation-actions-card" data-conversation-actions-card>
+                      <div class="conversation-actions-head">
+                        <span><%= t('操作') %></span>
+                        <strong><%= conversation.title || t('未命名对话') %></strong>
+                      </div>
+                      <div class="conversation-actions-body">
+                        <% if (conversation.status !== 'deleted') { %>
+                          <a class="conversation-actions-item" href="/chat/<%= conversation.id %>"><%= t('进入对话') %></a>
+                        <% } %>
+                        <% if (conversation.status === 'active') { %>
+                          <button class="conversation-actions-item" type="submit" form="conversationBulkForm" name="action" value="archive" data-single-conversation-action data-conversation-id="<%= conversation.id %>" data-confirm-message="<%= t('确认归档这条会话吗？') %>"><%= t('归档') %></button>
+                        <% } %>
+                        <% if (conversation.status === 'archived' || conversation.status === 'deleted') { %>
+                          <button class="conversation-actions-item" type="submit" form="conversationBulkForm" name="action" value="restore" data-single-conversation-action data-conversation-id="<%= conversation.id %>" data-confirm-message="<%= t('确认恢复这条会话吗？') %>"><%= t('恢复') %></button>
+                        <% } %>
+                        <% if (conversation.status !== 'deleted') { %>
+                          <button class="conversation-actions-item danger" type="submit" form="conversationBulkForm" name="action" value="delete" data-single-conversation-action data-conversation-id="<%= conversation.id %>" data-confirm-message="<%= t('确认删除这条会话吗？删除后会进入已删除状态。') %>"><%= t('删除') %></button>
+                        <% } %>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </div>
               <% if (conversation.latest_message_preview) { %>
