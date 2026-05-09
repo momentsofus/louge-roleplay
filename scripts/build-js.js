@@ -39,6 +39,7 @@ const bundleDefinitions = [
       'public/js/chat/bubbles.js',
       'public/js/chat/stream-client.js',
       'public/js/chat/message-menu.js',
+      'public/js/chat/conversation-more-menu.js',
       'public/js/chat/conversation-state.js',
       'public/js/chat/streaming-ui.js',
       'public/js/chat/compose-submit.js',

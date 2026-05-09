@@ -18,30 +18,30 @@
   border-radius: 16px;
 }
 
-.message-action-trigger span {
-  display: grid;
-  place-items: center;
+.message-action-trigger::before,
+.message-action-trigger span::before {
+  content: '⋯';
+  display: block;
   color: currentColor;
   font-size: 18px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.08em;
   transform: translateY(-1px);
+}
+
+.message-action-trigger span {
   pointer-events: none;
 }
 
-.bubble-user .message-action-trigger {
+.bubble-user .message-action-trigger,
+.bubble-character .message-action-trigger,
+.bubble-system .message-action-trigger {
   border-color: rgba(255, 255, 255, 0.26);
   background: rgba(0, 0, 0, 0.22);
   color: #fff7e8;
 }
 
-.bubble-character .message-action-trigger,
-.bubble-system .message-action-trigger {
-  color: var(--text-secondary);
-}
-
-.message-action-trigger::before,
 .message-action-trigger span::before {
   content: none;
 }
@@ -178,11 +178,13 @@ body.has-conversation-actions-modal {
   min-width: 0;
 }
 
-.conversation-more-trigger {
-  min-width: 42px;
+.conversation-more-trigger,
+.conversation-more-trigger.is-actions-active {
+  min-width: 72px;
 }
 
-.conversation-more-trigger span {
+.conversation-more-trigger span,
+.chat-more-trigger span {
   pointer-events: none;
 }
 
