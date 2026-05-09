@@ -24,6 +24,7 @@ async function hydrateSessionUser(sessionUser, user) {
     chat_visible_message_count: normalizeChatVisibleMessageCount(user.chat_visible_message_count),
     chat_font_id: chatFont ? chatFont.id : null,
     chat_font_css_stack: chatFont ? chatFont.css_stack : null,
+    chat_font_stylesheet_url: chatFont ? chatFont.stylesheet_url : null,
   };
 }
 

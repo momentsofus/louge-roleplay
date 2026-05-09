@@ -120,14 +120,14 @@ async function renderPage(res, view, params = {}) {
     layoutNavItems: getLayoutNavItems(res.locals.currentUser, t),
   };
 
-  const [clientNotifications, unreadSiteMessageCount, fontStylesheetUrls] = await Promise.all([
+  const [clientNotifications, unreadSiteMessageCount] = await Promise.all([
     getCachedClientNotificationBootstrap(res.locals.currentUser || null, {
       method: res.req?.method || 'GET',
       pageScope: params.notificationPageScope || inferNotificationPageScope(view),
     }),
     res.locals.currentUser?.id ? getCachedUnreadSiteMessageCount(res.locals.currentUser.id, res.req?.method || 'GET') : 0,
-    require('../services/font-service').getActiveFontStylesheetUrls().catch(() => []),
   ]);
+  const fontStylesheetUrls = Array.isArray(params.fontStylesheetUrls) ? params.fontStylesheetUrls : [];
 
   return new Promise((resolve) => {
     res.render(view, { ...params, viewModel, navigation, assetUrl, assetVersion }, (viewError, html) => {

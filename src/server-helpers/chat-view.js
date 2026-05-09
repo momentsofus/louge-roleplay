@@ -73,6 +73,8 @@ async function renderChatPage(req, res, conversation, options = {}) {
     ? conversation.selected_model_mode
     : (chatModelSelector.options || []).find((option) => option.isDefault)?.mode || (chatModelSelector.options || [])[0]?.mode || conversation.selected_model_mode || 'standard';
 
+  const chatFontStylesheetUrl = req.session?.user?.chat_font_stylesheet_url || '';
+
   return renderPage(res, 'chat', {
     title: req.t ? req.t('聊天') : '聊天',
     conversation: {
@@ -84,6 +86,7 @@ async function renderChatPage(req, res, conversation, options = {}) {
     optimizedContent: options.optimizedContent || '',
     newContinuationPreview: options.newContinuationPreview || null,
     chatModelSelector,
+    fontStylesheetUrls: chatFontStylesheetUrl ? [chatFontStylesheetUrl] : [],
     errorMessage: options.errorMessage || null,
   });
 }
