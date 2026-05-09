@@ -149,59 +149,7 @@ a:hover { color: var(--text); }
 }
 .section-head h2, .section-heading h2 { margin-bottom: 6px; }
 
-/* --- Buttons (override to flat style) --- */
-button, .submit-btn, .btn-brand, .feedback-submit-btn {
-  min-height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  box-shadow: none;
-}
-button:hover, .submit-btn:hover, .btn-brand:hover, .feedback-submit-btn:hover {
-  background: var(--brand-hover);
-  transform: translateY(-1px);
-  box-shadow: none;
-  filter: none;
-}
-button:active, .submit-btn:active, .btn-brand:active {
-  transform: translateY(0);
-}
-
-button::before, .submit-btn::before, .btn-brand::before,
-.feedback-submit-btn::before, .inline-btn::before,
-.quick-link::before, .ghost-btn::before, .btn-soft::before {
-  display: none;
-}
-
-.inline-btn, .quick-link, .ghost-btn, .btn-soft, .btn-ghost,
-.chip, .tag-chip {
-  min-height: 34px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: none;
-}
-.inline-btn:hover, .quick-link:hover, .ghost-btn:hover,
-.btn-soft:hover, .chip:hover, .tag-chip:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  transform: none;
-  box-shadow: none;
-}
-
-.inline-btn.primary, .chip.active, .quick-link.is-active {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.2);
-  color: var(--brand-hover);
-}
-
-.inline-btn.danger, .danger-btn, .inline-btn.is-danger,
+/* --- Buttons are normalized in 97-button-system.css. Keep page theme free of button resets. */
 .message-menu-item.danger, .meta-pill--danger {
   color: var(--danger);
   background: var(--danger-subtle);
@@ -424,14 +372,10 @@ label { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
   font-size: 12px;
 }
 
-.bubble-user .bubble-rich, .bubble-user .bubble-text,
-.bubble-user .bubble-header { color: #fff; }
-.bubble-user .bubble-header { opacity: 0.8; }
-
-.bubble-rich, .rich-preview, .bubble-text {
-  color: inherit;
-  line-height: 1.7;
+.bubble-user .bubble-rich, .bubble-user .bubble-text {
+  color: #fff7e8;
 }
+.bubble-user .bubble-header { color: #fff; opacity: 0.8; }
 
 .message-action-trigger {
   border-color: var(--border);
@@ -532,7 +476,7 @@ code, pre {
 }
 
 /* --- Rich content --- */
-.markdown-body, .bubble-rich, .rich-preview,
+.markdown-body, .rich-preview,
 .prompt-preview, .admin-log-pre, .preview-box {
   color: var(--text-secondary);
 }

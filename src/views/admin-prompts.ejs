@@ -1,5 +1,5 @@
 <!-- @file src/views/admin-prompts.ejs
-     @description 全局 Prompt 片段管理页面模板。调用说明：GET /admin/prompts 渲染，public/js/admin-page.js 负责拖拽排序和预览。
+     @description 全局 Prompt 片段管理页面模板。调用说明：GET /admin/prompts 渲染，public/js/generated/admin.bundle.js 负责拖拽排序和预览。
 -->
 <div class="admin-shell">
   <section class="hero-card admin-hero">
@@ -137,4 +137,4 @@
   </section>
 </div>
 
-<script nonce="<%= cspNonce || '' %>" src="/public/js/admin-page.js?v=v1.4.3-20260506"></script>
+<script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/generated/admin.bundle.js') %>"></script>

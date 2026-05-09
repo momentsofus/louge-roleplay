@@ -1,7 +1,7 @@
 <!-- @file src/views/error.ejs
      @description 错误页模板。调用说明：全局 errorHandler 与 404 handler 渲染，展示 requestId 方便排查。
 -->
-<link rel="stylesheet" href="/public/styles/shared-feedback.css?v=v1.4.3-20260506" />
+<link rel="stylesheet" href="<%= assetUrl('/public/styles/shared-feedback.css') %>" />
 
 <div class="feedback-shell">
   <div class="feedback-card feedback-card--danger">
@@ -29,4 +29,4 @@
   </div>
 </div>
 
-<script nonce="<%= (typeof cspNonce !== 'undefined' && cspNonce) ? cspNonce : '' %>" src="/public/js/error-page.js?v=v1.4.3-20260506"></script>
+<script nonce="<%= (typeof cspNonce !== 'undefined' && cspNonce) ? cspNonce : '' %>" src="<%= assetUrl('/public/js/error-page.js') %>"></script>

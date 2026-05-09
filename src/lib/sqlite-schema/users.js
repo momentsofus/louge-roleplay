@@ -80,6 +80,7 @@ function ensureSqliteUsersSchema(db) {
       phone_verified INTEGER NOT NULL DEFAULT 0,
       role         TEXT NOT NULL DEFAULT 'user',
       status       TEXT NOT NULL DEFAULT 'active',
+      chat_font_id INTEGER NULL,
       created_at   TEXT NOT NULL,
       updated_at   TEXT NOT NULL
     )
@@ -88,6 +89,8 @@ function ensureSqliteUsersSchema(db) {
   ensureSqliteColumn(db, 'users', 'show_nsfw', 'show_nsfw INTEGER NOT NULL DEFAULT 0');
   ensureSqliteColumn(db, 'users', 'reply_length_preference', "reply_length_preference TEXT NOT NULL DEFAULT 'medium'");
   ensureSqliteColumn(db, 'users', 'chat_visible_message_count', 'chat_visible_message_count INTEGER NOT NULL DEFAULT 8');
+  ensureSqliteColumn(db, 'users', 'chat_font_id', 'chat_font_id INTEGER NULL');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_users_chat_font ON users (chat_font_id)');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_users_username ON users (username)');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_users_email ON users (email) WHERE email IS NOT NULL');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_users_phone ON users (phone) WHERE phone IS NOT NULL');

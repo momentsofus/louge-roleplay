@@ -21,6 +21,9 @@
     if (!scope && window.LougeMessageMenus && typeof window.LougeMessageMenus.closeAll === 'function') {
       window.LougeMessageMenus.closeAll();
     }
+    if (!scope && window.LougeConversationMoreMenu && typeof window.LougeConversationMoreMenu.closeAll === 'function') {
+      window.LougeConversationMoreMenu.closeAll();
+    }
   }
 
   function closeSiblingMessageMenus(currentMenu) {
@@ -29,6 +32,12 @@
         menu.removeAttribute('open');
       }
     });
+    if (window.LougeMessageMenus && typeof window.LougeMessageMenus.closeAll === 'function') {
+      window.LougeMessageMenus.closeAll();
+    }
+    if (window.LougeConversationMoreMenu && typeof window.LougeConversationMoreMenu.closeAll === 'function') {
+      window.LougeConversationMoreMenu.closeAll();
+    }
   }
 
   function showToast(message) {

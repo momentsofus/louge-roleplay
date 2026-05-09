@@ -90,25 +90,14 @@ async function getConversationById(id, userId) {
   return rows[0] || null;
 }
 
-async function listUserConversations(userId) {
-  return query(
-    `SELECT
-       c.id,
-       c.title,
-       c.updated_at,
-       c.current_message_id,
-       c.parent_conversation_id,
-       c.branched_from_message_id,
-       ch.name AS character_name,
-       ch.avatar_image_path
-     FROM conversations c
-     JOIN characters ch ON ch.id = c.character_id
-     WHERE c.user_id = ? AND c.status <> 'deleted' AND ch.status <> 'blocked'
-     ORDER BY c.updated_at DESC, c.id DESC`,
-    [userId],
-  );
-}
-
+const {
+  listUserConversations,
+  listUserConversationsForManagement,
+  listUserConversationFilterOptions,
+  bulkSoftDeleteUserConversations,
+  bulkArchiveUserConversations,
+  bulkRestoreUserConversations,
+} = require('./conversation/user-conversation-list');
 async function fetchMessagesFromDatabase(conversationId, options = {}) {
   const includeDeleted = options.includeDeleted === true;
   const extraWhere = options.extraWhere || '';
@@ -372,6 +361,8 @@ module.exports = {
   updateConversationModelMode,
   getConversationById,
   listUserConversations,
+  listUserConversationsForManagement,
+  listUserConversationFilterOptions,
   listMessages,
   getMessageById,
   getLatestMessage,
@@ -386,5 +377,8 @@ module.exports = {
   countChildConversations,
   deleteMessageSafely,
   deleteConversationSafely,
+  bulkSoftDeleteUserConversations,
+  bulkArchiveUserConversations,
+  bulkRestoreUserConversations,
   invalidateConversationCache,
 };

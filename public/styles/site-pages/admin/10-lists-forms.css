@@ -47,22 +47,7 @@
 }
 
 .order-controls { display: inline-flex; gap: 6px; align-items: center; }
-.order-button {
-  width: auto;
-  min-width: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-soft);
-  border: 1px solid var(--border);
-  box-shadow: none;
-  font-size: 12px;
-}
-.order-button:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-hover);
-  box-shadow: none;
-}
+/* .order-button visual baseline lives in 97-button-system.css. */
 
 .pill, .meta-chip {
   display: inline-flex;

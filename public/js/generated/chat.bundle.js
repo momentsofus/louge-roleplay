@@ -187,6 +187,7 @@
       const line = lines[i];
       const trimmed = String(line || '').trim();
 
+      if (/^__FOLD_BLOCK_\d+__$/.test(trimmed)) continue;
       if (isBlank(line)) { flushParagraph(); continue; }
       if (isFencePlaceholder(trimmed)) { flushParagraph(); parts.push(trimmed); continue; }
       if (isHr(line)) { flushParagraph(); parts.push('<hr>'); continue; }
@@ -397,6 +398,69 @@
   }
 
   /**
+   * 给富文本内各种语义节点补上专用类，避免后续样式依赖大范围共用选择器。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
+  function applyChatRichSemanticClasses(root) {
+    const classMap = {
+      P: 'bubble-copy',
+      EM: 'bubble-italic',
+      I: 'bubble-italic',
+      STRONG: 'bubble-strong',
+      B: 'bubble-strong',
+      BLOCKQUOTE: 'bubble-blockquote',
+      CODE: 'bubble-code',
+      PRE: 'bubble-code-block',
+      A: 'bubble-link',
+      UL: 'bubble-list bubble-list--unordered',
+      OL: 'bubble-list bubble-list--ordered',
+      LI: 'bubble-list-item',
+      TABLE: 'bubble-table',
+      TH: 'bubble-table-head-cell',
+      TD: 'bubble-table-cell',
+      HR: 'bubble-divider',
+    };
+    root.querySelectorAll(Object.keys(classMap).map((tag) => tag.toLowerCase()).join(',')).forEach((node) => {
+      String(classMap[node.tagName] || '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .forEach((className) => node.classList.add(className));
+    });
+  }
+
+  /**
+   * 删除正文里的折叠块内部占位符。真实折叠内容会在 bubble-folds 中单独渲染。
+   *
+   * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
+   * @returns {void}
+   */
+  function removeFoldPlaceholdersInNodeTree(root) {
+    const placeholderRe = /__FOLD_BLOCK_\d+__/g;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || parent.closest('pre, code, style, a')) return NodeFilter.FILTER_REJECT;
+        return placeholderRe.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      },
+    });
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach((node) => {
+      const nextText = String(node.nodeValue || '').replace(placeholderRe, '').replace(/\n{3,}/g, '\n\n').trim();
+      if (nextText) {
+        node.nodeValue = nextText;
+      } else {
+        const parent = node.parentElement;
+        node.remove();
+        if (parent && parent.matches('p') && !parent.textContent.trim() && !parent.querySelector('img, br, code, a')) parent.remove();
+      }
+    });
+  }
+
+  /**
    * 遍历富文本 DOM，把普通文本节点里的引号内容包成 .bubble-quote。
    *
    * @param {Element|DocumentFragment} root 已净化或待净化的消息根节点。
@@ -491,6 +555,8 @@
 
   ns.sanitizeNodeTree = sanitizeNodeTree;
   ns.collectQuoteMatches = collectQuoteMatches;
+  ns.applyChatRichSemanticClasses = applyChatRichSemanticClasses;
+  ns.removeFoldPlaceholdersInNodeTree = removeFoldPlaceholdersInNodeTree;
   ns.highlightQuotesInNodeTree = highlightQuotesInNodeTree;
 }());
 
@@ -621,6 +687,8 @@
     const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
     const root = doc.body.firstElementChild || doc.body;
     ns.sanitizeNodeTree(root, scopeSelector);
+    ns.applyChatRichSemanticClasses(root);
+    ns.removeFoldPlaceholdersInNodeTree(root);
     ns.highlightQuotesInNodeTree(root);
 
     const wrapper = document.createElement('div');
@@ -679,6 +747,9 @@
     if (!scope && window.LougeMessageMenus && typeof window.LougeMessageMenus.closeAll === 'function') {
       window.LougeMessageMenus.closeAll();
     }
+    if (!scope && window.LougeConversationMoreMenu && typeof window.LougeConversationMoreMenu.closeAll === 'function') {
+      window.LougeConversationMoreMenu.closeAll();
+    }
   }
 
   function closeSiblingMessageMenus(currentMenu) {
@@ -687,6 +758,12 @@
         menu.removeAttribute('open');
       }
     });
+    if (window.LougeMessageMenus && typeof window.LougeMessageMenus.closeAll === 'function') {
+      window.LougeMessageMenus.closeAll();
+    }
+    if (window.LougeConversationMoreMenu && typeof window.LougeConversationMoreMenu.closeAll === 'function') {
+      window.LougeConversationMoreMenu.closeAll();
+    }
   }
 
   function showToast(message) {
@@ -1123,11 +1200,12 @@
 /* public/js/chat/message-menu.js */
 /**
  * @file public/js/chat/message-menu.js
- * @description 聊天消息操作区：点击消息上的“⋯”，在对应消息上方插入轻量上下文操作卡。
+ * @description 聊天消息操作菜单：点击消息上的操作按钮后，在页面级居中蒙层中显示菜单。
  */
 
 (function () {
   let activeMessageId = '';
+  let previousActiveElement = null;
 
   function getExistingDock() {
     return document.querySelector('[data-message-actions-dock]');
@@ -1140,11 +1218,27 @@
     if (article) article.classList.add('is-actions-active');
   }
 
+  function setBodyModalState(isOpen) {
+    document.body.classList.toggle('has-message-actions-modal', Boolean(isOpen));
+  }
+
   function closeActions() {
     const dock = getExistingDock();
     if (dock) dock.remove();
     activeMessageId = '';
     setActiveMessage(null);
+    setBodyModalState(false);
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+      previousActiveElement.focus({ preventScroll: true });
+    }
+    previousActiveElement = null;
+  }
+
+  function focusFirstAction(container) {
+    const target = container.querySelector('button, summary, textarea, input, a[href]');
+    if (target && typeof target.focus === 'function') {
+      target.focus({ preventScroll: true });
+    }
   }
 
   function renderActionsFor(article) {
@@ -1158,15 +1252,19 @@
     }
 
     closeActions();
+    previousActiveElement = document.activeElement;
 
     const dock = document.createElement('div');
-    dock.className = 'message-actions-dock';
+    dock.className = 'message-actions-modal';
     dock.dataset.messageActionsDock = 'true';
     dock.dataset.activeMessageId = messageId;
+    dock.setAttribute('role', 'dialog');
+    dock.setAttribute('aria-modal', 'true');
 
     const fragment = template.content.cloneNode(true);
     const card = fragment.querySelector('[data-message-actions-card]');
     if (!card) return;
+    card.setAttribute('role', 'document');
 
     const closeButton = document.createElement('button');
     closeButton.type = 'button';
@@ -1179,31 +1277,26 @@
     card.querySelector('.message-actions-head')?.appendChild(closeButton);
 
     dock.appendChild(card);
-    const rich = article.querySelector(':scope > .bubble-rich');
-    if (rich) {
-      article.insertBefore(dock, rich);
-    } else {
-      article.appendChild(dock);
-    }
+    document.body.appendChild(dock);
     activeMessageId = messageId;
     setActiveMessage(article);
-
-    requestAnimationFrame(() => {
-      const rect = dock.getBoundingClientRect();
-      const viewportTop = 12;
-      if (rect.top < viewportTop || rect.bottom > window.innerHeight - 120) {
-        const top = rect.top + window.scrollY - 16;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-      }
-    });
+    setBodyModalState(true);
+    requestAnimationFrame(() => focusFirstAction(dock));
   }
 
   document.addEventListener('click', (event) => {
     const trigger = event.target && event.target.closest ? event.target.closest('[data-message-actions-trigger]') : null;
-    if (!trigger) return;
-    event.preventDefault();
-    const article = trigger.closest('.bubble[data-message-id]');
-    renderActionsFor(article);
+    if (trigger) {
+      event.preventDefault();
+      const article = trigger.closest('.bubble[data-message-id]');
+      renderActionsFor(article);
+      return;
+    }
+
+    const dock = getExistingDock();
+    if (dock && event.target === dock) {
+      closeActions();
+    }
   });
 
   document.addEventListener('keydown', (event) => {
@@ -1220,6 +1313,116 @@
   window.LougeMessageMenus = {
     closeAll: closeActions,
     closeActions,
+  };
+}());
+
+
+;
+/* public/js/chat/conversation-more-menu.js */
+/**
+ * @file public/js/chat/conversation-more-menu.js
+ * @description 聊天页顶部“更多”会话操作：页面级居中蒙层。
+ */
+
+(function () {
+  let previousActiveElement = null;
+
+  function getModal() {
+    return document.querySelector('[data-conversation-more-modal]');
+  }
+
+  function closeAll() {
+    const modal = getModal();
+    if (modal) modal.remove();
+    document.body.classList.remove('has-conversation-actions-modal');
+    document.querySelectorAll('[data-conversation-more-trigger].is-actions-active').forEach((trigger) => {
+      trigger.classList.remove('is-actions-active');
+      trigger.setAttribute('aria-expanded', 'false');
+    });
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+      previousActiveElement.focus({ preventScroll: true });
+    }
+    previousActiveElement = null;
+  }
+
+  function focusFirstAction(container) {
+    const target = container.querySelector('button, a[href], input, textarea, summary');
+    if (target && typeof target.focus === 'function') {
+      target.focus({ preventScroll: true });
+    }
+  }
+
+  function openFor(trigger) {
+    const wrap = trigger.closest('.chat-head-actions');
+    const template = wrap?.querySelector('template[data-conversation-more-template]');
+    if (!template) return;
+
+    if (getModal()) {
+      closeAll();
+      return;
+    }
+
+    if (window.LougeMessageMenus && typeof window.LougeMessageMenus.closeAll === 'function') {
+      window.LougeMessageMenus.closeAll();
+    }
+
+    previousActiveElement = document.activeElement;
+    const modal = document.createElement('div');
+    modal.className = 'conversation-actions-modal conversation-more-modal';
+    modal.dataset.conversationMoreModal = 'true';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
+    const fragment = template.content.cloneNode(true);
+    const card = fragment.querySelector('[data-conversation-more-card]');
+    if (!card) return;
+    card.setAttribute('role', 'document');
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'conversation-actions-close';
+    closeButton.setAttribute('aria-label', window.AI_ROLEPLAY_I18N?.t ? window.AI_ROLEPLAY_I18N.t('关闭操作面板') : '关闭操作面板');
+    const closeIcon = document.createElement('span');
+    closeIcon.setAttribute('aria-hidden', 'true');
+    closeButton.appendChild(closeIcon);
+    closeButton.addEventListener('click', closeAll);
+    card.querySelector('.conversation-actions-head')?.appendChild(closeButton);
+
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+    document.body.classList.add('has-conversation-actions-modal');
+    trigger.classList.add('is-actions-active');
+    trigger.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => focusFirstAction(modal));
+  }
+
+  document.addEventListener('click', (event) => {
+    const trigger = event.target?.closest?.('[data-conversation-more-trigger]');
+    if (trigger) {
+      event.preventDefault();
+      openFor(trigger);
+      return;
+    }
+
+    const modal = getModal();
+    if (modal && event.target === modal) {
+      closeAll();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeAll();
+  });
+
+  document.addEventListener('submit', (event) => {
+    const modal = getModal();
+    if (modal && event.target && modal.contains(event.target)) {
+      window.setTimeout(closeAll, 80);
+    }
+  }, true);
+
+  window.LougeConversationMoreMenu = {
+    closeAll,
   };
 }());
 

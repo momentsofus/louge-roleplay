@@ -25,6 +25,7 @@ async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {
       show_nsfw     TINYINT(1) NOT NULL DEFAULT 0,
       reply_length_preference ENUM('low','medium','high') NOT NULL DEFAULT 'medium',
       chat_visible_message_count INT NOT NULL DEFAULT 8,
+      chat_font_id  BIGINT NULL,
       created_at    DATETIME NOT NULL,
       updated_at    DATETIME NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -40,6 +41,8 @@ async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {
   await ensureColumn('users', 'show_nsfw',      'show_nsfw TINYINT(1) NOT NULL DEFAULT 0');
   await ensureColumn('users', 'reply_length_preference', "reply_length_preference ENUM('low','medium','high') NOT NULL DEFAULT 'medium'");
   await ensureColumn('users', 'chat_visible_message_count', 'chat_visible_message_count INT NOT NULL DEFAULT 8');
+  await ensureColumn('users', 'chat_font_id', 'chat_font_id BIGINT NULL');
+  await ensureIndex('users', 'idx_users_chat_font', '(chat_font_id)');
   await ensureUniqueIndex('users', 'uniq_users_email', 'email');
   await ensureUniqueIndex('users', 'uniq_users_phone', 'phone');
   await backfillUserPublicIds(connection);
@@ -98,6 +101,24 @@ async function ensureUsersAndPlans(connection, helpers, backfillUserPublicIds) {
   await ensureColumn('preset_models', 'metadata_json', 'metadata_json LONGTEXT NULL');
   await ensureUniqueIndex('preset_models', 'uniq_preset_models_provider_model', 'provider_id, model_id');
   await ensureIndex('preset_models', 'idx_preset_models_status', '(status, sort_order)');
+
+  console.log('[init-db] 初始化 fonts 表...');
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS fonts (
+      id BIGINT PRIMARY KEY AUTO_INCREMENT,
+      code VARCHAR(80) NOT NULL,
+      name VARCHAR(80) NOT NULL,
+      css_stack VARCHAR(500) NOT NULL,
+      stylesheet_url VARCHAR(1000) NULL,
+      preview_text VARCHAR(200) NULL,
+      status ENUM('active','disabled') NOT NULL DEFAULT 'active',
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL,
+      UNIQUE KEY uniq_fonts_code (code),
+      INDEX idx_fonts_status_sort (status, sort_order, name)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
 
   console.log('[init-db] 初始化 user_subscriptions 表...');
   await connection.query(`

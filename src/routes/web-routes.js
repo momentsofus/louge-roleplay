@@ -14,7 +14,8 @@ const {
   getCaptchaImage,
   verifyCaptcha,
 } = require('../services/captcha-service');
-const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone, updateUserNsfwPreference, updateUserReplyLengthPreference, updateUserChatVisibleMessageCount } = require('../services/user-service');
+const { createUser, findUserByUsername, findUserByEmail, findUserByPhone, findUserByLogin, findUserById, findUserAuthById, updateUserRole, updateUserStatus, updateUsername, updatePasswordHash, updateUserEmail, unbindUserEmail, updateUserPhone, unbindUserPhone, updateUserNsfwPreference, updateUserReplyLengthPreference, updateUserChatVisibleMessageCount, updateUserChatFontPreference } = require('../services/user-service');
+const { listFontsForAdmin, listActiveFonts, createFont, updateFont, deleteFont } = require('../services/font-service');
 const { createCharacter, updateCharacter, listPublicCharacters, listFeaturedPublicCharacters, getPublicCharacterDetail, listUserCharacters, getCharacterById, deleteCharacterSafely, ensureCharacterImageColumns } = require('../services/character-service');
 const { toggleCharacterLike, addCharacterComment, listCharacterComments, markCharacterUsed } = require('../services/character-social-service');
 const { listPlans, findPlanById, createPlan, updatePlan, deletePlan, getActiveSubscriptionForUser, getUserQuotaSnapshot, updateUserPlan } = require('../services/plan-service');
@@ -47,6 +48,10 @@ const {
   updateConversationModelMode,
   getConversationById,
   listUserConversations,
+  listUserConversationsForManagement,
+  bulkSoftDeleteUserConversations,
+  bulkArchiveUserConversations,
+  bulkRestoreUserConversations,
   getMessageById,
   getLatestMessage,
   addMessage,
@@ -65,7 +70,6 @@ const { issueEmailCode, issuePhoneCode, verifyEmailCode, verifyPhoneCode } = req
 const { hashPassword, verifyPassword } = require('../services/password-service');
 const { verifyDomesticPhoneIdentity } = require('../services/phone-auth-service');
 const { hitLimit } = require('../services/rate-limit-service');
-const { CSS_CACHE_TTL_MS, FONT_CACHE_TTL_MS, getGoogleFontCss, getFontFile, logFontProxyError } = require('../services/font-proxy-service');
 const { uploadCharacterImages, getUploadedCharacterImagePaths, cleanupUploadedCharacterFiles, deleteStoredImageIfOwned } = require('../services/upload-service');
 const logger = require('../lib/logger');
 const config = require('../config');
@@ -170,6 +174,12 @@ function registerWebRoutes(app) {
     updateUserNsfwPreference,
     updateUserReplyLengthPreference,
     updateUserChatVisibleMessageCount,
+    updateUserChatFontPreference,
+    listFontsForAdmin,
+    listActiveFonts,
+    createFont,
+    updateFont,
+    deleteFont,
     ensureCharacterImageColumns,
     createCharacter,
     updateCharacter,
@@ -253,6 +263,10 @@ function registerWebRoutes(app) {
     updateConversationModelMode,
     getConversationById,
     listUserConversations,
+    listUserConversationsForManagement,
+    bulkSoftDeleteUserConversations,
+    bulkArchiveUserConversations,
+    bulkRestoreUserConversations,
     getMessageById,
     getLatestMessage,
     addMessage,
@@ -280,11 +294,6 @@ function registerWebRoutes(app) {
     verifyPassword,
     verifyDomesticPhoneIdentity,
     hitLimit,
-    CSS_CACHE_TTL_MS,
-    FONT_CACHE_TTL_MS,
-    getGoogleFontCss,
-    getFontFile,
-    logFontProxyError,
     uploadCharacterImages,
     getUploadedCharacterImagePaths,
     cleanupUploadedCharacterFiles,

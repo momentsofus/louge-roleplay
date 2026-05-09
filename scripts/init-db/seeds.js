@@ -7,6 +7,29 @@
 
 const { buildLegacyPlanModelsJson, maskApiKey } = require('./utils');
 
+async function seedDefaultFonts(connection) {
+  const defaults = [
+    ['inter-ui', 'Inter · 默认界面字体', '"Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif', 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&xuejourney=woff2&display=swap', 'Inter 适合清楚、现代的对话阅读。', 10],
+    ['system-sans-cn', '系统黑体 · 中文优先', '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif', null, '系统中文黑体更稳，加载也更轻。', 20],
+    ['system-serif-cn', '系统宋体 · 叙事阅读', '"Songti SC", "SimSun", "Noto Serif CJK SC", serif', null, '系统宋体更像小说正文，适合慢慢读。', 30],
+    ['jetbrains-mono', 'JetBrains Mono · 等宽风格', '"JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace', 'https://fonts.xuejourney.xin/css2?family=JetBrains+Mono:wght@400;500;600;700&xuejourney=woff2&display=swap', 'JetBrains Mono 会让对话带一点终端和手稿感。', 40],
+    ['ma-shan-zheng', 'Ma Shan Zheng · 马善政', '"Ma Shan Zheng", "STKaiti", "KaiTi", cursive', 'https://fonts.xuejourney.xin/css2?family=Ma+Shan+Zheng&xuejourney=woff2&display=swap', '马善政带着题字和手写感，适合更有江湖气的对白。', 50],
+    ['zcool-xiaowei', 'ZCOOL XiaoWei · 站酷小薇', '"ZCOOL XiaoWei", "Songti SC", "SimSun", serif', 'https://fonts.xuejourney.xin/css2?family=ZCOOL+XiaoWei&xuejourney=woff2&display=swap', '站酷小薇像旧书标题，也适合温雅一点的叙事。', 60],
+    ['zhi-mang-xing', 'Zhi Mang Xing · 志莽行', '"Zhi Mang Xing", "STKaiti", "KaiTi", cursive', 'https://fonts.xuejourney.xin/css2?family=Zhi+Mang+Xing&xuejourney=woff2&display=swap', '志莽行更潇洒，像把一句话写在风里。', 70],
+    ['zcool-qingke-huangyou', 'ZCOOL QingKe HuangYou · 站酷庆科黄油体', '"ZCOOL QingKe HuangYou", "PingFang SC", "Microsoft YaHei", sans-serif', 'https://fonts.xuejourney.xin/css2?family=ZCOOL+QingKe+HuangYou&xuejourney=woff2&display=swap', '庆科黄油体轻快醒目，适合更活泼的聊天氛围。', 80],
+    ['long-cang', 'Long Cang · 龙藏体', '"Long Cang", "STKaiti", "KaiTi", cursive', 'https://fonts.xuejourney.xin/css2?family=Long+Cang&xuejourney=woff2&display=swap', '龙藏体笔意更散，适合古风、梦境和带余韵的角色。', 90],
+  ];
+  for (const item of defaults) {
+    const [rows] = await connection.query('SELECT id FROM fonts WHERE code = ? LIMIT 1', [item[0]]);
+    if (rows.length) continue;
+    await connection.query(
+      `INSERT INTO fonts (code, name, css_stack, stylesheet_url, preview_text, status, sort_order, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'active', ?, NOW(), NOW())`,
+      item,
+    );
+  }
+}
+
 async function seedDefaults(connection, config, migratePresetModelsFromPlans) {
   const [planRows] = await connection.query('SELECT COUNT(*) AS count FROM plans');
   if (Number(planRows[0].count || 0) === 0) {
@@ -72,6 +95,8 @@ async function seedDefaults(connection, config, migratePresetModelsFromPlans) {
       console.log('[init-db]   ~ 空套餐模型配置已按当前 active provider 回填');
     }
   }
+
+  await seedDefaultFonts(connection);
 
   const presetMigration = await migratePresetModelsFromPlans(connection);
   console.log(`[init-db]   ~ 预设模型迁移完成：新增 ${presetMigration.created} 个，更新 ${presetMigration.updatedPlans} 个套餐`);

@@ -7,7 +7,8 @@
   </div>
 <% } %>
 <% const safeChatBackground = typeof escapeHtml === 'function' ? escapeHtml(conversation.background_image_path || '') : String(conversation.background_image_path || '').replace(/'/g, '%27'); %>
-<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path) { %>style="--chat-bg-image: url('<%- safeChatBackground %>');"<% } %>>
+<% const chatDisplayFontStyle = currentUser?.chat_font_css_stack ? `--chat-display-font: ${currentUser.chat_font_css_stack};` : ''; %>
+<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path || chatDisplayFontStyle) { %>style="<% if (conversation.background_image_path) { %>--chat-bg-image: url('<%- safeChatBackground %>');<% } %><% if (chatDisplayFontStyle) { %> <%= chatDisplayFontStyle %><% } %>"<% } %>>
   <div class="chat-main">
     <section class="chat-head chat-head--clean">
       <% if (conversation.avatar_image_path) { %>
@@ -19,15 +20,21 @@
         <p><%= conversation.character_summary %></p>
       </div>
       <div class="chat-head-actions">
-        <details class="more-menu chat-more-menu">
-          <summary class="inline-btn"><%= t('更多') %></summary>
-          <div class="more-menu-body">
-            <form method="POST" action="/chat/<%= conversation.id %>/delete" data-confirm-message="<%= t('确认删除这条对话吗？只有没有后续关联的对话才能删除。') %>">
-              <button class="inline-btn danger" type="submit"><%= t('删除这条对话') %></button>
-            </form>
-            <p class="mini-note"><%= t('删除只适用于没有后续关联的对话，避免误删已有内容。') %></p>
+        <button class="inline-btn chat-more-trigger" type="button" data-conversation-more-trigger aria-haspopup="dialog" aria-label="<%= t('会话操作') %>"><%= t('更多') %></button>
+        <template data-conversation-more-template>
+          <div class="conversation-actions-card" data-conversation-more-card>
+            <div class="conversation-actions-head">
+              <span><%= t('会话操作') %></span>
+              <strong><%= conversation.character_name %></strong>
+            </div>
+            <div class="conversation-actions-body">
+              <form method="POST" action="/chat/<%= conversation.id %>/delete" data-confirm-message="<%= t('确认删除这条对话吗？只有没有后续关联的对话才能删除。') %>">
+                <button class="conversation-actions-item danger" type="submit"><%= t('删除这条对话') %></button>
+              </form>
+              <p class="mini-note"><%= t('删除只适用于没有后续关联的对话，避免误删已有内容。') %></p>
+            </div>
           </div>
-        </details>
+        </template>
       </div>
     </section>
 
@@ -162,4 +169,4 @@
     </section>
   </aside>
 </div>
-<script nonce="<%= cspNonce || '' %>" src="/public/js/generated/chat.bundle.js?v=v1.4.3-20260506" defer></script>
+<script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/generated/chat.bundle.js') %>" defer></script>

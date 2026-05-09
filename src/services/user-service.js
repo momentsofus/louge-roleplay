@@ -19,11 +19,13 @@
  *   updatePasswordHash(userId, hash) 更新密码哈希
  *   updateUserReplyLengthPreference(userId, preference) 更新回复长度偏好
  *   updateUserChatVisibleMessageCount(userId, count) 更新聊天页默认渲染消息数
+ *   updateUserChatFontPreference(userId, fontId) 更新聊天页对话显示字体
  */
 
 'use strict';
 
-const { query, withTransaction, getDbType } = require('../lib/db');
+const { query, withTransaction, getDbType, waitReady } = require('../lib/db');
+const { updateUserChatFontPreference: updateUserChatFontPreferenceInFontService } = require('./font-service');
 
 const VALID_REPLY_LENGTH_PREFERENCES = new Set(['low', 'medium', 'high']);
 const DEFAULT_CHAT_VISIBLE_MESSAGE_COUNT = 8;
@@ -51,13 +53,14 @@ async function ensureUserPreferenceColumns() {
   }
 
   userPreferenceSchemaPromise = (async () => {
+    await waitReady();
     if (getDbType() === 'mysql') {
       const rows = await query(
         `SELECT COLUMN_NAME AS columnName
          FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = DATABASE()
            AND TABLE_NAME = 'users'
-           AND COLUMN_NAME IN ('reply_length_preference', 'chat_visible_message_count')`,
+           AND COLUMN_NAME IN ('reply_length_preference', 'chat_visible_message_count', 'chat_font_id')`,
       );
       const existingColumns = new Set(rows.map((row) => String(row.columnName || row.COLUMN_NAME || '')));
       if (!existingColumns.has('reply_length_preference')) {
@@ -66,6 +69,9 @@ async function ensureUserPreferenceColumns() {
       if (!existingColumns.has('chat_visible_message_count')) {
         await query('ALTER TABLE `users` ADD COLUMN `chat_visible_message_count` INT NOT NULL DEFAULT 8');
       }
+      if (!existingColumns.has('chat_font_id')) {
+        await query('ALTER TABLE `users` ADD COLUMN `chat_font_id` BIGINT NULL');
+      }
       return;
     }
 
@@ -73,6 +79,9 @@ async function ensureUserPreferenceColumns() {
       if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
     });
     await query('ALTER TABLE users ADD COLUMN chat_visible_message_count INTEGER NOT NULL DEFAULT 8').catch((error) => {
+      if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
+    });
+    await query('ALTER TABLE users ADD COLUMN chat_font_id INTEGER NULL').catch((error) => {
       if (!/duplicate column|already exists/i.test(String(error?.message || ''))) throw error;
     });
   })().catch((error) => {
@@ -228,7 +237,7 @@ async function findUserById(id) {
   const rows = await query(
     `SELECT
        id, public_id, username, nickname, email, phone, country_type,
-       email_verified, phone_verified, role, status, show_nsfw, reply_length_preference, chat_visible_message_count, created_at
+       email_verified, phone_verified, role, status, show_nsfw, reply_length_preference, chat_visible_message_count, chat_font_id, created_at
      FROM users
      WHERE id = ?
      LIMIT 1`,
@@ -247,7 +256,7 @@ async function findUserAuthById(id) {
   await ensureUserPreferenceColumns();
   const rows = await query(
     `SELECT
-       id, public_id, username, password_hash, email, phone, role, status, show_nsfw, reply_length_preference, chat_visible_message_count, created_at, updated_at
+       id, public_id, username, password_hash, email, phone, role, status, show_nsfw, reply_length_preference, chat_visible_message_count, chat_font_id, created_at, updated_at
      FROM users
      WHERE id = ?
      LIMIT 1`,
@@ -310,6 +319,10 @@ async function updateUserChatVisibleMessageCount(userId, count = DEFAULT_CHAT_VI
   );
 }
 
+async function updateUserChatFontPreference(userId, fontId) {
+  await updateUserChatFontPreferenceInFontService(userId, fontId);
+}
+
 async function unbindUserPhone(userId) {
   await query('UPDATE users SET phone = NULL, phone_verified = 0, updated_at = NOW() WHERE id = ?', [userId]);
 }
@@ -352,6 +365,7 @@ module.exports = {
   updateUserNsfwPreference,
   updateUserReplyLengthPreference,
   updateUserChatVisibleMessageCount,
+  updateUserChatFontPreference,
   ensureUserPreferenceColumns,
   normalizeReplyLengthPreference,
   normalizeChatVisibleMessageCount,

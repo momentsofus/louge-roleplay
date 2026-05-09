@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * @file scripts/build-js.js
- * @description 生成前端 JS 合并包，减少关键页面请求瀑布；当前只合并聊天页脚本。
+ * @description 生成前端 JS 合并包，减少关键页面请求瀑布；源码按页面/功能拆分，模板加载 generated bundle。
  */
 
 'use strict';
@@ -11,27 +11,44 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 
-const notificationBundleFiles = [
-  'public/js/notification/markdown-renderer.js',
-  'public/js/notification-client.js',
-];
-
-const chatBundleFiles = [
-  'public/js/chat/rich-renderer/formatting.js',
-  'public/js/chat/rich-renderer/sanitizer.js',
-  'public/js/chat/rich-renderer/folds.js',
-  'public/js/chat/rich-renderer.js',
-  'public/js/chat/dom-utils.js',
-  'public/js/chat/bubbles.js',
-  'public/js/chat/stream-client.js',
-  'public/js/chat/message-menu.js',
-  'public/js/chat/conversation-state.js',
-  'public/js/chat/streaming-ui.js',
-  'public/js/chat/compose-submit.js',
-  'public/js/chat/optimize-submit.js',
-  'public/js/chat/action-stream-submit.js',
-  'public/js/chat/history-loader.js',
-  'public/js/chat/controller.js',
+const bundleDefinitions = [
+  {
+    output: 'public/js/generated/notification.bundle.js',
+    sources: [
+      'public/js/notification/markdown-renderer.js',
+      'public/js/notification-client.js',
+    ],
+  },
+  {
+    output: 'public/js/generated/admin.bundle.js',
+    sources: [
+      'public/js/admin/model-config.js',
+      'public/js/admin/prompt-blocks.js',
+      'public/js/admin/list-filter.js',
+      'public/js/admin/quota-bars.js',
+    ],
+  },
+  {
+    output: 'public/js/generated/chat.bundle.js',
+    sources: [
+      'public/js/chat/rich-renderer/formatting.js',
+      'public/js/chat/rich-renderer/sanitizer.js',
+      'public/js/chat/rich-renderer/folds.js',
+      'public/js/chat/rich-renderer.js',
+      'public/js/chat/dom-utils.js',
+      'public/js/chat/bubbles.js',
+      'public/js/chat/stream-client.js',
+      'public/js/chat/message-menu.js',
+      'public/js/chat/conversation-more-menu.js',
+      'public/js/chat/conversation-state.js',
+      'public/js/chat/streaming-ui.js',
+      'public/js/chat/compose-submit.js',
+      'public/js/chat/optimize-submit.js',
+      'public/js/chat/action-stream-submit.js',
+      'public/js/chat/history-loader.js',
+      'public/js/chat/controller.js',
+    ],
+  },
 ];
 
 function readWorkspaceFile(relativePath) {
@@ -48,5 +65,4 @@ function buildBundle(outputRelativePath, sourceFiles) {
   console.log(`[build-js] wrote ${outputRelativePath} (${Buffer.byteLength(content)} bytes)`);
 }
 
-buildBundle('public/js/generated/notification.bundle.js', notificationBundleFiles);
-buildBundle('public/js/generated/chat.bundle.js', chatBundleFiles);
+bundleDefinitions.forEach(({ output, sources }) => buildBundle(output, sources));

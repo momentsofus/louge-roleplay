@@ -87,11 +87,7 @@
 .admin-hub-card p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 
 .admin-subnav { display: flex; flex-wrap: wrap; gap: 8px; }
-.quick-link.is-active {
-  background: var(--brand-subtle);
-  border-color: rgba(124, 107, 240, 0.2);
-  color: var(--brand-hover);
-}
+/* .quick-link.is-active visual baseline lives in 97-button-system.css. */
 
 .metrics--compact { grid-template-columns: repeat(3, 1fr); }
 .metrics {

@@ -50,16 +50,21 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/public/icons/icon-180.png" />
   <link rel="manifest" href="/public/icons/site.webmanifest" />
   <meta name="theme-color" content="#0b3f45" />
-  <link rel="preload" href="/fonts/google.css?v=latin-v2" as="style" />
-  <link rel="preload" href="/public/styles/site-pages.css?v=v1.4.3-20260506" as="style" />
-  <link rel="stylesheet" href="/fonts/google.css?v=latin-v2" />
-  <link rel="stylesheet" href="/public/styles/site-pages.css?v=v1.4.3-20260506" />
+  <link rel="preconnect" href="https://fonts.xuejourney.xin" crossorigin />
+  <link rel="preload" href="<%= assetUrl('/public/styles/site-pages.css') %>" as="style" />
+  <link rel="stylesheet" href="https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&xuejourney=woff2&display=swap" />
+  <% ((typeof fontStylesheetUrls !== 'undefined' && fontStylesheetUrls) || []).forEach((fontStylesheetUrl) => { %>
+    <% if (fontStylesheetUrl && fontStylesheetUrl !== 'https://fonts.xuejourney.xin/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&xuejourney=woff2&display=swap') { %>
+      <link rel="stylesheet" href="<%= fontStylesheetUrl %>" />
+    <% } %>
+  <% }) %>
+  <link rel="stylesheet" href="<%= assetUrl('/public/styles/site-pages.css') %>" />
   <% if (liveReloadEnabled) { %>
     <script nonce="<%= cspNonce || '' %>">
       window.LOUGE_LIVE_RELOAD = {
         enabled: true,
         endpoint: '/__live-reload/events',
-        cssVersion: 'v1.4.3-20260506',
+        cssVersion: '<%- esc(assetVersion('/public/styles/site-pages.css')) %>',
         reloadVersion: '<%- esc(liveReloadAssetVersion || '') %>'
       };
     </script>
@@ -71,15 +76,15 @@
     currentUser: currentUser ? { id: currentUser.id, username: currentUser.username, role: currentUser.role } : null,
     csrfToken: csrfToken || ''
   }) %></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/layout-bootstrap.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/i18n-runtime.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/csrf.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/form-guards.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/tag-input.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/generated/notification.bundle.js?v=v1.4.3-20260506" defer></script>
-  <script nonce="<%= cspNonce || '' %>" src="/public/js/site-message-client.js?v=v1.4.3-20260506" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/layout-bootstrap.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/i18n-runtime.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/csrf.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/form-guards.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/tag-input.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/generated/notification.bundle.js') %>" defer></script>
+  <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/site-message-client.js') %>" defer></script>
   <% if (liveReloadEnabled) { %>
-    <script nonce="<%= cspNonce || '' %>" src="/public/js/live-reload-client.js?v=<%- encodeURIComponent(liveReloadAssetVersion || '') %>" defer></script>
+    <script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/live-reload-client.js') %>" defer></script>
   <% } %>
 </head>
 <body>

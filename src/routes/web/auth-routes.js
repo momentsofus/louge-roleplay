@@ -9,12 +9,14 @@ const { registerAuthSessionRoutes } = require('./auth/session-routes');
 const { registerAuthDashboardRoutes } = require('./auth/dashboard-routes');
 const { registerAuthProfileRoutes } = require('./auth/profile-routes');
 const { registerAuthSiteMessageRoutes } = require('./auth/site-message-routes');
+const { registerAuthConversationManagementRoutes } = require('./auth/conversation-management-routes');
 
 function registerAuthRoutes(app, ctx) {
   registerAuthVerificationRoutes(app, ctx);
   registerAuthRegisterRoutes(app, ctx);
   registerAuthSessionRoutes(app, ctx);
   registerAuthDashboardRoutes(app, ctx);
+  registerAuthConversationManagementRoutes(app, ctx);
   registerAuthProfileRoutes(app, ctx);
   registerAuthSiteMessageRoutes(app, ctx);
 }

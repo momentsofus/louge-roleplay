@@ -132,3 +132,35 @@
 .dashboard-section { display: grid; gap: 16px; padding: 20px; }
 .compact-section { gap: 14px; }
 .dashboard-section-heading { align-items: flex-start; }
+
+.dashboard-heading-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  align-self: flex-start;
+  max-width: min(100%, 360px);
+}
+
+.dashboard-heading-actions > .quick-link,
+.dashboard-heading-actions > .secondary-button {
+  flex: 0 0 auto;
+}
+
+.character-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.character-actions > form {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+}
+
+.character-actions > .quick-link,
+.character-actions > form > .inline-btn {
+  flex: 0 0 auto;
+  min-width: 84px;
+  min-height: 38px;
+  padding: 8px 15px;
+}

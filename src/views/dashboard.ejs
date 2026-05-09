@@ -22,7 +22,8 @@
   const tokenQuotaTotal = hasQuota ? safeNum(quota.usage.usedTokens) + safeNum(quota.remainingTokens) : 0;
   const requestUsagePercent = requestQuotaTotal > 0 ? Math.min(100, Math.round((safeNum(quota.usage.usedRequests) / requestQuotaTotal) * 100)) : 0;
   const tokenUsagePercent = tokenQuotaTotal > 0 ? Math.min(100, Math.round((safeNum(quota.usage.usedTokens) / tokenQuotaTotal) * 100)) : 0;
-  const latestConversation = conversationList[0];
+  const recentConversations = conversationList.slice(0, 3);
+  const latestConversation = recentConversations[0];
   const accountInitial = String(user.username || 'L').slice(0, 1).toUpperCase();
   const unreadSiteMessages = Number(locals.unreadSiteMessages || 0);
 %>
@@ -41,6 +42,7 @@
         <a class="quick-link" href="/characters/public">逛公开角色</a>
         <a class="quick-link" href="/profile">个人资料</a>
         <a class="quick-link" href="/messages"><%= t('站内信') %><%= unreadSiteMessages > 0 ? `（${unreadSiteMessages}）` : '' %></a>
+        <a class="quick-link" href="/conversations"><%= t('会话管理') %></a>
       </div>
     </div>
 
@@ -105,7 +107,7 @@
     <article class="stat-card">
       <span>累计会话</span>
       <strong><%= formatNum(conversationList.length) %></strong>
-      <small><%= latestConversation ? t('最近更新：{updatedAt}', { updatedAt: latestConversation.updated_at }) : '还没有会话' %></small>
+      <small><%= latestConversation ? t('最近更新：{updatedAt}', { updatedAt: latestConversation.display_updated_at || latestConversation.updated_at }) : '还没有会话' %></small>
     </article>
     <article class="stat-card">
       <span><%= t('未读站内信') %></span>
@@ -134,11 +136,14 @@
           <div>
             <div class="section-kicker">Conversations</div>
             <h2>最近会话</h2>
-            <p>按最近更新时间展示会话，便于快速回到上一次对话。</p>
+            <p><%= t('只展示最近 3 个会话；更多对话可以进入会话管理页筛选和批量处理。') %></p>
           </div>
-          <% if (latestConversation) { %>
-            <a class="quick-link" href="/chat/<%= latestConversation.id %>"><%= t('继续最新会话') %></a>
-          <% } %>
+          <div class="dashboard-actions-row dashboard-heading-actions">
+            <% if (latestConversation) { %>
+              <a class="quick-link" href="/chat/<%= latestConversation.id %>"><%= t('继续最新会话') %></a>
+            <% } %>
+            <a class="secondary-button" href="/conversations"><%= t('管理全部会话') %></a>
+          </div>
         </div>
 
         <% if (conversationList.length === 0) { %>
@@ -151,7 +156,7 @@
           </div>
         <% } else { %>
           <div class="conversation-timeline">
-            <% conversationList.forEach((conversation, index) => { %>
+            <% recentConversations.forEach((conversation, index) => { %>
               <article class="timeline-item <%= index === 0 ? 'is-latest' : '' %>">
                 <div class="timeline-dot" aria-hidden="true"></div>
                 <div class="timeline-card">
@@ -163,13 +168,11 @@
                     <span class="meta-pill"><%= index === 0 ? '最新' : t('对话 #{id}', { id: conversation.id }) %></span>
                   </div>
                   <div class="dashboard-item-meta">
-                    <span><%= t('最近更新：{updatedAt}', { updatedAt: conversation.updated_at }) %></span>
+                    <span><%= t('最近更新：{updatedAt}', { updatedAt: conversation.display_updated_at || conversation.updated_at }) %></span>
                   </div>
                   <div class="dashboard-actions-row">
                     <a class="quick-link" href="/chat/<%= conversation.id %>"><%= t('进入对话') %></a>
-                    <form method="POST" action="/chat/<%= conversation.id %>/delete" data-confirm-message="<%= t('确认删除这条对话吗？只有没有后续关联的对话才能删除。') %>">
-                      <button class="inline-btn is-danger" type="submit">删除对话</button>
-                    </form>
+                    <a class="secondary-button" href="/conversations?status=active&q=<%= encodeURIComponent(conversation.title || '') %>"><%= t('管理') %></a>
                   </div>
                 </div>
               </article>
@@ -327,6 +330,7 @@
             <a class="shortcut-row" href="/chat/<%= latestConversation.id %>"><span>↗</span><strong><%= t('继续最新会话') %></strong></a>
           <% } %>
           <a class="shortcut-row" href="/profile"><span>◎</span><strong>完善个人资料</strong></a>
+          <a class="shortcut-row" href="/conversations"><span>☰</span><strong><%= t('管理全部会话') %></strong></a>
           <% if (isAdmin) { %>
             <a class="shortcut-row" href="/admin"><span>⚙</span><strong>去管理后台</strong></a>
           <% } %>
@@ -336,4 +340,4 @@
     </aside>
   </section>
 </div>
-<script nonce="<%= cspNonce || '' %>" src="/public/js/quota-bars.js?v=v1.4.3-20260506"></script>
+<script nonce="<%= cspNonce || '' %>" src="<%= assetUrl('/public/js/quota-bars.js') %>"></script>

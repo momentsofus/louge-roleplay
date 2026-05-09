@@ -1,0 +1,319 @@
+/* @file public/styles/site-pages/97-button-system.css
+   @description 全站共用按钮系统：统一 button、anchor 按钮和旧按钮类的视觉基线。 */
+
+/*
+ * Button normalization lives late in the CSS import order so old page-level
+ * declarations cannot make adjacent <a> / <button> controls look different.
+ */
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+) {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 15px;
+  border: 1px solid var(--button-border, var(--border-strong));
+  border-radius: var(--radius-full);
+  background: var(--button-bg, rgba(255, 255, 255, 0.035));
+  color: var(--button-color, var(--text-soft));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-shadow: none;
+  filter: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+)::before {
+  display: none;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+):hover {
+  border-color: var(--button-hover-border, var(--border-hover));
+  background: var(--button-hover-bg, rgba(255, 255, 255, 0.06));
+  color: var(--button-hover-color, var(--text));
+  transform: translateY(-1px);
+  box-shadow: none;
+  filter: none;
+  text-decoration: none;
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+):active {
+  transform: translateY(0);
+}
+
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+):disabled,
+:where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+)[disabled],
+.quick-link.is-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:where(button, .submit-btn, .btn-brand, .feedback-submit-btn, .inline-btn.primary, .quick-link.is-active, .nav-support-button) {
+  --button-border: var(--border-strong);
+  --button-bg: rgba(255, 255, 255, 0.035);
+  --button-color: var(--text-soft);
+  --button-hover-border: var(--border-hover);
+  --button-hover-bg: rgba(255, 255, 255, 0.06);
+  --button-hover-color: var(--text);
+}
+
+:where(.secondary-button, .quick-link, .inline-btn, .ghost-btn, .ghost-button, .btn-soft, .btn-ghost, .order-button, .nav-link-button) {
+  --button-border: var(--border-strong);
+  --button-bg: rgba(255, 255, 255, 0.035);
+  --button-color: var(--text-soft);
+}
+
+:where(.inline-btn.danger, .danger-btn, .inline-btn.is-danger, .danger-button, .text-danger-btn, .btn-danger) {
+  --button-border: rgba(239, 96, 96, 0.24);
+  --button-bg: rgba(239, 96, 96, 0.10);
+  --button-color: #fca5a5;
+  --button-hover-border: rgba(239, 96, 96, 0.34);
+  --button-hover-bg: rgba(239, 96, 96, 0.15);
+  --button-hover-color: #fecaca;
+}
+
+:where(.button-sm, .danger-button--small, .order-button) {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-size: 12px;
+}
+
+:is(.submit-btn, .btn-brand, .feedback-submit-btn, .inline-btn.primary, .quick-link.is-active, .nav-support-button) {
+  --button-border: var(--border-strong);
+  --button-bg: rgba(255, 255, 255, 0.035);
+  --button-color: var(--text-soft);
+  --button-hover-border: var(--border-hover);
+  --button-hover-bg: rgba(255, 255, 255, 0.06);
+  --button-hover-color: var(--text);
+}
+
+/*
+ * Specificity bridge: legacy element-level button styles in 00-core.css used
+ * `button { ... }`, so zero-specificity :where(...) rules above cannot fully
+ * restyle real <button class="inline-btn"> controls. Keep this late class rule
+ * focused on named button primitives so pseudo-element controls such as chat
+ * message action triggers are not accidentally reset.
+ */
+:is(
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+) {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 15px;
+  border: 1px solid var(--button-border, var(--border-strong));
+  border-radius: var(--radius-full);
+  background: var(--button-bg, rgba(255, 255, 255, 0.035));
+  color: var(--button-color, var(--text-soft));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-shadow: none;
+  filter: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+:is(
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .ghost-btn,
+  .ghost-button,
+  .btn-soft,
+  .btn-ghost,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button,
+  .nav-support-button,
+  .nav-link-button
+):hover {
+  border-color: var(--button-hover-border, var(--border-hover));
+  background: var(--button-hover-bg, rgba(255, 255, 255, 0.06));
+  color: var(--button-hover-color, var(--text));
+  transform: translateY(-1px);
+  box-shadow: none;
+  filter: none;
+  text-decoration: none;
+}
+
+:is(
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+):disabled,
+:is(
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .order-button
+)[disabled],
+.quick-link.is-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:where(.toolbar-row, .dashboard-actions, .dashboard-actions-row, .admin-log-filter-actions, .conversation-bulk-actions) > :where(
+  button,
+  .submit-btn,
+  .btn-brand,
+  .feedback-submit-btn,
+  .inline-btn,
+  .quick-link,
+  .secondary-button,
+  .danger-button,
+  .text-danger-btn,
+  .order-button
+) {
+  align-self: center;
+}

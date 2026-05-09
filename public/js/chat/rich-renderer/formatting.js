@@ -180,6 +180,7 @@
       const line = lines[i];
       const trimmed = String(line || '').trim();
 
+      if (/^__FOLD_BLOCK_\d+__$/.test(trimmed)) continue;
       if (isBlank(line)) { flushParagraph(); continue; }
       if (isFencePlaceholder(trimmed)) { flushParagraph(); parts.push(trimmed); continue; }
       if (isHr(line)) { flushParagraph(); parts.push('<hr>'); continue; }

@@ -1,0 +1,20 @@
+<section class="dashboard-hero-card conversation-manager-hero">
+  <div class="dashboard-welcome">
+    <div class="section-kicker">Conversations</div>
+    <h1><%= t('会话管理') %></h1>
+    <p><%= t('集中查看全部对话，按关键词、角色或状态筛选，也可以批量归档、恢复或删除。') %></p>
+    <div class="dashboard-actions">
+      <a class="quick-link" href="/dashboard"><%= t('返回控制台') %></a>
+      <a class="quick-link" href="/characters/public">浏览公开角色</a>
+      <a class="quick-link" href="/characters/new">创建新角色</a>
+    </div>
+  </div>
+  <aside class="dashboard-account-card conversation-manager-summary">
+    <div class="dashboard-account-pills">
+      <em class="status-pill status-pill--ok"><%= t('进行中') %> <%= formatConversationCount(stats.activeConversations || 0) %></em>
+      <em class="status-pill status-pill--muted"><%= t('已归档') %> <%= formatConversationCount(stats.archivedConversations || 0) %></em>
+    </div>
+    <strong><%= formatConversationCount(stats.totalConversations || result.total || 0) %></strong>
+    <span><%= t('全部会话记录') %></span>
+  </aside>
+</section>

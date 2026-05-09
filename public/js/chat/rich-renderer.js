@@ -33,6 +33,8 @@
     const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
     const root = doc.body.firstElementChild || doc.body;
     ns.sanitizeNodeTree(root, scopeSelector);
+    ns.applyChatRichSemanticClasses(root);
+    ns.removeFoldPlaceholdersInNodeTree(root);
     ns.highlightQuotesInNodeTree(root);
 
     const wrapper = document.createElement('div');
