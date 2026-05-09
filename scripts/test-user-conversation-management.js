@@ -8,6 +8,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const ejs = require('ejs');
+const { assetUrl } = require('../src/server-helpers/assets');
 const { query } = require('../src/lib/db');
 const {
   createConversation,
@@ -64,6 +65,7 @@ async function main() {
       locals: { viewModel: { formatNumber: (value) => Number(value || 0).toLocaleString('zh-CN') } },
       viewModel: { formatNumber: (value) => Number(value || 0).toLocaleString('zh-CN') },
       cspNonce: 'test-nonce',
+      assetUrl,
       t,
       buildPageUrl: (targetPage) => `/conversations?q=管理测试&page=${targetPage}&pageSize=2`,
     });
