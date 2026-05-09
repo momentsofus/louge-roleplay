@@ -2,7 +2,7 @@
      @description 单条聊天消息局部模板。调用说明：聊天页首屏和 /messages/history、流式 done 包都会用它渲染消息 HTML。
 -->
 <article class="bubble bubble-<%= message.sender_type === 'system' ? 'system' : message.sender_type %>" data-message-id="<%= message.id %>">
-  <button class="message-action-trigger" type="button" data-message-actions-trigger aria-label="<%= t('消息操作') %>"><span aria-hidden="true"></span></button>
+  <button class="message-action-trigger" type="button" data-message-actions-trigger aria-label="<%= t('消息操作') %>"><span aria-hidden="true">⋯</span></button>
   <div class="bubble-header">
     <span class="bubble-role">
       <%= message.sender_type === 'user' ? t('你') : (message.sender_type === 'character' ? conversation.character_name : t('系统')) %>

@@ -4848,10 +4848,9 @@ textarea, .bubble-rich, .rich-preview {
   overflow: hidden;
 }
 
-.message-action-trigger::before,
-.message-action-trigger span::before {
-  content: '⋯';
-  display: block;
+.message-action-trigger span {
+  display: grid;
+  place-items: center;
   color: currentColor;
   font-size: 18px;
   font-weight: 800;
@@ -4860,11 +4859,18 @@ textarea, .bubble-rich, .rich-preview {
   transform: translateY(-1px);
 }
 
-.message-action-trigger span {
-  display: grid;
-  place-items: center;
+.bubble-user .message-action-trigger {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff7e8;
 }
 
+.bubble-character .message-action-trigger,
+.bubble-system .message-action-trigger {
+  color: var(--text-secondary);
+}
+
+.message-action-trigger::before,
 .message-action-trigger span::before {
   content: none;
 }
