@@ -10,7 +10,7 @@
  * 4. 聊天页优先读取当前显示链；完整消息列表只保留给独立对话复制/诊断脚本。
  */
 
-const { query } = require('../lib/db');
+const { query, withTransaction } = require('../lib/db');
 const { getActiveSubscriptionForUser, getSubscriptionModelConfig } = require('./plan-service');
 const {
   buildPathMessages,
@@ -197,6 +197,79 @@ async function addMessage(options) {
   return result.insertId;
 }
 
+
+async function addMessagesAtomically(conversationId, messages) {
+  const normalizedConversationId = Number(conversationId || 0);
+  const items = Array.isArray(messages) ? messages : [];
+  if (!normalizedConversationId || !items.length) {
+    return [];
+  }
+
+  const insertedIds = await withTransaction(async (conn) => {
+    const [seqRows] = await conn.execute(
+      'SELECT COALESCE(MAX(sequence_no), 0) AS maxSeq FROM messages WHERE conversation_id = ?',
+      [normalizedConversationId],
+    );
+    let nextSequence = Number(seqRows[0]?.maxSeq || 0);
+    const ids = [];
+
+    for (const item of items) {
+      nextSequence += 1;
+      const parentMessageId = item.parentMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.parentMessageId || null;
+      const branchFromMessageId = item.branchFromMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.branchFromMessageId || null;
+      const editedFromMessageId = item.editedFromMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.editedFromMessageId || null;
+
+      const [result] = await conn.execute(
+        `INSERT INTO messages (
+          conversation_id,
+          sender_type,
+          content,
+          sequence_no,
+          status,
+          created_at,
+          parent_message_id,
+          branch_from_message_id,
+          edited_from_message_id,
+          prompt_kind,
+          metadata_json
+        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
+        [
+          normalizedConversationId,
+          item.senderType,
+          item.content,
+          nextSequence,
+          item.status || 'success',
+          parentMessageId,
+          branchFromMessageId,
+          editedFromMessageId,
+          normalizeMessagePromptKind(item.promptKind),
+          item.metadataJson || null,
+        ],
+      );
+      ids.push(Number(result.insertId));
+    }
+
+    const leafId = ids[ids.length - 1] || null;
+    await conn.execute(
+      `UPDATE conversations
+       SET current_message_id = ?, updated_at = NOW(), last_message_at = NOW()
+       WHERE id = ?`,
+      [leafId, normalizedConversationId],
+    );
+
+    return ids;
+  });
+
+  await invalidateConversationCache(normalizedConversationId);
+  return insertedIds;
+}
+
 async function setConversationCurrentMessage(conversationId, messageId) {
   await query(
     `UPDATE conversations
@@ -368,6 +441,7 @@ module.exports = {
   getLatestMessage,
   getConversationMessageCount,
   addMessage,
+  addMessagesAtomically,
   setConversationCurrentMessage,
   createEditedMessageVariant,
   buildPathMessages,

@@ -7,7 +7,7 @@ function registerChatEditRoutes(app, ctx) {
   const {
     requireAuth,
     getMessageById,
-    addMessage,
+    addMessagesAtomically,
     createEditedMessageVariant,
     fetchPathMessages,
     deleteMessageSafely,
@@ -101,21 +101,6 @@ function registerChatEditRoutes(app, ctx) {
         ? await fetchPathMessages(conversationId, targetMessage.parent_message_id)
         : [];
 
-      const newUserMessageId = await addMessage({
-        conversationId,
-        senderType: 'user',
-        content,
-        parentMessageId: targetMessage.parent_message_id || null,
-        branchFromMessageId: targetMessage.id,
-        editedFromMessageId: targetMessage.id,
-        promptKind: 'edit',
-        metadataJson: JSON.stringify({
-          requestId: req.requestId,
-          operation: 'user-edit-resend',
-          sourceMessageId: messageId,
-        }),
-      });
-
       const reply = await generateReplyViaGateway({
         requestId: req.requestId,
         userId: req.session.user.id,
@@ -134,21 +119,36 @@ function registerChatEditRoutes(app, ctx) {
         user: req.session.user,
       });
 
-      const replyMessageId = await addMessage({
-        conversationId,
-        senderType: 'character',
-        content: reply,
-        parentMessageId: newUserMessageId,
-        branchFromMessageId: newUserMessageId,
-        promptKind: 'edit',
-        metadataJson: JSON.stringify({
-          requestId: req.requestId,
-          operation: 'assistant-reply-from-user-edit',
-          sourceMessageId: messageId,
-        }),
-      });
+      const [newUserMessageId, replyMessageId] = await addMessagesAtomically(conversationId, [
+        {
+          senderType: 'user',
+          content,
+          parentMessageId: targetMessage.parent_message_id || null,
+          branchFromMessageId: targetMessage.id,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'user-edit-resend',
+            sourceMessageId: messageId,
+          }),
+        },
+        {
+          senderType: 'character',
+          content: reply,
+          parentMessageId: '__previous__',
+          branchFromMessageId: '__previous__',
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'assistant-reply-from-user-edit',
+            sourceMessageId: messageId,
+            sourceUserMessageId: targetMessage.id,
+          }),
+        },
+      ]);
 
-      return res.redirect(`/chat/${conversationId}?leaf=${replyMessageId}`);
+      return res.redirect(`/chat/${conversationId}?leaf=${replyMessageId || newUserMessageId}`);
     } catch (error) {
       next(error);
     }

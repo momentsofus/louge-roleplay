@@ -10,6 +10,7 @@ const { query } = require('../src/lib/db');
 const {
   createConversation,
   addMessage,
+  addMessagesAtomically,
   cloneConversationBranch,
   getConversationById,
   getConversationMessageCount,
@@ -52,6 +53,29 @@ async function main() {
       parentMessageId: firstUserMessageId,
       promptKind: 'normal',
     });
+    const [editedUserMessageId, editedReplyMessageId] = await addMessagesAtomically(sourceConversationId, [
+      {
+        senderType: 'user',
+        content: 'edited hello',
+        parentMessageId: null,
+        branchFromMessageId: firstUserMessageId,
+        editedFromMessageId: firstUserMessageId,
+        promptKind: 'edit',
+      },
+      {
+        senderType: 'character',
+        content: 'edited hi',
+        parentMessageId: '__previous__',
+        branchFromMessageId: '__previous__',
+        promptKind: 'edit',
+      },
+    ]);
+    assert.ok(editedUserMessageId > firstReplyMessageId, 'atomic edit should insert edited user message');
+    assert.ok(editedReplyMessageId > editedUserMessageId, 'atomic edit should insert edited reply message');
+    const atomicEditConversation = await getConversationById(sourceConversationId, userId);
+    assert.equal(Number(atomicEditConversation.current_message_id), Number(editedReplyMessageId), 'atomic edit should move current leaf to generated reply');
+    const atomicEditPath = await fetchPathMessages(sourceConversationId, editedReplyMessageId);
+    assert.deepEqual(atomicEditPath.map((message) => message.content), ['edited hello', 'edited hi'], 'atomic edit path should chain edited input to generated reply');
     let oldLeafMessageId = firstReplyMessageId;
 
     const cloneResult = await cloneConversationBranch({
