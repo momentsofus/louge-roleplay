@@ -39,7 +39,7 @@
           <details class="message-menu-details">
             <summary class="message-menu-item"><%= t('修改并重发') %></summary>
             <div class="message-menu-editor">
-              <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
+              <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user" data-stream-endpoint="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user/stream" data-stream-mode="edit-user" data-stream-role-label="<%= conversation.character_name %>" data-stream-kind-label="<%= t('重新生成中…') %>" data-stream-sender-class="character">
                 <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
                 <button class="inline-btn primary" type="submit"><%= t('重新生成回复') %></button>
               </form>

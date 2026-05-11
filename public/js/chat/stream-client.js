@@ -104,7 +104,7 @@
           fullText = String(packet.full || fullText || '');
           finalMessageId = String(packet.messageId || packet.leafId || packet.replyMessageId || '');
           if (request.streamBubble) {
-            if (packet.parentMessageId && ['message', 'regenerate', 'replay'].includes(String(packet.mode || ''))) {
+            if (packet.parentMessageId && ['message', 'regenerate', 'replay', 'edit-user'].includes(String(packet.mode || ''))) {
               settings.removeStaleLinearTail(packet.parentMessageId);
             }
             if (packet.parentHtml) {

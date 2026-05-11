@@ -453,6 +453,7 @@ const EN_MESSAGES = {
   "润色结果": "Polished result",
   "选择不同回应风格。真实模型 ID 不会展示在前台。": "Choose a response style. The real model ID is not shown here.",
   "重写中…": "Rewriting…",
+  "修改后": "Edited",
   "已生成新的结果，旧内容已保留。": "New result generated. The old content is kept.",
   "已显示新的结果，旧内容已保留。": "Showing the new result. The old content is kept.",
   "已显示新的结果。": "Showing the new result.",

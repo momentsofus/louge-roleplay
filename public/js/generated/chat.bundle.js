@@ -1090,7 +1090,7 @@
           fullText = String(packet.full || fullText || '');
           finalMessageId = String(packet.messageId || packet.leafId || packet.replyMessageId || '');
           if (request.streamBubble) {
-            if (packet.parentMessageId && ['message', 'regenerate', 'replay'].includes(String(packet.mode || ''))) {
+            if (packet.parentMessageId && ['message', 'regenerate', 'replay', 'edit-user'].includes(String(packet.mode || ''))) {
               settings.removeStaleLinearTail(packet.parentMessageId);
             }
             if (packet.parentHtml) {
@@ -1995,14 +1995,17 @@
       const senderClass = String(actionForm.dataset.streamSenderClass || 'character').trim() || 'character';
       const previewContent = String(actionForm.dataset.streamPreviewContent || '').trim();
       const payload = new FormData(actionForm);
+      const editUserContent = mode === 'edit-user'
+        ? String((payload.get('content') || '')).trim()
+        : '';
       closeMessageMenus();
       const abortController = (typeof AbortController === 'function') ? new AbortController() : null;
 
       let streamBubble = null;
-      if (mode === 'replay') {
-        const pair = appendStreamingPair(previewContent, {
+      if (mode === 'replay' || mode === 'edit-user') {
+        const pair = appendStreamingPair(mode === 'edit-user' ? editUserContent : previewContent, {
           userLabel: t('你'),
-          userKind: '',
+          userKind: mode === 'edit-user' ? t('修改后') : '',
           aiLabel: roleLabel,
           aiKind: kindLabel,
           userSenderClass: 'user',
@@ -2015,7 +2018,7 @@
 
       if (submitButton) {
         submitButton.disabled = true;
-        submitButton.textContent = mode === 'replay' ? t('重写中…') : t('生成中…');
+        submitButton.textContent = (mode === 'replay' || mode === 'edit-user') ? t('重写中…') : t('生成中…');
       }
 
       try {
@@ -2030,7 +2033,7 @@
 
         if (result.finalMessageId) {
           updateCurrentMessageState(result.finalMessageId);
-          if (mode === 'replay') {
+          if (mode === 'replay' || mode === 'edit-user') {
             showToast(t('已生成新的结果，旧内容已保留。'));
             reloadToMessage(result.finalMessageId, 'updated');
           } else if (mode === 'regenerate') {
