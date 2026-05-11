@@ -97,7 +97,7 @@
       <% }) %>
       <button type="button" class="nav-support-button" data-open-support><%= t('联系客服') %></button>
       <% if (currentUser) { %>
-        <form method="POST" action="/logout" class="inline-form nav-logout-form"><input type="hidden" name="_csrf" value="<%= csrfToken || '' %>" /><button type="submit" class="nav-link-button"><%= t('退出（{username}）', { username: currentUser.username }) %></button></form>
+        <form method="POST" action="/logout" class="inline-form nav-logout-form" data-confirm-message="<%= t('确认退出登录吗？') %>"><input type="hidden" name="_csrf" value="<%= csrfToken || '' %>" /><button type="submit" class="nav-link-button"><%= t('退出（{username}）', { username: currentUser.username }) %></button></form>
       <% } %>
       <span class="nav-locale-switch">
         <span><%= t('语言') %>:</span>

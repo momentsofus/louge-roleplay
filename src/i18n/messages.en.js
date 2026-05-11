@@ -9,6 +9,7 @@ const EN_MESSAGES = {
   "管理后台": "Admin",
   "创建角色": "Create Character",
   "退出（{username}）": "Sign out ({username})",
+  "确认退出登录吗？": "Are you sure you want to sign out?",
   "登录": "Sign in",
   "注册": "Sign up",
   "中文": "中文",
