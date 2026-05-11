@@ -57,20 +57,27 @@ function buildPathMessages(allMessages, leafMessageId) {
   return path.reverse();
 }
 
-function decoratePathMessages(pathMessages) {
+function decoratePathMessages(pathMessages, options = {}) {
+  const siblingGroups = options.siblingGroups instanceof Map ? options.siblingGroups : new Map();
+  const childGroups = options.childGroups instanceof Map ? options.childGroups : new Map();
   return pathMessages.map((message, index, messages) => {
     const parentMessage = index > 0 ? messages[index - 1] : null;
     const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+    const siblingKey = message.parent_message_id ? String(message.parent_message_id) : '__root__';
+    const siblingVariants = siblingGroups.get(siblingKey) || [];
+    const nextChoices = childGroups.get(String(message.id)) || [];
+    const currentNextMessageId = nextMessage ? Number(nextMessage.id) : null;
     return {
       ...message,
       depth: index,
       visibleContent: stripThinkTags(message.content),
       parentUserPreviewContent: parentMessage && parentMessage.sender_type === 'user' ? parentMessage.content : '',
       hasVisibleContinuation: Boolean(nextMessage),
-      siblingVariants: [],
-      nextChoices: [],
-      siblingCount: 0,
-      childCount: 0,
+      siblingVariants,
+      nextChoices,
+      currentNextMessageId,
+      siblingCount: siblingVariants.length,
+      childCount: nextChoices.length,
     };
   });
 }

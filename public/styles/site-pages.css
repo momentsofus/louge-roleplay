@@ -5062,6 +5062,112 @@ body.has-conversation-actions-modal {
 }
 
 /* --- end site-pages/54-message-action-modal.css --- */
+/* --- begin site-pages/55-chat-branch-switcher.css --- */
+/* @file public/styles/site-pages/55-chat-branch-switcher.css
+   @description 聊天消息分支切换小控件：轻量 chip，不打断气泡阅读。 */
+
+.branch-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.branch-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin: -2px 0 8px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text-tertiary);
+  vertical-align: middle;
+}
+
+.branch-switcher-chip {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  text-decoration: none;
+  background: transparent;
+  transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+
+.branch-switcher-chip:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.branch-switcher-chip.is-active {
+  color: #fff7e8;
+  border-color: rgba(196, 181, 253, 0.34);
+  background: linear-gradient(135deg, rgba(124, 107, 240, 0.55), rgba(96, 165, 250, 0.34));
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.14);
+}
+
+.branch-switcher-chip--next {
+  padding-inline: 7px;
+}
+
+.branch-switcher-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.bubble-user .branch-chip,
+.bubble-user .branch-switcher {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 247, 232, 0.78);
+}
+
+.bubble-user .branch-switcher-chip {
+  color: rgba(255, 247, 232, 0.78);
+}
+
+.bubble-user .branch-switcher-chip:hover,
+.bubble-user .branch-switcher-chip.is-active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 640px) {
+  .branch-switcher {
+    margin-bottom: 6px;
+    gap: 3px;
+  }
+
+  .branch-switcher-chip {
+    min-width: 19px;
+    height: 19px;
+    padding-inline: 5px;
+  }
+}
+
+/* --- end site-pages/55-chat-branch-switcher.css --- */
 /* --- begin site-pages/60-auth.css --- */
 /* Auth (login) page */
 

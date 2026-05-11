@@ -15,6 +15,9 @@ const {
   getConversationById,
   getConversationMessageCount,
   fetchPathMessages,
+  buildConversationPathView,
+  resolveConversationLeafId,
+  deleteMessageSafely,
 } = require('../src/services/conversation-service');
 const { buildChatRequestContext, renderChatPage } = require('../src/server-helpers/chat-view');
 
@@ -76,6 +79,59 @@ async function main() {
     assert.equal(Number(atomicEditConversation.current_message_id), Number(editedReplyMessageId), 'atomic edit should move current leaf to generated reply');
     const atomicEditPath = await fetchPathMessages(sourceConversationId, editedReplyMessageId);
     assert.deepEqual(atomicEditPath.map((message) => message.content), ['edited hello', 'edited hi'], 'atomic edit path should chain edited input to generated reply');
+
+    const branchView = await buildConversationPathView(sourceConversationId, editedReplyMessageId);
+    const rootBranchMessage = branchView.pathMessages.find((message) => Number(message.id) === Number(editedUserMessageId));
+    assert.equal(rootBranchMessage.siblingCount, 2, 'edited user variant should expose root sibling branches');
+    assert.deepEqual(rootBranchMessage.siblingVariants.map((variant) => variant.id), [firstUserMessageId, editedUserMessageId], 'sibling branch choices should preserve creation order');
+    assert.equal(await resolveConversationLeafId(sourceConversationId, firstUserMessageId), firstReplyMessageId, 'switching to an old branch should resolve to its latest descendant leaf');
+
+    const deleteBranchConversationId = await createConversation(userId, characterId, {
+      title: 'delete branch fallback conversation',
+      selectedModelMode: 'standard',
+    });
+    conversationIds.push(deleteBranchConversationId);
+    const deleteRootMessageId = await addMessage({
+      conversationId: deleteBranchConversationId,
+      senderType: 'user',
+      content: 'delete branch root',
+      promptKind: 'normal',
+    });
+    const deleteFirstReplyId = await addMessage({
+      conversationId: deleteBranchConversationId,
+      senderType: 'character',
+      content: 'delete first reply',
+      parentMessageId: deleteRootMessageId,
+      promptKind: 'normal',
+    });
+    const deleteSecondReplyId = await addMessage({
+      conversationId: deleteBranchConversationId,
+      senderType: 'character',
+      content: 'delete second reply',
+      parentMessageId: deleteRootMessageId,
+      branchFromMessageId: deleteFirstReplyId,
+      editedFromMessageId: deleteFirstReplyId,
+      promptKind: 'regenerate',
+    });
+    const deleteFirstReplyChildId = await addMessage({
+      conversationId: deleteBranchConversationId,
+      senderType: 'user',
+      content: 'continue first branch',
+      parentMessageId: deleteFirstReplyId,
+      promptKind: 'normal',
+    });
+    const deleteFirstReplyLeafId = await addMessage({
+      conversationId: deleteBranchConversationId,
+      senderType: 'character',
+      content: 'continued first branch reply',
+      parentMessageId: deleteFirstReplyChildId,
+      promptKind: 'normal',
+    });
+    const deleteResult = await deleteMessageSafely(deleteBranchConversationId, deleteSecondReplyId, userId);
+    assert.equal(Number(deleteResult.fallbackMessageId), Number(deleteFirstReplyLeafId), 'deleting active branch leaf should fall back to sibling branch leaf before parent');
+    const deleteFallbackConversation = await getConversationById(deleteBranchConversationId, userId);
+    assert.equal(Number(deleteFallbackConversation.current_message_id), Number(deleteFirstReplyLeafId), 'conversation current leaf should switch to sibling branch leaf after deleting current branch');
+
     let oldLeafMessageId = firstReplyMessageId;
 
     const cloneResult = await cloneConversationBranch({

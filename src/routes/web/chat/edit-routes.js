@@ -19,7 +19,8 @@ function registerChatEditRoutes(app, ctx) {
     createNdjsonResponder,
     streamChatReplyToNdjson,
     buildConversationCharacterPayload,
-    buildChatMessagePacket
+    buildChatMessagePacket,
+    setConversationCurrentMessage
   } = ctx;
 
   app.post('/chat/:conversationId/messages/:messageId/delete', requireAuth, async (req, res, next) => {
@@ -34,6 +35,9 @@ function registerChatEditRoutes(app, ctx) {
       try {
         const result = await deleteMessageSafely(conversationId, messageId, req.session.user.id);
         const nextLeaf = result.fallbackMessageId || '';
+        if (nextLeaf) {
+          await setConversationCurrentMessage(conversationId, nextLeaf);
+        }
         return res.redirect(nextLeaf ? `/chat/${conversationId}?leaf=${nextLeaf}` : `/chat/${conversationId}`);
       } catch (error) {
         if (error.code === 'MESSAGE_NOT_FOUND') {
@@ -77,6 +81,7 @@ function registerChatEditRoutes(app, ctx) {
       }
 
       const variantMessageId = await createEditedMessageVariant(conversationId, messageId, content);
+      await setConversationCurrentMessage(conversationId, variantMessageId);
       return res.redirect(`/chat/${conversationId}?leaf=${variantMessageId}`);
     } catch (error) {
       next(error);
