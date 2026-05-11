@@ -10,6 +10,7 @@ function registerChatToolRoutes(app, ctx) {
     getMessageById,
     getLatestMessage,
     fetchPathMessages,
+    resolveConversationLeafId,
     cloneConversationBranch,
     optimizeUserInputViaGateway,
     getChatModelSelector,
@@ -143,6 +144,26 @@ function registerChatToolRoutes(app, ctx) {
         draftContent: content,
         optimizedContent,
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/chat/:conversationId/switch/:messageId', requireAuth, async (req, res, next) => {
+    try {
+      const conversationId = parseIdParam(req.params.conversationId, '会话 ID');
+      const messageId = parseIdParam(req.params.messageId, '消息 ID');
+      const conversation = await loadConversationForUserOrFail(req, res, conversationId);
+      if (!conversation) {
+        return;
+      }
+
+      const leafId = await resolveConversationLeafId(conversationId, messageId);
+      if (!leafId) {
+        return renderPage(res, 'message', { title: '提示', message: '找不到要切换的分支。' });
+      }
+      await ctx.setConversationCurrentMessage(conversationId, leafId);
+      return res.redirect(`/chat/${conversationId}?leaf=${leafId}&notice=updated`);
     } catch (error) {
       next(error);
     }

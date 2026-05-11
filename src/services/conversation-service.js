@@ -10,11 +10,12 @@
  * 4. 聊天页优先读取当前显示链；完整消息列表只保留给独立对话复制/诊断脚本。
  */
 
-const { query } = require('../lib/db');
+const { query, withTransaction } = require('../lib/db');
 const { getActiveSubscriptionForUser, getSubscriptionModelConfig } = require('./plan-service');
 const {
   buildPathMessages,
   decoratePathMessages,
+  shortText,
 } = require('./conversation/message-view');
 const { fetchPathMessages } = require('./conversation/path-repository');
 const { normalizeMessagePromptKind } = require('./conversation/validators');
@@ -197,6 +198,79 @@ async function addMessage(options) {
   return result.insertId;
 }
 
+
+async function addMessagesAtomically(conversationId, messages) {
+  const normalizedConversationId = Number(conversationId || 0);
+  const items = Array.isArray(messages) ? messages : [];
+  if (!normalizedConversationId || !items.length) {
+    return [];
+  }
+
+  const insertedIds = await withTransaction(async (conn) => {
+    const [seqRows] = await conn.execute(
+      'SELECT COALESCE(MAX(sequence_no), 0) AS maxSeq FROM messages WHERE conversation_id = ?',
+      [normalizedConversationId],
+    );
+    let nextSequence = Number(seqRows[0]?.maxSeq || 0);
+    const ids = [];
+
+    for (const item of items) {
+      nextSequence += 1;
+      const parentMessageId = item.parentMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.parentMessageId || null;
+      const branchFromMessageId = item.branchFromMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.branchFromMessageId || null;
+      const editedFromMessageId = item.editedFromMessageId === '__previous__'
+        ? ids[ids.length - 1] || null
+        : item.editedFromMessageId || null;
+
+      const [result] = await conn.execute(
+        `INSERT INTO messages (
+          conversation_id,
+          sender_type,
+          content,
+          sequence_no,
+          status,
+          created_at,
+          parent_message_id,
+          branch_from_message_id,
+          edited_from_message_id,
+          prompt_kind,
+          metadata_json
+        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
+        [
+          normalizedConversationId,
+          item.senderType,
+          item.content,
+          nextSequence,
+          item.status || 'success',
+          parentMessageId,
+          branchFromMessageId,
+          editedFromMessageId,
+          normalizeMessagePromptKind(item.promptKind),
+          item.metadataJson || null,
+        ],
+      );
+      ids.push(Number(result.insertId));
+    }
+
+    const leafId = ids[ids.length - 1] || null;
+    await conn.execute(
+      `UPDATE conversations
+       SET current_message_id = ?, updated_at = NOW(), last_message_at = NOW()
+       WHERE id = ?`,
+      [leafId, normalizedConversationId],
+    );
+
+    return ids;
+  });
+
+  await invalidateConversationCache(normalizedConversationId);
+  return insertedIds;
+}
+
 async function setConversationCurrentMessage(conversationId, messageId) {
   await query(
     `UPDATE conversations
@@ -227,9 +301,104 @@ async function createEditedMessageVariant(conversationId, sourceMessageId, conte
   });
 }
 
+function toBranchChoice(message) {
+  if (!message) return null;
+  return {
+    id: Number(message.id),
+    sender_type: message.sender_type,
+    contentPreview: shortText(message.content, 28),
+    prompt_kind: message.prompt_kind || 'normal',
+    isEdited: Boolean(message.edited_from_message_id),
+    isRegenerated: message.prompt_kind === 'regenerate',
+    created_at: message.created_at,
+  };
+}
+
+async function resolveConversationLeafId(conversationId, messageId) {
+  const target = await getMessageById(conversationId, messageId);
+  if (!target) return null;
+  let current = target;
+  const visited = new Set();
+  while (current && !visited.has(Number(current.id))) {
+    visited.add(Number(current.id));
+    const childRows = await query(
+      `SELECT id, sender_type, content, sequence_no, parent_message_id, branch_from_message_id, edited_from_message_id, prompt_kind, created_at
+       FROM messages
+       WHERE conversation_id = ? AND parent_message_id = ? AND deleted_at IS NULL
+       ORDER BY sequence_no DESC, id DESC
+       LIMIT 1`,
+      [conversationId, current.id],
+    );
+    if (!childRows.length) break;
+    current = childRows[0];
+  }
+  return current?.id ? Number(current.id) : Number(target.id);
+}
+
+async function fetchBranchChoiceMaps(conversationId, pathMessages) {
+  const messages = Array.isArray(pathMessages) ? pathMessages : [];
+  if (!messages.length) {
+    return { siblingGroups: new Map(), childGroups: new Map() };
+  }
+
+  const parentKeys = Array.from(new Set(messages.map((message) => (
+    message.parent_message_id ? String(message.parent_message_id) : '__root__'
+  ))));
+  const childParentIds = messages.map((message) => Number(message.id)).filter(Boolean);
+  const siblingGroups = new Map(parentKeys.map((key) => [key, []]));
+  const childGroups = new Map(childParentIds.map((id) => [String(id), []]));
+
+  if (parentKeys.length) {
+    const rootRequested = parentKeys.includes('__root__');
+    const parentIds = parentKeys.filter((key) => key !== '__root__').map(Number).filter(Boolean);
+    const whereParts = [];
+    const params = [conversationId];
+    if (parentIds.length) {
+      whereParts.push(`parent_message_id IN (${parentIds.map(() => '?').join(',')})`);
+      params.push(...parentIds);
+    }
+    if (rootRequested) {
+      whereParts.push('parent_message_id IS NULL');
+    }
+    if (whereParts.length) {
+      const rows = await query(
+        `SELECT id, sender_type, content, sequence_no, parent_message_id, branch_from_message_id, edited_from_message_id, prompt_kind, created_at
+         FROM messages
+         WHERE conversation_id = ? AND deleted_at IS NULL AND (${whereParts.join(' OR ')})
+         ORDER BY sequence_no ASC, id ASC`,
+        params,
+      );
+      rows.forEach((row) => {
+        const key = row.parent_message_id ? String(row.parent_message_id) : '__root__';
+        if (!siblingGroups.has(key)) siblingGroups.set(key, []);
+        siblingGroups.get(key).push(toBranchChoice(row));
+      });
+    }
+  }
+
+  if (childParentIds.length) {
+    const rows = await query(
+      `SELECT id, sender_type, content, sequence_no, parent_message_id, branch_from_message_id, edited_from_message_id, prompt_kind, created_at
+       FROM messages
+       WHERE conversation_id = ? AND deleted_at IS NULL AND parent_message_id IN (${childParentIds.map(() => '?').join(',')})
+       ORDER BY sequence_no ASC, id ASC`,
+      [conversationId, ...childParentIds],
+    );
+    rows.forEach((row) => {
+      const key = String(row.parent_message_id);
+      if (!childGroups.has(key)) childGroups.set(key, []);
+      childGroups.get(key).push(toBranchChoice(row));
+    });
+  }
+
+  return { siblingGroups, childGroups };
+}
+
 async function buildConversationPathView(conversationId, activeLeafId, options = {}) {
   const normalizedLeafId = activeLeafId ? Number(activeLeafId) : null;
-  const pathMessages = decoratePathMessages(await fetchPathMessages(conversationId, normalizedLeafId));
+  const rawPathMessages = await fetchPathMessages(conversationId, normalizedLeafId);
+  const branchChoices = await fetchBranchChoiceMaps(conversationId, rawPathMessages);
+  const pathMessages = decoratePathMessages(rawPathMessages, branchChoices);
   const messageCount = options.messageCount === undefined
     ? await getConversationMessageCount(conversationId)
     : Number(options.messageCount || 0);
@@ -288,6 +457,30 @@ async function countChildConversations(conversationId) {
   return Number(rows[0]?.childCount || 0);
 }
 
+async function findSiblingFallbackMessageId(conversationId, targetMessage) {
+  if (!targetMessage) return null;
+  const parentClause = targetMessage.parent_message_id ? 'parent_message_id = ?' : 'parent_message_id IS NULL';
+  const params = targetMessage.parent_message_id
+    ? [conversationId, targetMessage.parent_message_id, targetMessage.id]
+    : [conversationId, targetMessage.id];
+  const rows = await query(
+    `SELECT id
+     FROM messages
+     WHERE conversation_id = ?
+       AND deleted_at IS NULL
+       AND ${parentClause}
+       AND id <> ?
+     ORDER BY
+       CASE WHEN sequence_no <= ? THEN 0 ELSE 1 END ASC,
+       CASE WHEN sequence_no <= ? THEN sequence_no END DESC,
+       CASE WHEN sequence_no > ? THEN sequence_no END ASC,
+       id DESC
+     LIMIT 1`,
+    [...params, targetMessage.sequence_no, targetMessage.sequence_no, targetMessage.sequence_no],
+  );
+  return rows[0]?.id ? Number(rows[0].id) : null;
+}
+
 async function deleteMessageSafely(conversationId, messageId, userId) {
   const conversation = await getConversationById(conversationId, userId);
   if (!conversation) {
@@ -327,10 +520,14 @@ async function deleteMessageSafely(conversationId, messageId, userId) {
     throw error;
   }
 
+  const siblingFallbackMessageId = await findSiblingFallbackMessageId(conversationId, targetMessage);
+  const fallbackMessageId = siblingFallbackMessageId
+    ? await resolveConversationLeafId(conversationId, siblingFallbackMessageId)
+    : (targetMessage.parent_message_id ? Number(targetMessage.parent_message_id) : null);
+
   await query("UPDATE messages SET deleted_at = NOW() WHERE id = ? AND conversation_id = ?", [messageId, conversationId]);
 
   if (Number(conversation.current_message_id || 0) === Number(messageId)) {
-    const fallbackMessageId = targetMessage.parent_message_id ? Number(targetMessage.parent_message_id) : null;
     await setConversationCurrentMessage(conversationId, fallbackMessageId);
   }
 
@@ -338,7 +535,7 @@ async function deleteMessageSafely(conversationId, messageId, userId) {
 
   return {
     deletedMessageId: Number(messageId),
-    fallbackMessageId: targetMessage.parent_message_id ? Number(targetMessage.parent_message_id) : null,
+    fallbackMessageId,
   };
 }
 
@@ -368,11 +565,13 @@ module.exports = {
   getLatestMessage,
   getConversationMessageCount,
   addMessage,
+  addMessagesAtomically,
   setConversationCurrentMessage,
   createEditedMessageVariant,
   buildPathMessages,
   fetchPathMessages,
   buildConversationPathView,
+  resolveConversationLeafId,
   cloneConversationBranch,
   countChildConversations,
   deleteMessageSafely,

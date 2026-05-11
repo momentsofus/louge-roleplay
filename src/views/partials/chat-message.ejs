@@ -10,7 +10,29 @@
     <% if (message.status === 'streaming') { %>
       <span class="bubble-status"><%= t('生成中断，已保留这段回复。') %></span>
     <% } %>
+    <% if (message.siblingCount > 1) { %>
+      <% const currentSiblingIndex = (message.siblingVariants || []).findIndex((variant) => Number(variant.id) === Number(message.id)); %>
+      <span class="branch-chip" title="<%= t('当前分支') %>"><%= t('分支 {current}/{total}', { current: currentSiblingIndex >= 0 ? currentSiblingIndex + 1 : 1, total: message.siblingCount }) %></span>
+    <% } %>
   </div>
+
+  <% if (message.siblingCount > 1 || message.childCount > 1) { %>
+    <div class="branch-switcher" aria-label="<%= t('分支切换') %>">
+      <% if (message.siblingCount > 1) { %>
+        <% (message.siblingVariants || []).forEach((variant, variantIndex) => { %>
+          <% const isCurrentVariant = Number(variant.id) === Number(message.id); %>
+          <a class="branch-switcher-chip <%= isCurrentVariant ? 'is-active' : '' %>" href="/chat/<%= conversation.id %>/switch/<%= variant.id %>" aria-current="<%= isCurrentVariant ? 'true' : 'false' %>" title="<%= variant.contentPreview || t('切换到这个分支') %>"><%= variantIndex + 1 %></a>
+        <% }) %>
+      <% } %>
+      <% if (message.childCount > 1) { %>
+        <span class="branch-switcher-sep" aria-hidden="true"></span>
+        <% (message.nextChoices || []).forEach((choice, choiceIndex) => { %>
+          <% const isCurrentNext = Number(choice.id) === Number(message.currentNextMessageId || 0); %>
+          <a class="branch-switcher-chip branch-switcher-chip--next <%= isCurrentNext ? 'is-active' : '' %>" href="/chat/<%= conversation.id %>/switch/<%= choice.id %>" aria-current="<%= isCurrentNext ? 'true' : 'false' %>" title="<%= choice.contentPreview || t('切换到后续分支') %>">→<%= choiceIndex + 1 %></a>
+        <% }) %>
+      <% } %>
+    </div>
+  <% } %>
 
   <template data-message-actions-template>
     <div class="message-actions-card" data-message-actions-card>
@@ -39,7 +61,7 @@
           <details class="message-menu-details">
             <summary class="message-menu-item"><%= t('修改并重发') %></summary>
             <div class="message-menu-editor">
-              <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user">
+              <form class="editor-form" method="POST" action="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user" data-stream-endpoint="/chat/<%= conversation.id %>/messages/<%= message.id %>/edit-user/stream" data-stream-mode="edit-user" data-stream-role-label="<%= conversation.character_name %>" data-stream-kind-label="<%= t('重新生成中…') %>" data-stream-sender-class="character">
                 <textarea name="content" maxlength="4000" required><%= message.content %></textarea>
                 <button class="inline-btn primary" type="submit"><%= t('重新生成回复') %></button>
               </form>

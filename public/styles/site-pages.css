@@ -5062,6 +5062,112 @@ body.has-conversation-actions-modal {
 }
 
 /* --- end site-pages/54-message-action-modal.css --- */
+/* --- begin site-pages/55-chat-branch-switcher.css --- */
+/* @file public/styles/site-pages/55-chat-branch-switcher.css
+   @description 聊天消息分支切换小控件：轻量 chip，不打断气泡阅读。 */
+
+.branch-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.branch-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin: -2px 0 8px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text-tertiary);
+  vertical-align: middle;
+}
+
+.branch-switcher-chip {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  text-decoration: none;
+  background: transparent;
+  transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+
+.branch-switcher-chip:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.branch-switcher-chip.is-active {
+  color: #fff7e8;
+  border-color: rgba(196, 181, 253, 0.34);
+  background: linear-gradient(135deg, rgba(124, 107, 240, 0.55), rgba(96, 165, 250, 0.34));
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.14);
+}
+
+.branch-switcher-chip--next {
+  padding-inline: 7px;
+}
+
+.branch-switcher-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.bubble-user .branch-chip,
+.bubble-user .branch-switcher {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 247, 232, 0.78);
+}
+
+.bubble-user .branch-switcher-chip {
+  color: rgba(255, 247, 232, 0.78);
+}
+
+.bubble-user .branch-switcher-chip:hover,
+.bubble-user .branch-switcher-chip.is-active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 640px) {
+  .branch-switcher {
+    margin-bottom: 6px;
+    gap: 3px;
+  }
+
+  .branch-switcher-chip {
+    min-width: 19px;
+    height: 19px;
+    padding-inline: 5px;
+  }
+}
+
+/* --- end site-pages/55-chat-branch-switcher.css --- */
 /* --- begin site-pages/60-auth.css --- */
 /* Auth (login) page */
 
@@ -6579,3 +6685,132 @@ code, pre {
 }
 
 /* --- end site-pages/97-button-system.css --- */
+/* --- begin site-pages/98-chat-background-compat.css --- */
+/* @file public/styles/site-pages/98-chat-background-compat.css
+   @description 对话背景图兼容层：修复 fixed 背景负层级不可见、主题面板遮挡、移动端裁剪等问题。 */
+
+.chat-shell--with-bg {
+  position: relative;
+  isolation: isolate;
+  --chat-bg-page-dim: rgba(6, 6, 12, 0.50);
+  --chat-bg-page-vignette: rgba(8, 8, 14, 0.92);
+  --chat-bg-panel-dim: rgba(8, 8, 14, 0.34);
+}
+
+.chat-shell--with-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(124, 107, 240, 0.18), transparent 34%),
+    linear-gradient(180deg, var(--chat-bg-page-dim), var(--chat-bg-page-vignette)),
+    var(--chat-bg-image) center / cover no-repeat;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.chat-shell--with-bg > .chat-main,
+.chat-shell--with-bg > .chat-side {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-shell--with-bg .chat-head,
+.chat-shell--with-bg .chat-transcript-panel,
+.chat-shell--with-bg .compose-card,
+.chat-shell--with-bg .sidebar-card,
+.chat-shell--with-bg .sidebar-details,
+.chat-shell--with-bg .compose-details,
+.chat-shell--with-bg .draft-box {
+  background: rgba(14, 14, 22, 0.66);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px) saturate(1.18);
+}
+
+.chat-shell--with-bg .chat-transcript-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.chat-shell--with-bg .chat-transcript-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(8, 8, 14, 0.46), rgba(8, 8, 14, 0.70)),
+    var(--chat-bg-image) center / cover no-repeat;
+  opacity: 0.72;
+  transform: scale(1.015);
+}
+
+.chat-shell--with-bg .chat-transcript-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06), transparent 42%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.18));
+}
+
+.chat-shell--with-bg .chat-transcript-panel > *,
+.chat-shell--with-bg .chat-transcript {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-shell--with-bg .bubble,
+.chat-shell--with-bg .bubble-character,
+.chat-shell--with-bg .chat-message,
+.chat-shell--with-bg .message {
+  background: rgba(18, 18, 27, 0.76);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(10px) saturate(1.08);
+}
+
+.chat-shell--with-bg .bubble-user,
+.chat-shell--with-bg .chat-message--user,
+.chat-shell--with-bg .message-user,
+.chat-shell--with-bg .message.is-user {
+  background: linear-gradient(135deg, rgba(124, 107, 240, 0.92), rgba(96, 165, 250, 0.78));
+  border-color: rgba(196, 181, 253, 0.38);
+}
+
+.chat-shell--with-bg .empty-chat-state,
+.chat-shell--with-bg .history-loader {
+  background: rgba(8, 8, 14, 0.28);
+  border-radius: var(--radius-lg);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .chat-shell--with-bg .chat-head,
+  .chat-shell--with-bg .chat-transcript-panel,
+  .chat-shell--with-bg .compose-card,
+  .chat-shell--with-bg .sidebar-card,
+  .chat-shell--with-bg .sidebar-details,
+  .chat-shell--with-bg .compose-details,
+  .chat-shell--with-bg .draft-box {
+    background: rgba(14, 14, 22, 0.88);
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-shell--with-bg::before {
+    background-position: center top;
+  }
+
+  .chat-shell--with-bg .chat-transcript-panel::before {
+    background-position: center top;
+    opacity: 0.62;
+  }
+}
+
+/* --- end site-pages/98-chat-background-compat.css --- */

@@ -7,7 +7,7 @@ function registerChatEditRoutes(app, ctx) {
   const {
     requireAuth,
     getMessageById,
-    addMessage,
+    addMessagesAtomically,
     createEditedMessageVariant,
     fetchPathMessages,
     deleteMessageSafely,
@@ -15,7 +15,12 @@ function registerChatEditRoutes(app, ctx) {
     renderPage,
     parseIdParam,
     renderChatPage,
-    loadConversationForUserOrFail
+    loadConversationForUserOrFail,
+    createNdjsonResponder,
+    streamChatReplyToNdjson,
+    buildConversationCharacterPayload,
+    buildChatMessagePacket,
+    setConversationCurrentMessage
   } = ctx;
 
   app.post('/chat/:conversationId/messages/:messageId/delete', requireAuth, async (req, res, next) => {
@@ -30,6 +35,9 @@ function registerChatEditRoutes(app, ctx) {
       try {
         const result = await deleteMessageSafely(conversationId, messageId, req.session.user.id);
         const nextLeaf = result.fallbackMessageId || '';
+        if (nextLeaf) {
+          await setConversationCurrentMessage(conversationId, nextLeaf);
+        }
         return res.redirect(nextLeaf ? `/chat/${conversationId}?leaf=${nextLeaf}` : `/chat/${conversationId}`);
       } catch (error) {
         if (error.code === 'MESSAGE_NOT_FOUND') {
@@ -73,9 +81,119 @@ function registerChatEditRoutes(app, ctx) {
       }
 
       const variantMessageId = await createEditedMessageVariant(conversationId, messageId, content);
+      await setConversationCurrentMessage(conversationId, variantMessageId);
       return res.redirect(`/chat/${conversationId}?leaf=${variantMessageId}`);
     } catch (error) {
       next(error);
+    }
+  });
+
+  app.post('/chat/:conversationId/messages/:messageId/edit-user/stream', requireAuth, async (req, res, next) => {
+    const ndjson = createNdjsonResponder(req, res);
+    try {
+      const conversationId = parseIdParam(req.params.conversationId, '会话 ID');
+      const messageId = parseIdParam(req.params.messageId, '消息 ID');
+      const content = String(req.body.content || '').trim();
+      const conversation = await loadConversationForUserOrFail(req, res, conversationId);
+      if (!conversation) {
+        ndjson.end();
+        return;
+      }
+      if (!content) {
+        ndjson.safeWrite({ type: 'error', message: '内容不能为空。' });
+        ndjson.end();
+        return;
+      }
+
+      const targetMessage = await getMessageById(conversationId, messageId);
+      if (!targetMessage || targetMessage.sender_type !== 'user') {
+        ndjson.safeWrite({ type: 'error', message: '这里只支持修改用户输入。' });
+        ndjson.end();
+        return;
+      }
+
+      const historyBeforeUser = targetMessage.parent_message_id
+        ? await fetchPathMessages(conversationId, targetMessage.parent_message_id)
+        : [];
+
+      ndjson.safeWrite({
+        type: 'assistant-start',
+        conversationId,
+        sourceMessageId: messageId,
+        mode: 'edit-user',
+      });
+
+      const reply = await streamChatReplyToNdjson({
+        requestId: req.requestId,
+        userId: req.session.user.id,
+        conversationId,
+        character: buildConversationCharacterPayload(conversation),
+        messages: historyBeforeUser,
+        userMessage: content,
+        systemHint: '这是基于用户修改后的输入重新生成回复，请自然延续，不要提到内部操作。',
+        promptKind: 'edit',
+        modelMode: conversation.selected_model_mode || 'standard',
+        signal: ndjson.abortController.signal,
+        safeWrite: ndjson.safeWrite,
+        user: req.session.user,
+      });
+
+      if (ndjson.isClosed() || ndjson.abortController.signal.aborted) {
+        return;
+      }
+
+      const [newUserMessageId, replyMessageId] = await addMessagesAtomically(conversationId, [
+        {
+          senderType: 'user',
+          content,
+          parentMessageId: targetMessage.parent_message_id || null,
+          branchFromMessageId: targetMessage.id,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'user-edit-resend-stream',
+            sourceMessageId: messageId,
+            delivery: 'stream',
+          }),
+        },
+        {
+          senderType: 'character',
+          content: reply,
+          parentMessageId: '__previous__',
+          branchFromMessageId: '__previous__',
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'assistant-reply-from-user-edit-stream',
+            sourceMessageId: messageId,
+            sourceUserMessageId: targetMessage.id,
+          }),
+        },
+      ]);
+
+      const replyPacket = await buildChatMessagePacket(req, conversation, replyMessageId, replyMessageId);
+      const parentPacket = await buildChatMessagePacket(req, conversation, replyMessageId, newUserMessageId);
+      ndjson.safeWrite({
+        type: 'done',
+        conversationId,
+        userMessageId: newUserMessageId,
+        replyMessageId,
+        messageId: replyMessageId,
+        leafId: replyMessageId,
+        full: reply,
+        mode: 'edit-user',
+        html: replyPacket ? replyPacket.html : '',
+        parentMessageId: newUserMessageId,
+        parentHtml: parentPacket ? parentPacket.html : '',
+        sourceMessageId: messageId,
+      });
+      ndjson.end();
+    } catch (error) {
+      if (!res.headersSent) {
+        return next(error);
+      }
+      ndjson.fail(error);
     }
   });
 
@@ -101,21 +219,6 @@ function registerChatEditRoutes(app, ctx) {
         ? await fetchPathMessages(conversationId, targetMessage.parent_message_id)
         : [];
 
-      const newUserMessageId = await addMessage({
-        conversationId,
-        senderType: 'user',
-        content,
-        parentMessageId: targetMessage.parent_message_id || null,
-        branchFromMessageId: targetMessage.id,
-        editedFromMessageId: targetMessage.id,
-        promptKind: 'edit',
-        metadataJson: JSON.stringify({
-          requestId: req.requestId,
-          operation: 'user-edit-resend',
-          sourceMessageId: messageId,
-        }),
-      });
-
       const reply = await generateReplyViaGateway({
         requestId: req.requestId,
         userId: req.session.user.id,
@@ -134,21 +237,36 @@ function registerChatEditRoutes(app, ctx) {
         user: req.session.user,
       });
 
-      const replyMessageId = await addMessage({
-        conversationId,
-        senderType: 'character',
-        content: reply,
-        parentMessageId: newUserMessageId,
-        branchFromMessageId: newUserMessageId,
-        promptKind: 'edit',
-        metadataJson: JSON.stringify({
-          requestId: req.requestId,
-          operation: 'assistant-reply-from-user-edit',
-          sourceMessageId: messageId,
-        }),
-      });
+      const [newUserMessageId, replyMessageId] = await addMessagesAtomically(conversationId, [
+        {
+          senderType: 'user',
+          content,
+          parentMessageId: targetMessage.parent_message_id || null,
+          branchFromMessageId: targetMessage.id,
+          editedFromMessageId: targetMessage.id,
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'user-edit-resend',
+            sourceMessageId: messageId,
+          }),
+        },
+        {
+          senderType: 'character',
+          content: reply,
+          parentMessageId: '__previous__',
+          branchFromMessageId: '__previous__',
+          promptKind: 'edit',
+          metadataJson: JSON.stringify({
+            requestId: req.requestId,
+            operation: 'assistant-reply-from-user-edit',
+            sourceMessageId: messageId,
+            sourceUserMessageId: targetMessage.id,
+          }),
+        },
+      ]);
 
-      return res.redirect(`/chat/${conversationId}?leaf=${replyMessageId}`);
+      return res.redirect(`/chat/${conversationId}?leaf=${replyMessageId || newUserMessageId}`);
     } catch (error) {
       next(error);
     }

@@ -6,9 +6,14 @@
     <%= errorMessage %>
   </div>
 <% } %>
-<% const safeChatBackground = typeof escapeHtml === 'function' ? escapeHtml(conversation.background_image_path || '') : String(conversation.background_image_path || '').replace(/'/g, '%27'); %>
+<%
+  const rawChatBackground = String(conversation.background_image_path || '').trim();
+  const safeChatBackground = typeof escapeHtml === 'function'
+    ? escapeHtml(rawChatBackground.replace(/\\/g, '/'))
+    : rawChatBackground.replace(/\\/g, '/').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '%27');
+%>
 <% const chatDisplayFontStyle = currentUser?.chat_font_css_stack ? `--chat-display-font: ${currentUser.chat_font_css_stack};` : ''; %>
-<div class="chat-shell chat-shell--linear <%= conversation.background_image_path ? 'chat-shell--with-bg' : '' %>" <% if (conversation.background_image_path || chatDisplayFontStyle) { %>style="<% if (conversation.background_image_path) { %>--chat-bg-image: url('<%- safeChatBackground %>');<% } %><% if (chatDisplayFontStyle) { %> <%= chatDisplayFontStyle %><% } %>"<% } %>>
+<div class="chat-shell chat-shell--linear <%= rawChatBackground ? 'chat-shell--with-bg' : '' %>" <% if (rawChatBackground || chatDisplayFontStyle) { %>style="<% if (rawChatBackground) { %>--chat-bg-image: url(&quot;<%- safeChatBackground %>&quot;);<% } %><% if (chatDisplayFontStyle) { %> <%= chatDisplayFontStyle %><% } %>"<% } %>>
   <div class="chat-main">
     <section class="chat-head chat-head--clean">
       <% if (conversation.avatar_image_path) { %>
